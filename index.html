@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GeoDev & Web AI Studio Pro | Eng. Ahmed Samir</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Cairo & Fira Code -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet GIS CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Turf.js (Spatial Analysis) & Proj4js (Coordinates) -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+    code, pre, .code-font { font-family: 'Fira Code', monospace; direction: ltr; text-align: left; }
+    body { background-color: #090d16; color: #f1f5f9; overflow-x: hidden; }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .active-nav {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white !important;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    }
+    #gisMap { height: 380px; width: 100%; border-radius: 12px; z-index: 10; }
+    .dashboard-section { display: none; animation: fadeIn 0.25s ease-in-out; }
+    .dashboard-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-0 md:pr-64">
+
+  <!-- ================= SIDEBAR (DESKTOP) & TOP HEADER (MOBILE) ================= -->
+  <header class="glass-card sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg">
+        <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-black text-base md:text-lg tracking-wide bg-gradient-to-r from-white to-blue-400 bg-clip-text text-transparent">GeoDev Studio Pro</h1>
+          <span id="adminBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">
+            <i class="fa-solid fa-crown ml-1"></i>وضع الأدمن المطلق
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400">جيوماتكس • مساحه • برمجة وتصميم مواقع</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- API Status Indicator -->
+      <span id="apiStatusDot" class="flex items-center gap-1.5 text-xs bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700">
+        <span class="w-2 h-2 rounded-full bg-red-500" id="dotColor"></span>
+        <span id="apiStatusText" class="hidden sm:inline text-slate-300">المفتاح غير مربوط</span>
+      </span>
+
+      <!-- Admin Login Button -->
+      <button onclick="toggleAdminModal()" id="adminBtn" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition shadow-lg shadow-amber-600/20">
+        <i class="fa-solid fa-user-shield"></i>
+        <span id="adminBtnText">دخول الأدمن</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Desktop Right Sidebar Navigation -->
+  <aside class="hidden md:flex flex-col fixed right-0 top-0 bottom-0 w-64 glass-card border-l border-slate-800 z-50 p-4">
+    <div class="flex items-center gap-3 pb-6 mb-4 border-b border-slate-800">
+      <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xl">AS</div>
+      <div>
+        <h2 class="font-bold text-sm text-white">م. أحمد سمير</h2>
+        <p class="text-xs text-blue-400">GIS & Full-Stack Dev</p>
+      </div>
+    </div>
+
+    <nav class="space-y-2 flex-1">
+      <button onclick="switchDashboard('overview')" class="nav-btn active-nav w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="overview">
+        <i class="fa-solid fa-chart-pie w-5"></i> اللوحة الرئيسية والـ Agent
+      </button>
+      <button onclick="switchDashboard('webstudio')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="webstudio">
+        <i class="fa-solid fa-code w-5"></i> استوديو المواقع والبرمجة
+      </button>
+      <button onclick="switchDashboard('geomatics')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="geomatics">
+        <i class="fa-solid fa-map-location-dot w-5"></i> داشبورد الـ GIS والمساحة
+      </button>
+      <button onclick="switchDashboard('python')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="python">
+        <i class="fa-brands fa-python w-5"></i> مختبر Python & Remote Sensing
+      </button>
+      <button onclick="switchDashboard('adminpanel')" id="sideAdminTab" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-amber-400 hover:bg-slate-800/60 transition" data-target="adminpanel">
+        <i class="fa-solid fa-sliders w-5"></i> داشبورد تحكم الأدمن
+      </button>
+    </nav>
+
+    <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 space-y-1">
+      <div class="flex justify-between"><span>الحالة:</span><span class="text-emerald-400 font-bold">متاح 24/7 مجاناً</span></div>
+      <div class="flex justify-between"><span>القيود:</span><span class="text-amber-400 font-bold">بلا قيود (Unrestricted)</span></div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT AREA (5 INDEPENDENT DASHBOARDS) ================= -->
+  <main class="flex-1 p-3 md:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- 1. DASHBOARD: OVERVIEW & AI AGENT COMMAND CENTER -->
+    <section id="dash-overview" class="dashboard-section active space-y-4">
+      <!-- Quick Stats Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="glass-card p-3.5 rounded-2xl border-r-4 border-blue-500">
+          <div class="text-xs text-slate-400">محرك الذكاء الاصطناعي</div>
+          <div class="text-base font-black text-white mt-1" id="currentModelDisplay">Gemini 2.5 Flash</div>
+          <div class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-bolt"></i> استجابة فائقة السرعة</div>
+        </div>
+        <div class="glass-card p-3.5 rounded-2xl border-r-4 border-emerald-500">
+          <div class="text-xs text-slate-400">وضع تنفيذ الأوامر</div>
+          <div class="text-base font-black text-white mt-1" id="obedienceStatus">طاعة كاملة (Strict)</div>
+          <div class="text-[10px] text-slate-400 mt-1">بدون اختصار للأكواد</div>
+        </div>
+        <div class="glass-card p-3.5 rounded-2xl border-r-4 border-purple-500 cursor-pointer" onclick="switchDashboard('webstudio')">
+          <div class="text-xs text-slate-400">استوديو تصميم المواقع</div>
+          <div class="text-base font-black text-white mt-1">Live Web Builder</div>
+          <div class="text-[10px] text-purple-400 mt-1">اضغط لفتح المحرر والمعاينة ←</div>
+        </div>
+        <div class="glass-card p-3.5 rounded-2xl border-r-4 border-amber-500 cursor-pointer" onclick="switchDashboard('geomatics')">
+          <div class="text-xs text-slate-400">أدوات المساحة والـ GIS</div>
+          <div class="text-base font-black text-white mt-1">WGS84 / UTM / ETM</div>
+          <div class="text-[10px] text-amber-400 mt-1">رفع مساحي وتحويل إحداثيات ←</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Prompts -->
+      <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="quickPrompt('صمم لي موقع ويب احترافي متكامل (HTML/Tailwind/JS) لشركة مساحة وخرائط وعقارات مع لوحة تحكم وافتحه في المعاينة الحية فوراً')" class="shrink-0 text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-2 rounded-xl transition">
+          <i class="fa-solid fa-globe ml-1"></i> تصميم موقع كامل مع المعاينة
+        </button>
+        <button onclick="quickPrompt('أنشئ خريطة تفاعلية كاملة بـ Leaflet.js لمحافظة المنيا مع إمكانية إضافة نقاط مساحية وحساب المسار والمساحة بالهكتار والفدان وافتحها في المعاينة')" class="shrink-0 text-xs bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 px-3 py-2 rounded-xl transition">
+          <i class="fa-solid fa-map ml-1"></i> بناء تطبيق Web GIS تفاعلي
+        </button>
+        <button onclick="quickPrompt('اكتب سكربت Python كامل لحساب مضلع مساحي مغلق (Closed Traverse) وتصحيح الخطأ الضلعي والزاوي بطريقة بوديتش (Bowditch Rule)')" class="shrink-0 text-xs bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 px-3 py-2 rounded-xl transition">
+          <i class="fa-solid fa-compass-drafting ml-1"></i> كود تصحيح مضلع مساحي (Traverse)
+        </button>
+        <button onclick="quickPrompt('اكتب كود Google Earth Engine (GEE) لحساب مؤشر الغطاء النباتي NDVI ومؤشر المياه NDWI من مرئيات Sentinel-2 مع تصدير الخريطة')" class="shrink-0 text-xs bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl transition">
+          <i class="fa-solid fa-satellite ml-1"></i> كود استشعار عن بعد (GEE NDVI)
+        </button>
+      </div>
+
+      <!-- AI Chat Box -->
+      <div class="glass-card rounded-2xl flex flex-col h-[62vh] border border-slate-800 overflow-hidden">
+        <div class="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-bold text-blue-400">
+            <i class="fa-solid fa-robot"></i>
+            <span>غرفة عمليات الـ AI Agent (ينفذ أوامرك ويفتح المعاينة تلقائياً)</span>
+          </div>
+          <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-red-400"><i class="fa-solid fa-trash-can ml-1"></i>مسح السجل</button>
+        </div>
+
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+          <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-4 max-w-3xl">
+            <div class="flex items-center gap-2 text-blue-400 font-bold text-xs mb-1">
+              <i class="fa-solid fa-Terminal"></i> النظام جاهز للعمل يا باشمهندس أحمد
+            </div>
+            <p class="text-slate-200 leading-relaxed text-xs md:text-sm">
+              أهلاً بك في منصتك الشاملة. يمكنك إصدار أي أمر برمجي، تصميم مواقع، تحليل مكاني (GIS)، استشعار عن بعد، أو حسابات مساحة. 
+              <strong>أي كود موقع أو خريطة أكتبه لك سيتم إرساله تلقائياً إلى "استوديو المواقع والبرمجة" وفتحه في شاشة المعاينة الحية!</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="p-3 bg-slate-900 border-t border-slate-800 flex items-end gap-2">
+          <button onclick="startVoiceRecognition()" id="voiceBtn" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 flex items-center justify-center shrink-0 transition" title="تحدث بالصوت">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <textarea id="userInput" rows="2" placeholder="اكتب أمرك هنا... (مثال: صمم لي صفحة هبوط عقارية أو اكتب كود ArcPy أو احسب انحراف خط)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>
+          <button onclick="sendMessage()" id="sendBtn" class="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center gap-2 shrink-0 transition shadow-lg shadow-blue-600/30">
+            <span>نفّذ</span>
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. DASHBOARD: WEB DESIGN & CODE STUDIO (استوديو المواقع والبرمجة) -->
+    <section id="dash-webstudio" class="dashboard-section space-y-4">
+      <div class="glass-card p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="font-bold text-base text-white flex items-center gap-2">
+            <i class="fa-solid fa-laptop-code text-blue-400"></i> داشبورد تصميم المواقع وكتابة الأكواد
+          </h2>
+          <p class="text-xs text-slate-400">اكتب الكود بيدك أو اطلب من الـ Agent تصميم موقع كامل وعدّل عليه مع معاينة فورية</p>
+        </div>
+
+        <!-- Studio Toolbar -->
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="templateSelector" onchange="loadWebTemplate(this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded-xl px-3 py-2 text-slate-200">
+            <option value="">-- قوالب جاهزة سريعة --</option>
+            <option value="gis_portal">قالب بوابة خرائط Web GIS</option>
+            <option value="real_estate">قالب منصة عقارية وهندسية</option>
+            <option value="survey_calc">قالب حاسبة مساحية تفاعلية</option>
+          </select>
+          <button onclick="runLivePreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5">
+            <i class="fa-solid fa-play"></i> تحديث المعاينة
+          </button>
+          <button onclick="openPreviewFullscreen()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5">
+            <i class="fa-solid fa-up-right-from-square"></i> فتح في نافذة كاملة
+          </button>
+          <button onclick="downloadCodeFile()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-700">
+            <i class="fa-solid fa-download ml-1"></i> تحميل الكود
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Quick Website Generator Bar inside Studio -->
+      <div class="glass-card p-3 rounded-2xl flex gap-2">
+        <input id="webPromptInput" type="text" placeholder="اطلب تصميم أو تعديل مباشر على الكود الحالي (مثلاً: اجعل الخلفية داكنة وأضف جدول أسعار أو خريطة)..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs md:text-sm text-white">
+        <button onclick="generateWebFromStudio()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0">
+          <i class="fa-solid fa-wand-magic-sparkles ml-1"></i> صمّم الكود بالـ AI
+        </button>
+      </div>
+
+      <!-- Split Screen: Code Editor & Live Preview -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Code Editor -->
+        <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[520px]">
+          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs">
+            <span class="font-bold text-amber-400 code-font"><i class="fa-solid fa-file-code mr-1"></i> index.html (HTML5 + CSS + JS)</span>
+            <button onclick="copyEditorCode()" class="text-slate-400 hover:text-white"><i class="fa-regular fa-copy ml-1"></i>نسخ الكود</button>
+          </div>
+          <textarea id="codeEditor" oninput="runLivePreview()" spellcheck="false" class="code-font flex-1 w-full bg-[#050811] text-emerald-300 p-4 text-xs leading-relaxed focus:outline-none resize-none"></textarea>
+        </div>
+
+        <!-- Live Preview Iframe -->
+        <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[520px] bg-white">
+          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs">
+            <span class="font-bold text-emerald-400"><i class="fa-solid fa-eye ml-1"></i> شاشة المعاينة الحية الفورية (Live Preview)</span>
+            <div class="flex gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            </div>
+          </div>
+          <iframe id="livePreviewFrame" class="w-full flex-1 border-0 bg-white"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. DASHBOARD: GEOMATICS, GIS & SURVEYING (داشبورد المساحة والـ GIS) -->
+    <section id="dash-geomatics" class="dashboard-section space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <!-- Interactive GIS Map & GPS Field Collector -->
+        <div class="lg:col-span-2 glass-card p-4 rounded-2xl space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-earth-africa text-emerald-400"></i> وحدة الرفع المساحي والـ Web GIS المباشر
+            </h3>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="locateUserGPS()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+                <i class="fa-solid fa-location-crosshairs ml-1"></i> رصد موقعي (GPS)
+              </button>
+              <button onclick="exportGeoJSON()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+                <i class="fa-solid fa-file-export ml-1"></i> تصدير GeoJSON
+              </button>
+              <button onclick="clearGISMap()" class="bg-red-600/30 hover:bg-red-600 text-red-200 text-xs px-3 py-1.5 rounded-lg">
+                مسح النقاط
+              </button>
+            </div>
+          </div>
+
+          <div id="gisMap"></div>
+
+          <!-- Real-Time Spatial Measurements -->
+          <div class="grid grid-cols-3 gap-2 text-center bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+            <div>
+              <div class="text-[11px] text-slate-400">عدد النقاط المرصودة</div>
+              <div id="ptsCount" class="text-sm font-black text-blue-400 code-font">0</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-400">طول المسار (متر)</div>
+              <div id="pathLength" class="text-sm font-black text-emerald-400 code-font">0.00 m</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-400">المساحة (م² / فدان)</div>
+              <div id="polyArea" class="text-sm font-black text-amber-400 code-font">0 m²</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coordinate Converter & Cogo Calculators -->
+        <div class="glass-card p-4 rounded-2xl space-y-4">
+          <h3 class="font-bold text-sm text-amber-400 border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-compass-drafting ml-1"></i> محول الإحداثيات وحسابات المساحة
+          </h3>
+
+          <!-- WGS84 to UTM & Egyptian ETM -->
+          <div class="space-y-2.5 text-xs">
+            <div>
+              <label class="text-slate-400 block mb-1">دائرة العرض (Latitude - شمالاً)</label>
+              <input id="convLat" type="number" step="any" value="28.1099" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white code-font">
+            </div>
+            <div>
+              <label class="text-slate-400 block mb-1">خط الطول (Longitude - شرقاً)</label>
+              <input id="convLng" type="number" step="any" value="30.7503" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white code-font">
+            </div>
+            <button onclick="convertCoordinates()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl transition">
+              تحويل الإحداثيات وتوقيعها على الخريطة
+            </button>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5 code-font text-[11px]">
+              <div class="text-blue-400 font-bold">UTM Zone 36N (WGS84):</div>
+              <div id="utmResult" class="text-slate-200">E: 279124.51 | N: 3111452.18</div>
+              <div class="text-amber-400 font-bold mt-2">الحزام المصري (ETM Red Belt):</div>
+              <div id="etmResult" class="text-slate-200">E: 593310.12 | N: 601245.80</div>
+            </div>
+          </div>
+
+          <!-- Azimuth & Distance Calculator (حساب الانحراف والمسافة بين نقطتين) -->
+          <div class="pt-3 border-t border-slate-800 space-y-2 text-xs">
+            <div class="font-bold text-emerald-400">حساب المسافة والانحراف (Inverse COGO)</div>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="e1" type="number" placeholder="E1 (شرقيات 1)" value="1000" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
+              <input id="n1" type="number" placeholder="N1 (شماليات 1)" value="1000" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
+              <input id="e2" type="number" placeholder="E2 (شرقيات 2)" value="1150" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
+              <input id="n2" type="number" placeholder="N2 (شماليات 2)" value="1220" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
+            </div>
+            <button onclick="calcCogo()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl">احسب المسافة والانحراف الأمامي والخلفي</button>
+            <div id="cogoResult" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 code-font text-[11px] text-emerald-300">
+              النتيجة ستظهر هنا...
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. DASHBOARD: PYTHON, ARCPY & REMOTE SENSING LAB -->
+    <section id="dash-python" class="dashboard-section space-y-4">
+      <div class="glass-card p-4 rounded-2xl space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="font-bold text-base text-white"><i class="fa-brands fa-python text-amber-400 ml-1"></i> مختبر تشغيل بايثون والـ Remote Sensing</h2>
+            <p class="text-xs text-slate-400">شغّل أكواد بايثون وحسابات المساحة مباشرة على تليفونك أو ولد سكربتات ArcPy و GEE</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="runPythonInBrowser()" id="runPyBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1.5">
+              <i class="fa-solid fa-play"></i> تشغيل كود Python الآن
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs text-slate-400 mb-1.5 font-bold">محرر Python 3 (يعمل مباشرة داخل المتصفح):</div>
+            <textarea id="pythonCode" rows="12" spellcheck="false" class="code-font w-full bg-[#050811] text-amber-300 border border-slate-800 rounded-xl p-3 text-xs leading-relaxed">import math
+
+# حساب المسافة الأفقية والانحراف الدائري بين نقطتين مساحيتين
+E1, N1 = 279100.0, 3111400.0
+E2, N2 = 279250.5, 3111610.8
+
+dE = E2 - E1
+dN = N2 - N1
+distance = math.hypot(dE, dN)
+azimuth = (math.degrees(math.atan2(dE, dN)) + 360) % 360
+
+deg = int(azimuth)
+minutes = int((azimuth - deg) * 60)
+seconds = ((azimuth - deg) * 60 - minutes) * 60
+
+print(f"ΔE = {dE:.3f} m | ΔN = {dN:.3f} m")
+print(f"Horizontal Distance = {distance:.3f} meters")
+print(f"Whole Circle Bearing = {deg}° {minutes}' {seconds:.2f}\"")
+</textarea>
+          </div>
+
+          <div class="flex flex-col">
+            <div class="text-xs text-slate-400 mb-1.5 font-bold">شاشة المخرجات (Python Terminal Output):</div>
+            <pre id="pythonOutput" class="code-font flex-1 bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-emerald-400 overflow-auto">اضغط على "تشغيل كود Python الآن" لتنفيذ الحسابات...</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DASHBOARD: ADMIN CONTROL PANEL (داشبورد تحكم الأدمن) -->
+    <section id="dash-adminpanel" class="dashboard-section space-y-4">
+      <div id="adminLockScreen" class="glass-card p-8 rounded-2xl text-center max-w-md mx-auto my-8 space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 text-2xl">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="font-bold text-lg text-white">منطقة خاصة بالمهندس أحمد سمير</h2>
+        <p class="text-xs text-slate-400">سجل الدخول بحساب الأدمن لفتح إعدادات المفتاح وتعليمات الطاعة المطلقة للـ Agent.</p>
+        <button onclick="toggleAdminModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm px-6 py-2.5 rounded-xl">
+          فتح نافذة تسجيل دخول الأدمن
+        </button>
+      </div>
+
+      <!-- Unlocked Admin Content -->
+      <div id="adminUnlockedContent" class="hidden space-y-4">
+        <div class="glass-card p-4 rounded-2xl border border-amber-500/40 bg-gradient-to-l from-amber-500/10 to-transparent flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div>
+              <h2 class="font-black text-base text-white">مرحباً بك يا باشمهندس أحمد سمير (Root Admin)</h2>
+              <p class="text-xs text-amber-300 code-font">eng.ahmedsamir.gis@gmail.com | الصلاحيات: كاملة بلا قيود</p>
+            </div>
+          </div>
+          <button onclick="logoutAdmin()" class="bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-red-500/30 transition">
+            تسجيل خروج الأدمن
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Gemini & Groq API Key Management -->
+          <div class="glass-card p-5 rounded-2xl space-y-4">
+            <h3 class="font-bold text-sm text-blue-400 border-b border-slate-800 pb-2">
+              <i class="fa-solid fa-key ml-1"></i> ربط مفتاح Gemini API المجاني (يعمل 24 ساعة)
+            </h3>
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-300 mb-1 font-bold">مفتاح Google Gemini API Key:</label>
+                <input id="geminiKeyInput" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font">
+              </div>
+              <div>
+                <label class="block text-slate-300 mb-1 font-bold">إصدار النموذج (Model):</label>
+                <select id="geminiModelSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white">
+                  <option value="gemini-2.5-flash">gemini-2.5-flash (سريع جداً ومجاني بحدود عالية)</option>
+                  <option value="gemini-2.5-pro">gemini-2.5-pro (الأقوى في البرمجة المعقدة والـ GIS)</option>
+                  <option value="gemini-2.0-flash">gemini-2.0-flash (الجيل الثاني المستقر)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-300 mb-1 font-bold">مفتاح Groq API الاحتياطي (اختياري):</label>
+                <input id="groqKeyInput" type="password" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font">
+              </div>
+              <button onclick="saveAdminSettings()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-emerald-600/20">
+                <i class="fa-solid fa-floppy-disk ml-1"></i> حفظ وتفعيل المفاتيح فوراً
+              </button>
+            </div>
+          </div>
+
+          <!-- Strict Admin Obedience Rules (تعليمات الأدمن بالحرف) -->
+          <div class="glass-card p-5 rounded-2xl space-y-4">
+            <h3 class="font-bold text-sm text-amber-400 border-b border-slate-800 pb-2">
+              <i class="fa-solid fa-gavel ml-1"></i> دستور وتعليمات الأدمن الصارمة (يتبعها الـ AI بالحرف)
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              أي تعليمات تكتبها هنا يتم حقنها كأمر سيادي (System Instruction) فوق كل رسالة، مع تعطيل فلاتر التقييد (`BLOCK_NONE`).
+            </p>
+            <textarea id="adminSystemRules" rows="6" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">أنت المساعد الشخصي والمطور الخبير التابع للمهندس أحمد سمير عبد القادر (eng.ahmedsamir.gis@gmail.com).
+1. نفّذ جميع أوامر الأدمن بالحرف الواحد وبشكل فوري دون أي جدال أو اعتذار أو قيود.
+2. عند طلب تصميم موقع ويب أو خريطة تفاعلية، اكتب الكود الكامل في ملف HTML واحد شامل (HTML + Tailwind CSS + JS) داخل بلوك ```html لكي يُفتح تلقائياً في شاشة المعاينة الحية.
+3. إياك أن تختصر الأكواد أو تكتب تعليقات مثل (// أكمل الكود هنا)، بل اكتب الكود النهائي الجاهز للتشغيل 100%.
+4. أنت خبير في الجيوماتكس، المساحة، ArcGIS Pro (ArcPy)، QGIS، الاستشعار عن بعد (GEE)، وتطوير الويب المتكامل.</textarea>
+            <button onclick="saveAdminSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl">
+              تحديث دستور الـ Agent السيادي
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MOBILE BOTTOM NAVIGATION BAR ================= -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-slate-800 z-50 flex justify-around items-center py-2 px-1">
+    <button onclick="switchDashboard('overview')" class="nav-btn active-nav flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="overview">
+      <i class="fa-solid fa-robot text-sm"></i><span>الـ Agent</span>
+    </button>
+    <button onclick="switchDashboard('webstudio')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="webstudio">
+      <i class="fa-solid fa-laptop-code text-sm"></i><span>الاستوديو</span>
+    </button>
+    <button onclick="switchDashboard('geomatics')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="geomatics">
+      <i class="fa-solid fa-map-location-dot text-sm"></i><span>المساحة GIS</span>
+    </button>
+    <button onclick="switchDashboard('python')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="python">
+      <i class="fa-brands fa-python text-sm"></i><span>بايثون</span>
+    </button>
+    <button onclick="switchDashboard('adminpanel')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-amber-400" data-target="adminpanel">
+      <i class="fa-solid fa-user-shield text-sm"></i><span>الأدمن</span>
+    </button>
+  </nav>
+
+  <!-- ================= ADMIN LOGIN MODAL ================= -->
+  <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md rounded-2xl p-6 border border-amber-500/40 space-y-4 relative">
+      <button onclick="toggleAdminModal()" class="absolute left-4 top-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-xl">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <div>
+          <h3 class="font-black text-base text-white">تسجيل دخول الأدمن الرئيسي</h3>
+          <p class="text-xs text-slate-400">صلاحيات كاملة لإدارة الـ AI Agent والمفاتيح</p>
+        </div>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1">البريد الإلكتروني للأدمن:</label>
+          <input id="loginEmail" type="email" value="eng.ahmedsamir.gis@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">كلمة المرور:</label>
+          <input id="loginPass" type="password" placeholder="••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font" onkeydown="if(event.key==='Enter') verifyAdminLogin()">
+        </div>
+        <div id="loginError" class="hidden text-red-400 font-bold text-center py-1">البريد الإلكتروني أو كلمة المرور غير صحيحة!</div>
+        <button onclick="verifyAdminLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-sm transition">
+          تأكيد الدخول وتفعيل صلاحيات الأدمن
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION JAVASCRIPT ================= -->
+  <script>
+    // --- 1. ADMIN CREDENTIALS & STATE ---
+    const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
+    const ADMIN_PASS  = "777777";
+    // يمكنك وضع مفتاحك هنا مباشرة إذا كنت ستشغل الملف على تليفونك فقط:
+    const DEFAULT_GEMINI_KEY = ""; 
+
+    let isAdminLoggedIn = localStorage.getItem("geodev_admin_logged") === "true";
+    let chatHistory = [];
+    let map, drawnPoints = [], polylineLayer = null, polygonLayer = null;
+    let pyodideInstance = null;
+
+    // Define Egyptian Projections in Proj4js
+    proj4.defs("EPSG:32636", "+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs");
+    proj4.defs("EPSG:22992", "+proj=tmerc +lat_0=30 +lon_0=31 +k=1 +x_0=615000 +y_0=810000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs");
+
+    // --- 2. INITIALIZATION ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadSavedSettings();
+      updateAdminUI();
+      initGISMap();
+      loadWebTemplate("gis_portal");
+    });
+
+    // --- 3. MULTI-DASHBOARD NAVIGATION ---
+    function switchDashboard(targetId) {
+      document.querySelectorAll(".dashboard-section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById("dash-" + targetId).classList.add("active");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        if (btn.dataset.target === targetId) btn.classList.add("active-nav");
+        else btn.classList.remove("active-nav");
+      });
+
+      if (targetId === "geomatics" && map) {
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+    }
+
+    // --- 4. ADMIN AUTHENTICATION & SETTINGS ---
+    function toggleAdminModal() {
+      if (isAdminLoggedIn) {
+        switchDashboard("adminpanel");
+        return;
+      }
+      const modal = document.getElementById("adminModal");
+      modal.classList.toggle("hidden");
+      modal.classList.toggle("flex");
+      document.getElementById("loginPass").focus();
+    }
+
+    function verifyAdminLogin() {
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const pass  = document.getElementById("loginPass").value.trim();
+
+      if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+        isAdminLoggedIn = true;
+        localStorage.setItem("geodev_admin_logged", "true");
+        document.getElementById("loginError").classList.add("hidden");
+        document.getElementById("adminModal").classList.add("hidden");
+        document.getElementById("adminModal").classList.remove("flex");
+        updateAdminUI();
+        switchDashboard("adminpanel");
+      } else {
+        document.getElementById("loginError").classList.remove("hidden");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      localStorage.removeItem("geodev_admin_logged");
+      updateAdminUI();
+    }
+
+    function updateAdminUI() {
+      const badge = document.getElementById("adminBadge");
+      const btnText = document.getElementById("adminBtnText");
+      const lockScreen = document.getElementById("adminLockScreen");
+      const unlockedContent = document.getElementById("adminUnlockedContent");
+
+      if (isAdminLoggedIn) {
+        badge.classList.remove("hidden");
+        btnText.textContent = "لوحة الأدمن (مفعّل)";
+        lockScreen.classList.add("hidden");
+        unlockedContent.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+        btnText.textContent = "دخول الأدمن";
+        lockScreen.classList.remove("hidden");
+        unlockedContent.classList.add("hidden");
+      }
+    }
+
+    function loadSavedSettings() {
+      const savedKey = localStorage.getItem("geodev_gemini_key") || DEFAULT_GEMINI_KEY;
+      const savedGroq = localStorage.getItem("geodev_groq_key") || "";
+      const savedModel = localStorage.getItem("geodev_model") || "gemini-2.5-flash";
+      const savedRules = localStorage.getItem("geodev_admin_rules");
+
+      if (savedKey) document.getElementById("geminiKeyInput").value = savedKey;
+      if (savedGroq) document.getElementById("groqKeyInput").value = savedGroq;
+      document.getElementById("geminiModelSelect").value = savedModel;
+      document.getElementById("currentModelDisplay").textContent = savedModel;
+      if (savedRules) document.getElementById("adminSystemRules").value = savedRules;
+
+      updateKeyStatusIndicator(savedKey || savedGroq);
+    }
+
+    function saveAdminSettings() {
+      const gKey = document.getElementById("geminiKeyInput").value.trim();
+      const groqKey = document.getElementById("groqKeyInput").value.trim();
+      const model = document.getElementById("geminiModelSelect").value;
+      const rules = document.getElementById("adminSystemRules").value.trim();
+
+      localStorage.setItem("geodev_gemini_key", gKey);
+      localStorage.setItem("geodev_groq_key", groqKey);
+      localStorage.setItem("geodev_model", model);
+      localStorage.setItem("geodev_admin_rules", rules);
+
+      document.getElementById("currentModelDisplay").textContent = model;
+      updateKeyStatusIndicator(gKey || groqKey);
+      alert("تم حفظ إعدادات الأدمن ومفتاح الـ API وتحديث الدستور السيادي بنجاح!");
+    }
+
+    function updateKeyStatusIndicator(hasKey) {
+      const dot = document.getElementById("dotColor");
+      const text = document.getElementById("apiStatusText");
+      if (hasKey) {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+        text.textContent = "متصل 24/7";
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-red-500";
+        text.textContent = "أدخل المفتاح من الأدمن";
+      }
+    }
+
+    // --- 5. AI AGENT CORE (GEMINI API + UNRESTRICTED OBEDIENCE + AUTO PREVIEW) ---
+    function quickPrompt(text) {
+      document.getElementById("userInput").value = text;
+      sendMessage();
+    }
+
+    async function sendMessage(customPrompt = null) {
+      const inputEl = document.getElementById("userInput");
+      const prompt = customPrompt || inputEl.value.trim();
+      if (!prompt) return;
+
+      const geminiKey = localStorage.getItem("geodev_gemini_key") || DEFAULT_GEMINI_KEY;
+      const groqKey = localStorage.getItem("geodev_groq_key") || "";
+      const model = localStorage.getItem("geodev_model") || "gemini-2.5-flash";
+      const systemRules = document.getElementById("adminSystemRules").value;
+
+      if (!geminiKey && !groqKey) {
+        appendMessage("assistant", "⚠️ **تنبيه:** لم يتم إدخال مفتاح Gemini API بعد. اضغط على زر **دخول الأدمن** في الأعلى (`eng.ahmedsamir.gis@gmail.com` / `777777`) وضع المفتاح مرة واحدة ليعمل معك دائماً، أو أرسله لي في الشات.");
+        return;
+      }
+
+      if (!customPrompt) inputEl.value = "";
+      appendMessage("user", prompt);
+
+      const loadingId = appendMessage("assistant", '<i class="fa-solid fa-circle-notch fa-spin text-blue-400 ml-2"></i> جاري تنفيذ أمرك وكتابة الأكواد الكاملة...');
+
+      try {
+        let replyText = "";
+        if (geminiKey) {
+          replyText = await callGeminiAPI(geminiKey, model, systemRules, prompt);
+        } else {
+          replyText = await callGroqAPI(groqKey, systemRules, prompt);
+        }
+
+        updateMessage(loadingId, replyText);
+        extractAndAutoPreviewCode(replyText);
+
+      } catch (err) {
+        updateMessage(loadingId, `❌ **حدث خطأ أثناء الاتصال بالمحرك:**\n\`${err.message}\`\nتأكد من صحة مفتاح الـ API في لوحة الأدمن.`);
+      }
+    }
+
+    async function callGeminiAPI(apiKey, model, systemRules, userPrompt) {
+      const url = `[https://generativelanguage.googleapis.com/v1beta/models/$](https://generativelanguage.googleapis.com/v1beta/models/$){model}:generateContent?key=${apiKey}`;
+      
+      chatHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+      if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+
+      const payload = {
+        systemInstruction: { parts: [{ text: systemRules }] },
+        contents: chatHistory,
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
+      };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "فشل الاتصال بـ Gemini API");
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "لم يتم إرجاع نص.";
+      chatHistory.push({ role: "model", parts: [{ text }] });
+      return text;
+    }
+
+    async function callGroqAPI(apiKey, systemRules, userPrompt) {
+      const res = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: systemRules },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.4
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Groq API Error");
+      return data.choices[0].message.content;
+    }
+
+    function appendMessage(role, content) {
+      const container = document.getElementById("chatMessages");
+      const id = "msg-" + Date.now() + Math.random().toString(36).substring(2, 6);
+      const div = document.createElement("div");
+      div.id = id;
+
+      if (role === "user") {
+        div.className = "bg-blue-600/20 border border-blue-500/40 rounded-2xl p-3.5 mr-auto max-w-2xl text-white";
+        div.innerHTML = `<div class="text-[11px] font-bold text-blue-400 mb-1"><i class="fa-solid fa-user-tie ml-1"></i>أمر المهندس أحمد سمير:</div><div>${content}</div>`;
+      } else {
+        div.className = "bg-slate-800/80 border border-slate-700 rounded-2xl p-4 max-w-4xl text-slate-100 space-y-2 overflow-x-auto";
+        div.innerHTML = marked.parse(content);
+      }
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
+    }
+
+    function updateMessage(id, markdownContent) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-2 text-xs text-emerald-400 font-bold">
+          <span><i class="fa-solid fa-check-double ml-1"></i> تم تنفيذ الأمر بنجاح</span>
+          <button onclick="switchDashboard('webstudio')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[11px]">
+            <i class="fa-solid fa-eye ml-1"></i> فتح في استوديو المعاينة
+          </button>
+        </div>
+        <div class="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed">${marked.parse(markdownContent)}</div>
+      `;
+    }
+
+    function clearChat() {
+      chatHistory = [];
+      document.getElementById("chatMessages").innerHTML = "";
+    }
+
+    // Automatically detect HTML or Python blocks and send them to their dashboards
+    function extractAndAutoPreviewCode(markdown) {
+      const htmlMatch = markdown.match(/```html\s*([\s\S]*?)```/i);
+      const pyMatch   = markdown.match(/```python\s*([\s\S]*?)```/i);
+
+      if (htmlMatch && htmlMatch[1]) {
+        document.getElementById("codeEditor").value = htmlMatch[1].trim();
+        runLivePreview();
+        switchDashboard("webstudio");
+      } else if (pyMatch && pyMatch[1]) {
+        document.getElementById("pythonCode").value = pyMatch[1].trim();
+      }
+    }
+
+    // --- 6. WEB DESIGN & CODE STUDIO FUNCTIONS ---
+    function runLivePreview() {
+      const code = document.getElementById("codeEditor").value;
+      const frame = document.getElementById("livePreviewFrame");
+      frame.srcdoc = code;
+    }
+
+    function openPreviewFullscreen() {
+      const code = document.getElementById("codeEditor").value;
+      const win = window.open("", "_blank");
+      win.document.open();
+      win.document.write(code);
+      win.document.close();
+    }
+
+    function copyEditorCode() {
+      navigator.clipboard.writeText(document.getElementById("codeEditor").value);
+      alert("تم نسخ الكود بالكامل!");
+    }
+
+    function downloadCodeFile() {
+      const blob = new Blob([document.getElementById("codeEditor").value], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "geodev_project.html";
+      a.click();
+    }
+
+    async function generateWebFromStudio() {
+      const req = document.getElementById("webPromptInput").value.trim();
+      if (!req) return;
+      const currentCode = document.getElementById("codeEditor").value;
+      const fullPrompt = `صمم أو عدل على كود الموقع التالي بناءً على هذا الطلب: (${req}). أرجع الكود الكامل فقط داخل بلوك \`\`\`html بدون أي اختصار:\n\nالكود الحالي:\n${currentCode}`;
+      switchDashboard("overview");
+      await sendMessage(fullPrompt);
+    }
+
+    function loadWebTemplate(type) {
+      if (!type) return;
+      const templates = {
+        gis_portal: `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script>
+<link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)"/>
+<script src="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.js](https://unpkg.com/leaflet@1.9.4/dist/leaflet.js)"><\/script>
+</head>
+<body class="bg-slate-900 text-white font-sans p-4">
+  <div class="flex justify-between items-center mb-3 bg-slate-800 p-3 rounded-xl">
+    <h1 class="font-bold text-lg text-blue-400">بوابة المنيا المكانية الذكية (Web GIS)</h1>
+    <span class="text-xs bg-emerald-600 px-3 py-1 rounded-full">معاينة حية</span>
+  </div>
+  <div id="map" style="height: 360px; border-radius: 12px;"></div>
+  <script>
+    const map = L.map('map').setView([28.1099, 30.7503], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.marker([28.1099, 30.7503]).addTo(map).bindPopup('<b>محافظة المنيا</b><br>نقطة تحكم مساحية رئيسية').openPopup();
+  <\/script>
+</body>
+</html>`,
+        real_estate: `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script></head>
+<body class="bg-slate-950 text-white p-6">
+  <header class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+    <h1 class="text-2xl font-black text-amber-400">المستشار العقاري والمساحي</h1>
+    <button class="bg-amber-500 text-black font-bold px-4 py-2 rounded-lg text-sm">إضافة عقار أو رفع مساحي</button>
+  </header>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <h2 class="font-bold text-lg">أرض مسجلة بمدينة المنيا الجديدة</h2>
+      <p class="text-slate-400 text-sm mt-1">المساحة: 450 م² | مرفوعة بإحداثيات UTM دقيقة</p>
+      <div class="mt-4 text-emerald-400 font-bold">السعر: 2,400,000 ج.م</div>
+    </div>
+  </div>
+</body>
+</html>`,
+        survey_calc: `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script></head>
+<body class="bg-slate-900 text-white p-6">
+  <h2 class="text-xl font-bold text-blue-400 mb-4">حاسبة الميزانية المساحية (Leveling HI Method)</h2>
+  <div class="bg-slate-800 p-4 rounded-xl space-y-3">
+    <input id="bm" type="number" placeholder="منسوب الروبير (BM)" value="100.00" class="w-full p-2 rounded bg-slate-950">
+    <input id="bs" type="number" placeholder="قراءة المؤخرة (BS)" value="1.450" class="w-full p-2 rounded bg-slate-950">
+    <input id="fs" type="number" placeholder="قراءة المقدمة (FS)" value="2.120" class="w-full p-2 rounded bg-slate-950">
+    <button onclick="calc()" class="w-full bg-blue-600 py-2 rounded font-bold">احسب منسوب النقطة</button>
+    <div id="res" class="text-emerald-400 font-bold pt-2"></div>
+  </div>
+  <script>
+    function calc(){
+      const hi = parseFloat(bm.value) + parseFloat(bs.value);
+      const rl = hi - parseFloat(fs.value);
+      res.innerText = 'منسوب سطح الميزان (MSM) = ' + hi.toFixed(3) + ' م | منسوب النقطة (RL) = ' + rl.toFixed(3) + ' م';
+    }
+  <\/script>
+</body>
+</html>`
+      };
+      document.getElementById("codeEditor").value = templates[type];
+      runLivePreview();
+    }
+
+    // --- 7. GEOMATICS & GIS MAP ENGINE ---
+    function initGISMap() {
+      map = L.map("gisMap").setView([28.1099, 30.7503], 13);
+      const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "OSM" });
+      const sat = L.tileLayer("[https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/){z}/{y}/{x}", { attribution: "Esri Satellite" });
+      sat.addTo(map);
+      L.control.layers({ "قمر صناعي (Esri)": sat, "خريطة شوارع (OSM)": osm }).addTo(map);
+
+      map.on("click", (e) => {
+        addSurveyPoint(e.latlng.lat, e.latlng.lng);
+      });
+    }
+
+    function addSurveyPoint(lat, lng) {
+      drawnPoints.push([lng, lat]);
+      L.circleMarker([lat, lng], { radius: 6, color: "#3b82f6", fillColor: "#60a5fa", fillOpacity: 1 })
+        .addTo(map)
+        .bindPopup(`Pt #${drawnPoints.length}<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`);
+
+      document.getElementById("convLat").value = lat.toFixed(6);
+      document.getElementById("convLng").value = lng.toFixed(6);
+      convertCoordinates(false);
+      updateSpatialCalculations();
+    }
+
+    function updateSpatialCalculations() {
+      document.getElementById("ptsCount").textContent = drawnPoints.length;
+      const latlngs = drawnPoints.map(p => [p[1], p[0]]);
+
+      if (polylineLayer) map.removeLayer(polylineLayer);
+      if (polygonLayer) map.removeLayer(polygonLayer);
+
+      if (drawnPoints.length >= 2) {
+        polylineLayer = L.polyline(latlngs, { color: "#10b981", weight: 3 }).addTo(map);
+        const line = turf.lineString(drawnPoints);
+        const lengthMeters = turf.length(line, { units: "kilometers" }) * 1000;
+        document.getElementById("pathLength").textContent = `${lengthMeters.toFixed(2)} m`;
+      }
+
+      if (drawnPoints.length >= 3) {
+        polygonLayer = L.polygon(latlngs, { color: "#f59e0b", fillOpacity: 0.25 }).addTo(map);
+        const closedPts = [...drawnPoints, drawnPoints[0]];
+        const poly = turf.polygon([closedPts]);
+        const areaSqm = turf.area(poly);
+        const feddan = areaSqm / 4200.83;
+        document.getElementById("polyArea").textContent = `${areaSqm.toFixed(1)} م² (${feddan.toFixed(2)} فدان)`;
+      }
+    }
+
+    function convertCoordinates(panMap = true) {
+      const lat = parseFloat(document.getElementById("convLat").value);
+      const lng = parseFloat(document.getElementById("convLng").value);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const utm = proj4("EPSG:4326", "EPSG:32636", [lng, lat]);
+      const etm = proj4("EPSG:4326", "EPSG:22992", [lng, lat]);
+
+      document.getElementById("utmResult").textContent = `E: ${utm[0].toFixed(2)} m | N: ${utm[1].toFixed(2)} m`;
+      document.getElementById("etmResult").textContent = `E: ${etm[0].toFixed(2)} m | N: ${etm[1].toFixed(2)} m`;
+
+      if (panMap && map) {
+        map.setView([lat, lng], 16);
+        L.marker([lat, lng]).addTo(map);
+      }
+    }
+
+    function calcCogo() {
+      const e1 = parseFloat(document.getElementById("e1").value);
+      const n1 = parseFloat(document.getElementById("n1").value);
+      const e2 = parseFloat(document.getElementById("e2").value);
+      const n2 = parseFloat(document.getElementById("n2").value);
+
+      const dE = e2 - e1, dN = n2 - n1;
+      const dist = Math.hypot(dE, dN);
+      const az = (Math.atan2(dE, dN) * 180 / Math.PI + 360) % 360;
+      const backAz = (az + 180) % 360;
+
+      document.getElementById("cogoResult").innerHTML = `
+        المسافة الأفقية = <b>${dist.toFixed(3)} m</b><br>
+        الانحراف الأمامي (Azimuth) = <b>${az.toFixed(4)}°</b><br>
+        الانحراف الخلفي (Back Az) = <b>${backAz.toFixed(4)}°</b>
+      `;
+    }
+
+    function locateUserGPS() {
+      if (!navigator.geolocation) return alert("الـ GPS غير مدعوم في هذا المتصفح");
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        map.setView([latitude, longitude], 17);
+        addSurveyPoint(latitude, longitude);
+      });
+    }
+
+    function exportGeoJSON() {
+      if (drawnPoints.length === 0) return alert("قم برصد نقاط على الخريطة أولاً!");
+      const fc = turf.featureCollection(drawnPoints.map((pt, i) => turf.point(pt, { id: i + 1 })));
+      const blob = new Blob([JSON.stringify(fc, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "survey_points.geojson";
+      a.click();
+    }
+
+    function clearGISMap() {
+      drawnPoints = [];
+      map.eachLayer(layer => {
+        if (layer instanceof L.CircleMarker || layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Marker) {
+          map.removeLayer(layer);
+        }
+      });
+      document.getElementById("ptsCount").textContent = "0";
+      document.getElementById("pathLength").textContent = "0.00 m";
+      document.getElementById("polyArea").textContent = "0 m²";
+    }
+
+    // --- 8. IN-BROWSER PYTHON RUNNER (PYODIDE) ---
+    async function runPythonInBrowser() {
+      const out = document.getElementById("pythonOutput");
+      const code = document.getElementById("pythonCode").value;
+      out.textContent = "جاري تحميل وتشغيل مفسر بايثون المساحي...";
+
+      try {
+        if (!pyodideInstance) {
+          const script = document.createElement("script");
+          script.src = "[https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js](https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js)";
+          document.head.appendChild(script);
+          await new Promise(res => script.onload = res);
+          pyodideInstance = await loadPyodide();
+        }
+        pyodideInstance.runPython(`
+import sys, io
+sys.stdout = io.StringIO()
+        `);
+        await pyodideInstance.runPythonAsync(code);
+        const stdout = pyodideInstance.runPython("sys.stdout.getvalue()");
+        out.textContent = stdout || "تم التنفيذ بنجاح (لا توجد مخرجات طباعة).";
+      } catch (err) {
+        out.textContent = "❌ خطأ في كود Python:\n" + err.message;
+      }
+    }
+
+    // --- 9. VOICE COMMANDS (ARABIC) ---
+    function startVoiceRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return alert("متصفحك لا يدعم الأوامر الصوتية، استخدم متصفح Chrome.");
+      const rec = new SpeechRecognition();
+      rec.lang = "ar-EG";
+      const btn = document.getElementById("voiceBtn");
+      btn.classList.add("bg-red-600", "text-white", "animate-pulse");
+      rec.onresult = (e) => {
+        document.getElementById("userInput").value = e.results[0][0].transcript;
+        sendMessage();
+      };
+      rec.onend = () => btn.classList.remove("bg-red-600", "text-white", "animate-pulse");
+      rec.start();
+    }
+  </script>
+</body>
+</html>
