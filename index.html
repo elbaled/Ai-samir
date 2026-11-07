@@ -204,14 +204,30 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 </style>
 </head>
 <body>
-
 <div id="gate"><div class="card gt">
-<div style="font-size:34px">🛡️</div><h2 style="margin:6px 0">GeoDev Studio Pro</h2>
-<p class="mt">بوابة الأدمن — المنصة لا تعمل إلا بعد تسجيل الدخول</p>
-<input id="em" type="email" class="c" value="eng.ahmedsamir.gis@gmail.com">
-<input id="pw" type="password" class="c" placeholder="كلمة المرور (000000)" onkeydown="if(event.key=='Enter')login()">
-<div id="er" style="color:#f87171;display:none;margin-bottom:6px">بيانات الدخول غير صحيحة</div>
-<button class="a" style="width:100%;padding:12px" onclick="login()">دخول</button>
+  <!-- شاشة تسجيل الدخول -->
+  <div id="loginForm">
+    <div style="font-size:34px">🛡️</div><h2 style="margin:6px 0">GeoDev Studio Pro</h2>
+    <p class="mt">بوابة الدخول — سجل دخولك أو أنشئ حساباً جديداً</p>
+    <input id="em" type="email" class="c" placeholder="البريد الإلكتروني">
+    <input id="pw" type="password" class="c" placeholder="كلمة المرور" onkeydown="if(event.key=='Enter')login()">
+    <div id="er" style="color:#f87171;display:none;margin-bottom:6px">بيانات الدخول غير صحيحة</div>
+    <button class="a" style="width:100%;padding:12px" onclick="login()">دخول</button>
+    <a href="#" onclick="toggleAuth(true);return false" style="color:var(--bl);display:block;margin-top:12px;font-size:13px;text-decoration:none;font-weight:bold">ليس لديك حساب؟ إنشاء حساب جديد</a>
+  </div>
+
+  <!-- شاشة إنشاء الحساب (مخفية افتراضياً) -->
+  <div id="registerForm" style="display:none">
+    <div style="font-size:34px">📝</div><h2 style="margin:6px 0">إنشاء حساب جديد</h2>
+    <p class="mt">انضم لمنصة GeoDev</p>
+    <input id="regName" type="text" class="c" placeholder="الاسم بالكامل">
+    <input id="regEmail" type="email" class="c" placeholder="البريد الإلكتروني">
+    <input id="regPhone" type="tel" class="c" placeholder="رقم الهاتف">
+    <input id="regPw" type="password" class="c" placeholder="كلمة المرور" onkeydown="if(event.key=='Enter')register()">
+    <div id="regEr" style="color:#f87171;display:none;margin-bottom:6px">يرجى ملء جميع الحقول</div>
+    <button class="g" style="width:100%;padding:12px" onclick="register()">تسجيل الحساب</button>
+    <a href="#" onclick="toggleAuth(false);return false" style="color:var(--mt);display:block;margin-top:12px;font-size:13px;text-decoration:none">لديك حساب بالفعل؟ تسجيل الدخول</a>
+  </div>
 </div></div>
 
 <header>
@@ -465,7 +481,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <section id="s-admin" class="sec">
 <div id="adminGate" class="card">
   <h3>🔐 بوابة الأدمن</h3>
-  <p class="mt">كلمة سر الأدمن الافتراضية: <b class="c">admin2024</b> (غيّرها من الكود)</p>
+
   <input id="adminPw" type="password" class="c" placeholder="كلمة سر الأدمن" onkeydown="if(event.key=='Enter')adminLogin()">
   <button class="g" style="width:100%" onclick="adminLogin()">دخول</button>
 </div>
@@ -772,9 +788,102 @@ function tabs(){$("blocks").style.cssText="display:flex;gap:6px;flex-wrap:wrap;m
 function openF(i){if(F[cu])F[cu].c=$("code").value;cu=i;$("code").value=F[i].c;$("fn").textContent=F[i].n;tabs();paint()}
 function html(){if(F[cu])F[cu].c=$("code").value;const h=F.find(f=>f.l=="html");return h?h.c:$("code").value}
 proj4.defs("EPSG:22992","+proj=tmerc +lat_0=30 +lon_0=31 +k=1 +x_0=615000 +y_0=810000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs");
-function gate(){$("gate").style.display=sessionStorage.getItem("gd_auth")=="1"?"none":"flex"}
-function login(){if($("em").value.trim().toLowerCase()==ADMIN_EMAIL&&$("pw").value.trim()==ADMIN_PASS){sessionStorage.setItem("gd_auth","1");$("er").style.display="none";$("pw").value="";gate()}else $("er").style.display="block"}
-function logout(){sessionStorage.removeItem("gd_auth");location.reload()}
+function gate(){
+  if(sessionStorage.getItem("gd_auth")=="1"){
+    $("gate").style.display="none";
+  }else{
+    $("gate").style.display="flex";
+  }
+}
+
+function toggleAuth(isRegister){
+  $("loginForm").style.display = isRegister ? "none" : "block";
+  $("registerForm").style.display = isRegister ? "block" : "none";
+  $("er").style.display = "none";
+  $("regEr").style.display = "none";
+}
+
+function register(){
+  const name = $("regName").value.trim();
+  const email = $("regEmail").value.trim().toLowerCase();
+  const phone = $("regPhone").value.trim();
+  const pw = $("regPw").value.trim();
+
+  if(!name || !email || !phone || !pw){
+    $("regEr").style.display = "block";
+    $("regEr").textContent = "يرجى ملء جميع الحقول";
+    return;
+  }
+
+  // التحقق من حساب الأدمن إنه متسجلش كـ مستخدم عادي
+  if(email === ADMIN_EMAIL){
+    $("regEr").style.display = "block";
+    $("regEr").textContent = "هذا البريد مخصص للأدمن فقط";
+    return;
+  }
+
+  let users = JSON.parse(localStorage.getItem("gd_users") || "[]");
+  
+  if(users.find(u => u.email === email)){
+    $("regEr").style.display = "block";
+    $("regEr").textContent = "هذا البريد مسجل بالفعل";
+    return;
+  }
+
+  // حفظ المستخدم الجديد
+  users.push({ name, email, phone, pw });
+  localStorage.setItem("gd_users", JSON.stringify(users));
+  
+  toast("✅ تم إنشاء الحساب بنجاح", "success");
+  
+  // الدخول تلقائياً بعد التسجيل
+  sessionStorage.setItem("gd_auth", "1");
+  sessionStorage.setItem("gd_role", "user");
+  sessionStorage.setItem("gd_name", name);
+  
+  gate();
+}
+
+function login(){
+  const em = $("em").value.trim().toLowerCase();
+  const pw = $("pw").value.trim();
+
+  // 1. التحقق من حساب الأدمن الأساسي
+  if(em === ADMIN_EMAIL && pw === ADMIN_PASS){
+    sessionStorage.setItem("gd_auth", "1");
+    sessionStorage.setItem("gd_role", "admin");
+    sessionStorage.setItem("gd_name", "م. أحمد سمير");
+    $("er").style.display = "none";
+    $("pw").value = "";
+    gate();
+    toast("أهلاً بك يا هندسة 👑", "success");
+    return;
+  }
+
+  // 2. التحقق من المستخدمين العاديين
+  let users = JSON.parse(localStorage.getItem("gd_users") || "[]");
+  const user = users.find(u => u.email === em && u.pw === pw);
+  
+  if(user){
+    sessionStorage.setItem("gd_auth", "1");
+    sessionStorage.setItem("gd_role", "user");
+    sessionStorage.setItem("gd_name", user.name);
+    $("er").style.display = "none";
+    $("pw").value = "";
+    gate();
+    toast(`أهلاً بك ${user.name} 👋`, "success");
+  } else {
+    $("er").style.display = "block";
+    $("er").textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem("gd_auth");
+  sessionStorage.removeItem("gd_role");
+  sessionStorage.removeItem("gd_name");
+  location.reload();
+}
 
 function go(t){
   document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id=="s-"+t));
