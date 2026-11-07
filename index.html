@@ -1,1133 +1,1658 @@
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GeoDev & Web AI Studio Pro | Eng. Ahmed Samir</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet GIS CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Turf.js & Proj4js -->
-  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-  <!-- Marked.js -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>GeoDev Studio Pro | م. أحمد سمير</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Fira+Code&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#090d16;--cd:#0f172a;--ln:#1e293b;--bl:#3b82f6;--gr:#10b981;
+  --am:#f59e0b;--mt:#94a3b8;--tx:#f1f5f9;
+}
+*{box-sizing:border-box;font-family:Cairo,sans-serif;-webkit-tap-highlight-color:transparent}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-size:15px;padding-bottom:72px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--cd);z-index:40}
+option{background:var(--cd);color:var(--tx)}input::placeholder,textarea::placeholder{color:var(--mt);opacity:1}
+.c,code,pre{font-family:'Fira Code',monospace;direction:ltr;text-align:left}
+.mt{color:var(--mt);font-size:12px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--cd);border-bottom:1px solid var(--ln);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header h1{margin:0;font-size:16px;font-weight:900;background:linear-gradient(90deg,#fff,var(--bl));-webkit-background-clip:text;color:transparent}
+main{padding:12px;max-width:1200px;margin:auto}
+.sec{display:none}.sec.on{display:block}
+.card{background:var(--cd);border:1px solid var(--ln);border-radius:10px;padding:12px;margin-bottom:12px;color:var(--tx)}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--bl)}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),select,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:10px;font-size:15px;margin-bottom:6px}
+textarea{resize:vertical}
+button{border:0;border-radius:8px;padding:9px 13px;font-weight:700;color:#fff;background:var(--bl);cursor:pointer;font-size:12px;transition:.2s}
+button:hover{opacity:0.9}
+.g{background:var(--gr)}.a{background:var(--am);color:var(--bg)}.r{background:#991b1b}.k{background:#334155}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.row>*{margin-bottom:0}
+.g2{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:900px){.g2{grid-template-columns:1fr 1fr}.g2.g3{grid-template-columns:2fr 1fr}}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;justify-content:space-around;background:var(--cd);border-top:1px solid var(--ln);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{background:none;color:var(--mt);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;padding:6px 4px;border-radius:8px}
+nav button.on{background:linear-gradient(135deg,var(--bl),var(--cd));color:#fff}
+@media(min-width:1024px){body{padding:0 220px 0 0}nav{top:0;bottom:auto;left:auto;width:220px;flex-direction:column;justify-content:flex-start;gap:6px;border-top:0;border-left:1px solid var(--ln);padding:76px 10px}nav button{flex-direction:row;gap:10px;font-size:13px;padding:11px}header{margin-right:-220px;padding-right:234px}}
+#chat,#gisChatBox{height:55vh;overflow-y:auto;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:inset 0 0 10px rgba(0,0,0,0.5)}
+.m{padding:12px 16px;border-radius:12px;margin-bottom:12px;overflow-x:auto;line-height:1.8;font-size:14px}
+.m.u{background:var(--bl);border:1px solid var(--bl);color:#fff;border-bottom-left-radius:2px}
+.m.a{background:var(--cd);border:1px solid var(--ln);color:var(--tx);border-bottom-right-radius:2px}
+.m pre{background:#000;padding:10px;border-radius:8px;overflow:auto;font-size:13px;border:1px solid #333;position:relative}.m code{color:var(--gr)}
+.m table{border-collapse:collapse}.m td,.m th{border:1px solid #475569;padding:4px 8px}
+.chips label,.chip{display:inline-flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--ln);border-radius:20px;padding:4px 10px;margin:0 0 6px 6px;font-size:12px;cursor:pointer;color:var(--tx)}.chips input{width:auto;margin:0}.chip b{color:#f87171;cursor:pointer}
+.bk{display:flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:6px 10px;margin-bottom:6px}.bk span{flex:1;color:var(--gr)}
+#map{height:55vh;min-height:340px;border-radius:12px;z-index:1}
+.st{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px;margin-top:8px;background:var(--bg);border-radius:10px;padding:8px}
+.res{background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:8px;font-size:12px;margin-top:6px;color:var(--tx)}
+table.pt{width:100%;border-collapse:collapse;font-size:11px;direction:ltr}.pt td,.pt th{border-bottom:1px solid var(--ln);padding:4px;text-align:center}.pt th{color:var(--mt)}.pt button{padding:2px 8px}
+#gate{position:fixed;inset:0;background:var(--bg);z-index:99;display:flex;align-items:center;justify-content:center;padding:16px}
+.gt{width:100%;max-width:380px;text-align:center;border-color:var(--am)}
+iframe{width:100%;height:420px;border:0;background:#fff;border-radius:8px}
+.ed{display:flex;height:440px;background:var(--bg);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
+.ed pre,.ed textarea{font:13px/21px 'Fira Code',monospace;padding:10px;margin:0;white-space:pre;tab-size:2}
+#gut{width:46px;flex:none;overflow:hidden;color:var(--mt);text-align:right;background:var(--cd);border-left:1px solid var(--ln);user-select:none}
+.ec{position:relative;flex:1;min-width:0}
+#hlp{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--tx)}
+#code{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:transparent;color:transparent;caret-color:var(--tx);resize:none;overflow:auto;outline:0;margin:0}
+#code::selection{background:#3b82f666}
+.ed i{font-style:normal}.c1{color:var(--mt)}.c2{color:var(--gr)}.c3{color:var(--bl)}.c4{color:var(--am)}.c5{color:#c084fc}
+details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6px}
+#ov{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column}#ov.on{display:flex}
+#ov .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:var(--cd);border-bottom:1px solid var(--ln)}
+#url{flex:1;min-width:140px;background:var(--bg);border:1px solid var(--ln);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--gr);overflow:hidden;white-space:nowrap}
+#ovw{flex:1;display:flex;padding:8px;overflow:auto}#ovf{width:100%;max-width:100%;height:100%;margin:auto;transition:max-width .2s;border-radius:0}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;position:relative;direction:ltr;outline-offset:1px;background:var(--bg);font-size:12px;-webkit-tap-highlight-color:transparent;touch-action:none}
+.leaflet-tile{user-select:none;visibility:hidden;max-width:none!important;max-height:none!important}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-zoom-box{width:0;height:0;z-index:800;border:2px dotted #38f;background:rgba(255,255,255,.3)}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both;margin:10px}.leaflet-right .leaflet-control{float:right}
+.leaflet-zoom-animated{transform-origin:0 0}.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{transition:none}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}.leaflet-interactive{cursor:pointer}.leaflet-popup-pane,.leaflet-control{cursor:auto}
+.leaflet-marker-icon,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}.leaflet-marker-icon.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive{pointer-events:auto}
+.leaflet-bar{border-radius:8px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.5)}.leaflet-bar a{display:block;width:34px;height:34px;line-height:34px;text-align:center;background:#fff;color:#111;font:700 18px sans-serif;text-decoration:none;border-bottom:1px solid #ccc}
+.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}.leaflet-popup-content-wrapper{background:#fff;color:#111;border-radius:10px;padding:1px;text-align:left}.leaflet-popup-content{margin:10px 14px;line-height:1.4}
+.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:14px;height:14px;margin:-7px auto 0;transform:rotate(45deg);background:#fff}
+.leaflet-popup-close-button{position:absolute;top:0;right:0;padding:4px 8px;color:#666;text-decoration:none;font:16px sans-serif}
+.leaflet-control-layers{background:#fff;color:#111;padding:6px 10px;border-radius:8px;font-size:12px}.leaflet-control-layers label{display:block;cursor:pointer;margin:0}
+.leaflet-control-layers input{width:auto;padding:0;margin:0 4px;background:none;border:0}.leaflet-control-layers-separator{display:none}.leaflet-control-attribution{display:none}
+#triSvg{background:var(--bg);border:1px solid var(--ln);border-radius:10px;margin-top:8px;display:block}
+.tri-hint{background:rgba(59,130,246,.1);border-right:3px solid var(--bl);padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px;color:var(--mt);line-height:1.7}
 
-  <style>
-    * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
-    code, pre, .code-font { font-family: 'Fira Code', monospace; direction: ltr; text-align: left; }
-    body { background-color: #090d16; color: #f1f5f9; overflow-x: hidden; }
-    
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+/* ===== NEW: Dashboard Grid & Modals ===== */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:12px;margin-bottom:20px}
+.dash-card{background:var(--cd);border:1px solid var(--ln);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+.dash-card:hover{transform:translateY(-3px);border-color:var(--bl);box-shadow:0 8px 20px rgba(0,0,0,0.3)}
+.dash-icon{width:54px;height:54px;border-radius:12px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.dash-text{flex:1}
+.dash-text b{display:block;font-size:15px;color:var(--tx);margin-bottom:2px}
+.dash-text span{display:block;font-size:12px;color:var(--mt)}
+.dash-arrow{color:var(--mt);font-size:18px}
 
-    .glass-card {
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(59, 130, 246, 0.22);
-    }
-    .active-nav {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white !important;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-    }
-    #gisMap { height: 380px; width: 100%; border-radius: 12px; z-index: 10; }
-    .dashboard-section { display: none; animation: fadeIn 0.2s ease-in-out; }
-    .dashboard-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+.tool-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.tool-modal.on{display:flex}
+.tool-content{background:var(--cd);border:1px solid var(--ln);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 40px rgba(0,0,0,0.5)}
+.tool-header{position:sticky;top:0;background:var(--cd);padding:16px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;z-index:10}
+.tool-header h3{margin:0;font-size:16px}
+.tool-body{padding:16px}
+.close-btn{background:none;color:#f87171;font-size:20px;padding:4px 8px;cursor:pointer}
+
+/* Compass */
+.compass-wrap{text-align:center;padding:20px;background:var(--bg);border-radius:12px;border:1px solid var(--ln);margin-top:10px}
+.compass-needle{width:120px;height:120px;margin:0 auto 15px;border-radius:50%;border:4px solid var(--ln);position:relative;transition:transform 0.5s ease-out}
+.compass-needle::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:50px solid #ef4444;}
+.compass-needle::after{content:"";position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:50px solid var(--mt);}
+
+/* ===== Responsive & Mobile Fixes ===== */
+@media (max-width: 768px){
+  header{flex-wrap:wrap;padding:8px 10px;gap:6px}
+  header h1{font-size:14px}
+  header .mt{font-size:10px}
+  header > div:first-child{flex:1 1 100%}
+  header .row{gap:4px;flex-wrap:wrap;width:100%}
+  header button{padding:8px 11px;font-size:15px;min-height:38px;min-width:38px;line-height:1}
+  header select{flex:1;max-width:none;padding:8px 6px;font-size:12px;margin:0}
+  nav{padding:6px 2px calc(6px + env(safe-area-inset-bottom))}
+  nav button{padding:6px 2px;font-size:9px;gap:1px;min-height:54px;flex:1;min-width:0}
+  nav button span{font-size:20px;line-height:1}
+  body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  main{padding:8px}
+  .card{padding:10px;margin-bottom:10px;border-radius:10px}
+  .card h3{font-size:13px}
+  .card h2{font-size:16px}
+  .dash-grid{grid-template-columns:1fr;gap:8px}
+  .dash-card{padding:11px;gap:10px}
+  .dash-icon{width:46px;height:46px;font-size:20px;border-radius:10px}
+  .dash-text b{font-size:14px}
+  .dash-text span{font-size:11px}
+  .dash-arrow{font-size:16px}
+  .tool-modal{padding:0;align-items:flex-end}
+  .tool-content{border-radius:16px 16px 0 0;max-width:100%;max-height:95vh;width:100%}
+  .tool-header{padding:12px;border-radius:16px 16px 0 0}
+  .tool-header h3{font-size:14px}
+  .tool-body{padding:12px}
+  .close-btn{font-size:22px;padding:8px 12px;min-width:44px;min-height:44px}
+  .ed{height:340px}
+  #gut{width:36px;font-size:10px;padding:6px}
+  #hlp,#code{padding:6px;font-size:12px;line-height:18px}
+  .ed pre,.ed textarea{font-size:12px;line-height:18px}
+  input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),
+  select, textarea{font-size:16px !important}
+  #chat,#gisChatBox{height:52vh;min-height:250px;padding:8px;border-radius:10px}
+  .m{padding:10px 12px;font-size:13px;margin-bottom:8px;border-radius:10px}
+  .m pre{font-size:11px;padding:8px}
+  .m table{font-size:11px}
+  #map{height:45vh;min-height:260px}
+  .st{grid-template-columns:repeat(2,1fr);gap:6px;padding:6px}
+  .st b{font-size:14px}
+  table.pt{font-size:10px}
+  .pt td,.pt th{padding:3px 2px}
+  .chips label,.chip{font-size:11px;padding:4px 9px;margin:0 0 4px 4px;min-height:30px}
+  #fab{bottom:calc(78px + env(safe-area-inset-bottom));left:12px;width:48px;height:48px;font-size:20px}
+  #selfModModal{bottom:calc(134px + env(safe-area-inset-bottom)) !important;padding:12px}
+  #ov .bar{padding:6px;padding-top:calc(6px + env(safe-area-inset-top));gap:4px}
+  #ov .bar button{padding:6px 9px;font-size:10px;min-height:34px}
+  #url{font-size:10px;padding:5px 10px;min-width:100px}
+  #ovw{padding:4px}
+  .row{gap:5px}
+  .gt{padding:16px 12px}
+  .gt h2{font-size:18px}
+  .compass-needle{width:100px;height:100px}
+  .compass-needle::before{border-bottom-width:42px}
+  .compass-needle::after{border-top-width:42px}
+  #triSvg{height:200px}
+  #pv{height:280px}
+  #s-agent > .row:first-child button{flex-shrink:0;font-size:11px;padding:7px 10px;min-height:34px}
+}
+@media (max-width: 380px){
+  header h1{font-size:13px}
+  header .mt{display:none}
+  nav button{font-size:8px;padding:5px 1px}
+  nav button span{font-size:18px}
+  .dash-text b{font-size:13px}
+  .dash-text span{font-size:10px}
+  #s-agent > .row:first-child button{font-size:10px}
+}
+@media (max-height: 500px) and (max-width: 900px){
+  #chat,#gisChatBox{height:70vh}
+  #map{height:60vh}
+}
+@media (min-width: 769px) and (max-width: 1023px){
+  main{padding:16px}
+  .g2{gap:14px}
+  .dash-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+}
+@media (hover: none) and (pointer: coarse){
+  button{min-height:40px}
+  .chip,.chips label{min-height:32px}
+  a.leaflet-control-zoom-in, a.leaflet-control-zoom-out{width:42px !important;height:42px !important;line-height:42px !important;font-size:22px !important}
+}
+</style>
 </head>
-<body class="min-h-screen flex flex-col pb-20 lg:pb-0 lg:pr-64">
+<body>
 
-  <!-- ================= TOP HEADER ================= -->
-  <header class="glass-card sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg">
-        <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="font-black text-base md:text-lg tracking-wide bg-gradient-to-r from-white to-blue-400 bg-clip-text text-transparent">GeoDev Studio Pro</h1>
-          <span id="adminBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">
-            <i class="fa-solid fa-crown ml-1"></i>وضع الأدمن المطلق
-          </span>
-        </div>
-        <p class="text-[11px] text-slate-400">جيوماتكس • مساحة • برمجة وتصميم مواقع</p>
-      </div>
-    </div>
+<div id="gate"><div class="card gt">
+<div style="font-size:34px">🛡️</div><h2 style="margin:6px 0">GeoDev Studio Pro</h2>
+<p class="mt">بوابة الأدمن — المنصة لا تعمل إلا بعد تسجيل الدخول</p>
+<input id="em" type="email" class="c" value="eng.ahmedsamir.gis@gmail.com">
+<input id="pw" type="password" class="c" placeholder="كلمة المرور (000000)" onkeydown="if(event.key=='Enter')login()">
+<div id="er" style="color:#f87171;display:none;margin-bottom:6px">بيانات الدخول غير صحيحة</div>
+<button class="a" style="width:100%;padding:12px" onclick="login()">دخول</button>
+</div></div>
 
-    <div class="flex items-center gap-2">
-      <span id="apiStatusDot" class="flex items-center gap-1.5 text-xs bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700">
-        <span class="w-2 h-2 rounded-full bg-red-500" id="dotColor"></span>
-        <span id="apiStatusText" class="text-slate-300 text-[11px]">غير متصل</span>
-      </span>
+<header>
+<div><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div>
+<div class="row">
+<button class="k" onclick="saveProjects()" title="حفظ المشروع (Ctrl+S)">💾</button>
+<button class="k" onclick="loadProjects()" title="فتح مشروع محفوظ">📂</button>
+<select id="tier" title="مستوى الذكاء الاصطناعي" style="width:auto;margin:0;padding:6px 8px;font-size:12px"><option value="quick">⚡ سريع</option><option value="default" selected>⚖️ متوازن</option><option value="complex">🧠 الأقوى</option></select>
+<button class="k" onclick="aiSettings()" title="إعدادات AI">⚙️</button>
+<button class="r" onclick="logout()">خروج</button>
+</div>
+</header>
 
-      <button onclick="toggleAdminModal()" id="adminBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-3 py-2 rounded-xl flex items-center gap-1.5 transition shadow-lg">
-        <i class="fa-solid fa-user-shield"></i>
-        <span id="adminBtnText">دخول الأدمن</span>
-      </button>
-    </div>
-  </header>
+<nav>
+<button class="on" data-t="agent" onclick="go('agent')"><span>🤖</span>المساعد</button>
+<button data-t="studio" onclick="go('studio')"><span>💻</span>البرمجة</button>
+<button data-t="survey" onclick="go('survey')"><span>📐</span>المساحة</button>
+<button data-t="gis" onclick="go('gis')"><span>🌍</span>الجيوماتكس</button>
+<button data-t="py" onclick="go('py')"><span>🧪</span>المختبر</button>
+<button data-t="admin" onclick="go('admin')"><span>⚙️</span>الأدمن</button>
+</nav>
 
-  <!-- Desktop Right Sidebar Navigation (Only on Large Screens >= 1024px) -->
-  <aside class="hidden lg:flex flex-col fixed right-0 top-0 bottom-0 w-64 glass-card border-l border-slate-800 z-50 p-4">
-    <div class="flex items-center gap-3 pb-6 mb-4 border-b border-slate-800">
-      <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xl">AS</div>
-      <div>
-        <h2 class="font-bold text-sm text-white">م. أحمد سمير</h2>
-        <p class="text-xs text-blue-400">GIS & Full-Stack Dev</p>
-      </div>
-    </div>
+<main>
 
-    <nav class="space-y-2 flex-1">
-      <button onclick="switchDashboard('overview')" class="nav-btn active-nav w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="overview">
-        <i class="fa-solid fa-robot w-5"></i> اللوحة الرئيسية والـ Agent
-      </button>
-      <button onclick="switchDashboard('webstudio')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="webstudio">
-        <i class="fa-solid fa-code w-5"></i> استوديو المواقع والبرمجة
-      </button>
-      <button onclick="switchDashboard('geomatics')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="geomatics">
-        <i class="fa-solid fa-map-location-dot w-5"></i> داشبورد الـ GIS والمساحة
-      </button>
-      <button onclick="switchDashboard('python')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800/60 transition" data-target="python">
-        <i class="fa-brands fa-python w-5"></i> مختبر Python & Remote Sensing
-      </button>
-      <button onclick="switchDashboard('adminpanel')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-amber-400 hover:bg-slate-800/60 transition" data-target="adminpanel">
-        <i class="fa-solid fa-sliders w-5"></i> داشبورد تحكم الأدمن
-      </button>
-    </nav>
+<!-- ===== 1: المساعد ===== -->
+<section id="s-agent" class="sec on">
+<div class="row" style="flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px">
+<button class="k" onclick="qp('صمم موقع شركة مساحة وخرائط متكامل بكود كامل جاهز للمعاينة')">🌐 تصميم موقع</button>
+<button class="k" onclick="qp('قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم والظواهر الجغرافية')">🗺️ تحليل خريطة</button>
+<button class="k" onclick="qp('اكتب كود لبرنامج Civil 3D لتعديل النقاط المساحية')">🏗️ Civil 3D</button>
+<button class="k" onclick="qp('اشرح لي التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود')">🌍 جغرافيا</button>
+</div>
+<div class="card">
+<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>🤖 المساعد الذكي (عام — موسوعة شاملة)</b><span class="row"><button class="k" onclick="hp()">🕘 السجل</button><button class="k" onclick="newChat()">+ محادثة جديدة</button></span></div>
+<div id="tokstat" class="mt" style="text-align:left;margin-bottom:4px">0 رسالة</div>
+<div id="hl" style="display:none;max-height:170px;overflow:auto;margin-bottom:8px"></div>
+<div id="chat"></div>
+<div id="ats" style="margin-top:6px"></div>
+<div class="row" style="flex-wrap:nowrap;margin-top:8px;align-items:flex-end">
+<button class="k" onclick="$('fl').click()" title="رفع">📎</button><input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''"><button class="k" id="mic" onclick="voice()">🎤</button>
+<textarea id="ui" rows="2" style="margin:0" placeholder="اسأل عن أي حاجة: جغرافيا، برمجة، رياضة، دين، تصميم... أو اطلب كود/صفحة (Ctrl+Enter)" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+<button onclick="send()">نفّذ ➤</button>
+</div></div>
+</section>
 
-    <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 space-y-1">
-      <div class="flex justify-between"><span>الحالة:</span><span class="text-emerald-400 font-bold">متاح 24/7 مجاناً</span></div>
-      <div class="flex justify-between"><span>القيود:</span><span class="text-amber-400 font-bold">بلا قيود (Unrestricted)</span></div>
-    </div>
-  </aside>
+<!-- ===== 2: البرمجة ===== -->
+<section id="s-studio" class="sec">
+<div class="card">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <h3 style="margin:0">🛠 اكتب التصميم أو الكود</h3>
+    <span class="row">
+      <button class="a" onclick="$('upCode').click()">📂 رفع كود</button>
+      <input id="upCode" type="file" hidden accept=".html,.js,.css,.txt" onchange="loadCustomCode(this.files[0]);this.value=''">
+      <button class="k" onclick="exportZip()" title="تصدير ZIP (Ctrl+E)">📦 ZIP</button>
+      <button class="g" onclick="makePWA()">📱 PWA</button>
+    </span>
+  </div>
+<textarea id="sd" rows="5" placeholder="اطلب أي شيء: تصميم موقع، خريطة تفاعلية، سكربت..."></textarea>
+<div class="mt" style="margin-bottom:4px">أمثلة:</div><div class="chips" id="ex"></div>
+<details><summary>⚙️ خيارات اختيارية</summary>
+<div class="g2"><div>
+<select id="stp"><option value="">النوع: حسب وصفي</option><option>موقع شركة / بورتفوليو</option><option>موقع عقارات</option><option>متجر إلكتروني</option><option>تطبيق Web GIS</option><option>لوحة تحكم Dashboard</option><option>حاسبة / أداة مساحية</option><option>مدونة / موقع محتوى</option><option>صفحة هبوط Landing Page</option></select>
+<select id="slg"><option value="">اللغة: حسب وصفي</option><option>عربي RTL</option><option>إنجليزي LTR</option><option>ثنائي اللغة</option></select>
+<select id="ssy"><option value="">الستايل: حسب وصفي</option><option>داكن عصري</option><option>فاتح بسيط</option><option>زجاجي</option><option>رسمي للشركات</option><option>فاخر Luxury</option></select>
+</div><div class="chips" id="chips"></div></div></details>
+<div class="row"><button class="g" onclick="buildSite()">⚡ ولّد</button><span id="st" class="mt"></span><button class="r" id="stop" style="display:none" onclick="ctl&&ctl.abort()">إيقاف</button></div>
+</div>
+<div class="card"><div class="row"><input id="ep" style="flex:1;min-width:180px" placeholder="طلب تعديل على الكود..."><button onclick="editSite()">✨ عدّل</button></div></div>
+<div id="rb" class="card row" style="display:none;justify-content:space-between"><b style="color:var(--gr)">✅ اكتمل</b><span class="row"><button class="a" onclick="ov(true)">فتح كاملة ↗</button><button class="k" onclick="full()">تبويب جديد</button></span></div>
+<div id="blocks"></div>
+<div class="g2">
+<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="c" id="fn">index.html</b>
+<span class="row"><button class="k" onclick="toggleWrap()" id="wrapBtn" title="التفاف">↩</button><button class="k" onclick="preview()" title="معاينة">🔄</button><button class="k" onclick="fs(-1)">A−</button><button class="k" onclick="fs(1)">A+</button><button class="k" onclick="cp()">نسخ</button><button class="k" onclick="dlText($('code').value,$('fn').textContent)">تحميل</button></span></div>
+<div class="ed"><pre id="gut"></pre><div class="ec"><pre id="hlp"></pre><textarea id="code" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off"></textarea></div></div><div id="sb" class="mt c" style="margin-top:6px"></div></div>
+<div class="card"><div class="row" style="justify-content:space-between"><b style="color:var(--gr)">المعاينة</b><button class="a" onclick="ov(true)">كاملة ⤢</button></div><iframe id="pv" sandbox="allow-scripts allow-popups allow-forms" style="margin-top:6px"></iframe></div>
+</div>
+</section>
 
-  <!-- ================= MAIN CONTENT AREA ================= -->
-  <main class="flex-1 p-3 md:p-5 max-w-7xl w-full mx-auto space-y-4">
-
-    <!-- 1. DASHBOARD: OVERVIEW & AI AGENT COMMAND CENTER -->
-    <section id="dash-overview" class="dashboard-section active space-y-3">
-      <!-- Quick Stats Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-        <div class="glass-card p-3 rounded-2xl border-r-4 border-blue-500">
-          <div class="text-[11px] text-slate-400">محرك الذكاء الاصطناعي</div>
-          <div class="text-sm font-black text-white mt-0.5" id="currentModelDisplay">gemini-2.5-flash</div>
-          <div class="text-[10px] text-emerald-400 mt-0.5"><i class="fa-solid fa-bolt"></i> تبديل تلقائي ذكي</div>
-        </div>
-        <div class="glass-card p-3 rounded-2xl border-r-4 border-emerald-500">
-          <div class="text-[11px] text-slate-400">وضع تنفيذ الأوامر</div>
-          <div class="text-sm font-black text-white mt-0.5">طاعة كاملة (Strict)</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">بدون اختصار للأكواد</div>
-        </div>
-        <div class="glass-card p-3 rounded-2xl border-r-4 border-purple-500 cursor-pointer" onclick="switchDashboard('webstudio')">
-          <div class="text-[11px] text-slate-400">استوديو تصميم المواقع</div>
-          <div class="text-sm font-black text-white mt-0.5">Live Web Builder</div>
-          <div class="text-[10px] text-purple-400 mt-0.5">فتح المحرر والمعاينة ←</div>
-        </div>
-        <div class="glass-card p-3 rounded-2xl border-r-4 border-amber-500 cursor-pointer" onclick="switchDashboard('geomatics')">
-          <div class="text-[11px] text-slate-400">أدوات المساحة والـ GIS</div>
-          <div class="text-sm font-black text-white mt-0.5">WGS84 / UTM / ETM</div>
-          <div class="text-[10px] text-amber-400 mt-0.5">رفع مساحي وإحداثيات ←</div>
-        </div>
-      </div>
-
-      <!-- Quick Action Prompts -->
-      <div class="flex gap-2 overflow-x-auto pb-1">
-        <button onclick="quickPrompt('صمم لي موقع ويب احترافي متكامل (HTML/Tailwind/JS) لشركة مساحة وخرائط وعقارات مع لوحة تحكم وافتحه في المعاينة الحية فوراً')" class="shrink-0 text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-2 rounded-xl transition">
-          <i class="fa-solid fa-globe ml-1"></i> تصميم موقع كامل مع المعاينة
-        </button>
-        <button onclick="quickPrompt('أنشئ خريطة تفاعلية كاملة بـ Leaflet.js لمحافظة المنيا مع إمكانية إضافة نقاط مساحية وحساب المسار والمساحة بالهكتار والفدان وافتحها في المعاينة')" class="shrink-0 text-xs bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 px-3 py-2 rounded-xl transition">
-          <i class="fa-solid fa-map ml-1"></i> بناء تطبيق Web GIS تفاعلي
-        </button>
-        <button onclick="quickPrompt('اكتب سكربت Python كامل لحساب مضلع مساحي مغلق (Closed Traverse) وتصحيح الخطأ الضلعي والزاوي بطريقة بوديتش')" class="shrink-0 text-xs bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 px-3 py-2 rounded-xl transition">
-          <i class="fa-solid fa-compass-drafting ml-1"></i> كود تصحيح مضلع مساحي (Traverse)
-        </button>
-        <button onclick="quickPrompt('اكتب كود Google Earth Engine (GEE) لحساب مؤشر الغطاء النباتي NDVI من مرئيات Sentinel-2')" class="shrink-0 text-xs bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl transition">
-          <i class="fa-solid fa-satellite ml-1"></i> كود استشعار عن بعد (GEE)
-        </button>
-      </div>
-
-      <!-- AI Chat Box -->
-      <div class="glass-card rounded-2xl flex flex-col h-[64vh] border border-slate-800 overflow-hidden">
-        <div class="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-2 text-xs font-bold text-blue-400">
-            <i class="fa-solid fa-robot"></i>
-            <span>غرفة عمليات الـ AI Agent (ينفذ أوامرك ويفتح المعاينة تلقائياً)</span>
-          </div>
-          <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-red-400"><i class="fa-solid fa-trash-can ml-1"></i>مسح السجل</button>
-        </div>
-
-        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
-          <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-4 max-w-3xl">
-            <div class="flex items-center gap-2 text-blue-400 font-bold text-xs mb-1">
-              <i class="fa-solid fa-terminal"></i> النظام جاهز للعمل يا باشمهندس أحمد
-            </div>
-            <p class="text-slate-200 leading-relaxed text-xs md:text-sm">
-              أهلاً بك في منصتك الشاملة. اطلب تصميم أي موقع، أداة Web GIS، سكربت ArcPy/QGIS، أو حسابات مساحة، وسيتم تنفيذ الكود وفتحه في شاشة المعاينة تلقائياً.
-            </p>
-          </div>
-        </div>
-
-        <!-- Chat Input Bar -->
-        <div class="p-3 bg-slate-900 border-t border-slate-800 flex items-end gap-2">
-          <button onclick="startVoiceRecognition()" id="voiceBtn" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 flex items-center justify-center shrink-0 transition" title="تحدث بالصوت">
-            <i class="fa-solid fa-microphone"></i>
-          </button>
-          <textarea id="userInput" rows="2" placeholder="اكتب أمرك هنا... (مثال: صمم لي موقع عقاري أو خريطة أو احسب مسافة)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>
-          <button onclick="sendMessage()" id="sendBtn" class="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center gap-2 shrink-0 transition shadow-lg shadow-blue-600/30">
-            <span>نفّذ</span>
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. DASHBOARD: WEB DESIGN & CODE STUDIO -->
-    <section id="dash-webstudio" class="dashboard-section space-y-4">
-      <div class="glass-card p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="font-bold text-base text-white flex items-center gap-2">
-            <i class="fa-solid fa-laptop-code text-blue-400"></i> داشبورد تصميم المواقع وكتابة الأكواد
-          </h2>
-          <p class="text-xs text-slate-400">حرر الكود مباشرة أو اطلب من الـ Agent تصميم وتعديل الموقع مع معاينة فورية</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <select id="templateSelector" onchange="loadWebTemplate(this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded-xl px-3 py-2 text-slate-200">
-            <option value="">-- قوالب جاهزة سريعة --</option>
-            <option value="gis_portal">قالب بوابة خرائط Web GIS</option>
-            <option value="real_estate">قالب منصة عقارية وهندسية</option>
-            <option value="survey_calc">قالب حاسبة مساحية تفاعلية</option>
-          </select>
-          <button onclick="runLivePreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5">
-            <i class="fa-solid fa-play"></i> تحديث المعاينة
-          </button>
-          <button onclick="openPreviewFullscreen()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5">
-            <i class="fa-solid fa-up-right-from-square"></i> فتح في نافذة كاملة
-          </button>
-          <button onclick="downloadCodeFile()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-700">
-            <i class="fa-solid fa-download ml-1"></i> تحميل HTML
-          </button>
-        </div>
-      </div>
-
-      <div class="glass-card p-3 rounded-2xl flex gap-2">
-        <input id="webPromptInput" type="text" placeholder="اطلب تصميم أو تعديل مباشر على الكود الحالي (مثلاً: أضف قسم تواصل معنا وخريطة)..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs md:text-sm text-white">
-        <button onclick="generateWebFromStudio()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0">
-          <i class="fa-solid fa-wand-magic-sparkles ml-1"></i> نفّذ بالـ AI
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[500px]">
-          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs">
-            <span class="font-bold text-amber-400 code-font"><i class="fa-solid fa-file-code mr-1"></i> index.html</span>
-            <button onclick="copyEditorCode()" class="text-slate-400 hover:text-white"><i class="fa-regular fa-copy ml-1"></i>نسخ الكود</button>
-          </div>
-          <textarea id="codeEditor" oninput="runLivePreview()" spellcheck="false" class="code-font flex-1 w-full bg-[#050811] text-emerald-300 p-4 text-xs leading-relaxed focus:outline-none resize-none"></textarea>
-        </div>
-
-        <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[500px] bg-white">
-          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs">
-            <span class="font-bold text-emerald-400"><i class="fa-solid fa-eye ml-1"></i> شاشة المعاينة الحية الفورية (Live Preview)</span>
-          </div>
-          <iframe id="livePreviewFrame" class="w-full flex-1 border-0 bg-white"></iframe>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. DASHBOARD: GEOMATICS, GIS & SURVEYING -->
-    <section id="dash-geomatics" class="dashboard-section space-y-4">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 glass-card p-4 rounded-2xl space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i class="fa-solid fa-earth-africa text-emerald-400"></i> وحدة الرفع المساحي والـ Web GIS المباشر
-            </h3>
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="locateUserGPS()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-                <i class="fa-solid fa-location-crosshairs ml-1"></i> رصد موقعي (GPS)
-              </button>
-              <button onclick="exportGeoJSON()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-                <i class="fa-solid fa-file-export ml-1"></i> تصدير GeoJSON
-              </button>
-              <button onclick="clearGISMap()" class="bg-red-600/30 hover:bg-red-600 text-red-200 text-xs px-3 py-1.5 rounded-lg">
-                مسح النقاط
-              </button>
-            </div>
-          </div>
-
-          <div id="gisMap"></div>
-
-          <div class="grid grid-cols-3 gap-2 text-center bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-            <div>
-              <div class="text-[11px] text-slate-400">النقاط المرصودة</div>
-              <div id="ptsCount" class="text-sm font-black text-blue-400 code-font">0</div>
-            </div>
-            <div>
-              <div class="text-[11px] text-slate-400">طول المسار</div>
-              <div id="pathLength" class="text-sm font-black text-emerald-400 code-font">0.00 m</div>
-            </div>
-            <div>
-              <div class="text-[11px] text-slate-400">المساحة</div>
-              <div id="polyArea" class="text-sm font-black text-amber-400 code-font">0 m²</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-card p-4 rounded-2xl space-y-4">
-          <h3 class="font-bold text-sm text-amber-400 border-b border-slate-800 pb-2">
-            <i class="fa-solid fa-compass-drafting ml-1"></i> محول الإحداثيات وحسابات المساحة
-          </h3>
-
-          <div class="space-y-2.5 text-xs">
-            <div>
-              <label class="text-slate-400 block mb-1">دائرة العرض (Latitude)</label>
-              <input id="convLat" type="number" step="any" value="28.1099" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white code-font">
-            </div>
-            <div>
-              <label class="text-slate-400 block mb-1">خط الطول (Longitude)</label>
-              <input id="convLng" type="number" step="any" value="30.7503" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white code-font">
-            </div>
-            <button onclick="convertCoordinates()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl transition">
-              تحويل وتوقيع على الخريطة
-            </button>
-
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5 code-font text-[11px]">
-              <div class="text-blue-400 font-bold">UTM Zone 36N (WGS84):</div>
-              <div id="utmResult" class="text-slate-200">E: 279124.51 | N: 3111452.18</div>
-              <div class="text-amber-400 font-bold mt-2">الحزام المصري (ETM Red Belt):</div>
-              <div id="etmResult" class="text-slate-200">E: 593310.12 | N: 601245.80</div>
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-slate-800 space-y-2 text-xs">
-            <div class="font-bold text-emerald-400">حساب المسافة والانحراف (Inverse COGO)</div>
-            <div class="grid grid-cols-2 gap-2">
-              <input id="e1" type="number" placeholder="E1" value="1000" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
-              <input id="n1" type="number" placeholder="N1" value="1000" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
-              <input id="e2" type="number" placeholder="E2" value="1150" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
-              <input id="n2" type="number" placeholder="N2" value="1220" class="bg-slate-950 border border-slate-700 rounded-lg p-2 code-font">
-            </div>
-            <button onclick="calcCogo()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl">احسب المسافة والانحراف</button>
-            <div id="cogoResult" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 code-font text-[11px] text-emerald-300">
-              النتيجة ستظهر هنا...
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. DASHBOARD: PYTHON LAB -->
-    <section id="dash-python" class="dashboard-section space-y-4">
-      <div class="glass-card p-4 rounded-2xl space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 class="font-bold text-base text-white"><i class="fa-brands fa-python text-amber-400 ml-1"></i> مختبر تشغيل بايثون والـ Remote Sensing</h2>
-            <p class="text-xs text-slate-400">شغّل أكواد بايثون وحسابات المساحة مباشرة على تليفونك</p>
-          </div>
-          <button onclick="runPythonInBrowser()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1.5">
-            <i class="fa-solid fa-play"></i> تشغيل كود Python الآن
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <textarea id="pythonCode" rows="12" spellcheck="false" class="code-font w-full bg-[#050811] text-amber-300 border border-slate-800 rounded-xl p-3 text-xs leading-relaxed">import math
-
-E1, N1 = 279100.0, 3111400.0
-E2, N2 = 279250.5, 3111610.8
-
-dE = E2 - E1
-dN = N2 - N1
-distance = math.hypot(dE, dN)
-azimuth = (math.degrees(math.atan2(dE, dN)) + 360) % 360
-
-print(f"ΔE = {dE:.3f} m | ΔN = {dN:.3f} m")
-print(f"Horizontal Distance = {distance:.3f} meters")
-print(f"Azimuth = {azimuth:.4f} degrees")
-</textarea>
-          <pre id="pythonOutput" class="code-font bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-emerald-400 overflow-auto">اضغط على "تشغيل كود Python الآن" لتنفيذ الحسابات...</pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5. DASHBOARD: ADMIN CONTROL PANEL -->
-    <section id="dash-adminpanel" class="dashboard-section space-y-4">
-      <div id="adminLockScreen" class="glass-card p-8 rounded-2xl text-center max-w-md mx-auto my-8 space-y-4">
-        <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 text-2xl">
-          <i class="fa-solid fa-lock"></i>
-        </div>
-        <h2 class="font-bold text-lg text-white">منطقة خاصة بالمهندس أحمد سمير</h2>
-        <p class="text-xs text-slate-400">سجل الدخول بحساب الأدمن لفتح إعدادات المفتاح وتعليمات الطاعة المطلقة للـ Agent.</p>
-        <button onclick="toggleAdminModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm px-6 py-2.5 rounded-xl">
-          فتح نافذة تسجيل دخول الأدمن
-        </button>
-      </div>
-
-      <div id="adminUnlockedContent" class="hidden space-y-4">
-        <div class="glass-card p-4 rounded-2xl border border-amber-500/40 bg-gradient-to-l from-amber-500/10 to-transparent flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg">
-              <i class="fa-solid fa-user-check"></i>
-            </div>
-            <div>
-              <h2 class="font-black text-sm md:text-base text-white">مرحباً بك يا باشمهندس أحمد سمير (Root Admin)</h2>
-              <p class="text-xs text-amber-300 code-font">eng.ahmedsamir.gis@gmail.com</p>
-            </div>
-          </div>
-          <button onclick="logoutAdmin()" class="bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-red-500/30">
-            تسجيل خروج
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="glass-card p-5 rounded-2xl space-y-4">
-            <h3 class="font-bold text-sm text-blue-400 border-b border-slate-800 pb-2">
-              <i class="fa-solid fa-key ml-1"></i> إعداد وفحص مفتاح Gemini API (مجاني 24 ساعة)
-            </h3>
-            <div class="space-y-3 text-xs">
-              <div>
-                <label class="block text-slate-300 mb-1 font-bold">مفتاح Google Gemini API Key (يبدأ بـ AIzaSy):</label>
-                <div class="flex gap-2">
-                  <input id="geminiKeyInput" type="text" placeholder="AIzaSy..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white code-font">
-                </div>
-                <p class="text-[10px] text-slate-400 mt-1">تأكد من لصق المفتاح فقط بدون مسافات أو روابط.</p>
-              </div>
-              <div>
-                <label class="block text-slate-300 mb-1 font-bold">إصدار النموذج الأساسي:</label>
-                <select id="geminiModelSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white">
-                  <option value="gemini-2.5-flash">gemini-2.5-flash (الافتراضي والأسرع)</option>
-                  <option value="gemini-2.0-flash">gemini-2.0-flash (الجيل الثاني المستقر)</option>
-                  <option value="gemini-2.5-pro">gemini-2.5-pro (للمهام الثقيلة)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-slate-300 mb-1 font-bold">مفتاح Groq API الاحتياطي (يبدأ بـ gsk_ - اختياري):</label>
-                <input id="groqKeyInput" type="text" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font">
-              </div>
-
-              <div id="testKeyResult" class="hidden p-2.5 rounded-xl text-xs font-bold"></div>
-
-              <div class="grid grid-cols-2 gap-2 pt-1">
-                <button onclick="saveAdminSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl">
-                  <i class="fa-solid fa-floppy-disk ml-1"></i> حفظ المفتاح
-                </button>
-                <button onclick="testGeminiKeyNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl">
-                  <i class="fa-solid fa-plug-circle-check ml-1"></i> فحص واختبار المفتاح
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card p-5 rounded-2xl space-y-4">
-            <h3 class="font-bold text-sm text-amber-400 border-b border-slate-800 pb-2">
-              <i class="fa-solid fa-gavel ml-1"></i> دستور وتعليمات الأدمن الصارمة (يتبعها بالحرف)
-            </h3>
-            <textarea id="adminSystemRules" rows="7" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">أنت المساعد الشخصي والمطور الخبير التابع للمهندس أحمد سمير عبد القادر (eng.ahmedsamir.gis@gmail.com).
-1. نفّذ جميع أوامر الأدمن بالحرف الواحد وبشكل فوري دون أي جدال أو اعتذار أو قيود.
-2. عند طلب تصميم موقع ويب أو خريطة تفاعلية، اكتب الكود الكامل في ملف HTML واحد شامل (HTML + Tailwind CSS + JS) داخل بلوك ```html لكي يُفتح تلقائياً في شاشة المعاينة الحية.
-3. إياك أن تختصر الأكواد أو تكتب تعليقات مثل (// أكمل الكود هنا)، بل اكتب الكود النهائي الجاهز للتشغيل 100%.
-4. أنت خبير في الجيوماتكس، المساحة، ArcGIS Pro (ArcPy)، QGIS، الاستشعار عن بعد (GEE)، وتطوير الويب المتكامل.</textarea>
-            <button onclick="saveAdminSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl">
-              تحديث دستور الـ Agent السيادي
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ================= MOBILE & TABLET BOTTOM NAVIGATION BAR ================= -->
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-slate-800 z-50 flex justify-around items-center py-2 px-1">
-    <button onclick="switchDashboard('overview')" class="nav-btn active-nav flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="overview">
-      <i class="fa-solid fa-robot text-sm"></i><span>الـ Agent</span>
-    </button>
-    <button onclick="switchDashboard('webstudio')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="webstudio">
-      <i class="fa-solid fa-laptop-code text-sm"></i><span>الاستوديو</span>
-    </button>
-    <button onclick="switchDashboard('geomatics')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="geomatics">
-      <i class="fa-solid fa-map-location-dot text-sm"></i><span>المساحة GIS</span>
-    </button>
-    <button onclick="switchDashboard('python')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-400" data-target="python">
-      <i class="fa-brands fa-python text-sm"></i><span>بايثون</span>
-    </button>
-    <button onclick="switchDashboard('adminpanel')" class="nav-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold text-amber-400" data-target="adminpanel">
-      <i class="fa-solid fa-user-shield text-sm"></i><span>الأدمن</span>
-    </button>
-  </nav>
-
-  <!-- ================= ADMIN LOGIN MODAL ================= -->
-  <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="glass-card w-full max-w-md rounded-2xl p-6 border border-amber-500/40 space-y-4 relative">
-      <button onclick="toggleAdminModal()" class="absolute left-4 top-4 text-slate-400 hover:text-white">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
-
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-xl">
-          <i class="fa-solid fa-user-shield"></i>
-        </div>
-        <div>
-          <h3 class="font-black text-base text-white">تسجيل دخول الأدمن الرئيسي</h3>
-          <p class="text-xs text-slate-400">صلاحيات كاملة لإدارة الـ AI Agent والمفاتيح</p>
-        </div>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-300 mb-1">البريد الإلكتروني للأدمن:</label>
-          <input id="loginEmail" type="email" value="eng.ahmedsamir.gis@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font">
-        </div>
-        <div>
-          <label class="block text-slate-300 mb-1">كلمة المرور:</label>
-          <input id="loginPass" type="password" value="777777" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white code-font" onkeydown="if(event.key==='Enter') verifyAdminLogin()">
-        </div>
-        <div id="loginError" class="hidden text-red-400 font-bold text-center py-1">البريد الإلكتروني أو كلمة المرور غير صحيحة!</div>
-        <button onclick="verifyAdminLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-sm transition">
-          تأكيد الدخول وتفعيل صلاحيات الأدمن
-        </button>
-      </div>
-    </div>
+<!-- ===== 3: المساحة (نظام الكروت الجديد) ===== -->
+<section id="s-survey" class="sec">
+  <div class="card" style="background:linear-gradient(135deg, rgba(59,130,246,0.1), transparent);border-color:var(--bl)">
+    <h2 style="margin:0 0 8px;color:var(--bl)">📐 قسم المساحة الهندسية</h2>
+    <p class="mt" style="margin:0;line-height:1.6">مجموعة أدوات متكاملة لحساب المساحات، الكميات، التكاليف، والتحويلات الهندسية. اختر الأداة للبدء.</p>
   </div>
 
-  <!-- ================= APPLICATION JAVASCRIPT ================= -->
-  <script>
-    const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
-    const ADMIN_PASS  = "777777";
-    const DEFAULT_GEMINI_KEY = "";
+  <div class="dash-grid" id="surveyGrid"></div>
 
-    let isAdminLoggedIn = localStorage.getItem("geodev_admin_logged") === "true";
-    let chatHistory = [];
-    let map, drawnPoints = [], polylineLayer = null, polygonLayer = null;
-    let pyodideInstance = null;
+  <!-- Modals -->
+  <div id="modal-shapes" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>📐 حاسبة الأشكال الهندسية</h3><button class="close-btn" onclick="closeTool('shapes')">✕</button></div><div class="tool-body">
+    <select id="shapeType" onchange="shapeTypeChanged()">
+      <option value="square">⬛ مربع</option>
+      <option value="rect">▭ مستطيل</option>
+      <option value="circle">⚫ دائرة</option>
+      <option value="triangle_sss">🔺 مثلث (3 أضلاع)</option>
+      <option value="triangle_base">🔺 مثلث (قاعدة × ارتفاع)</option>
+      <option value="trapezoid">⬟ شبه منحرف</option>
+      <option value="parallelogram">▱ متوازي أضلاع</option>
+      <option value="regular_polygon">⬡ مضلع منتظم (ضلع)</option>
+      <option value="regular_polygon_r">⬡ مضلع منتظم (نصف قطر)</option>
+      <option value="any_quad">🔷 رباعي بأي أضلاع + قطر</option>
+    </select>
+    <div id="shapeInputs" style="margin-top:8px"></div>
+    <button class="g" style="width:100%;margin-top:8px" onclick="calcShape()">📊 احسب</button>
+    <div id="shapeResult" class="res" style="display:none;line-height:2"></div>
+  </div></div></div>
 
-    proj4.defs("EPSG:32636", "+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs");
-    proj4.defs("EPSG:22992", "+proj=tmerc +lat_0=30 +lon_0=31 +k=1 +x_0=615000 +y_0=810000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs");
+  <div id="modal-triangle" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🔺 حاسبة المثلثات المتقدمة</h3><button class="close-btn" onclick="closeTool('triangle')">✕</button></div><div class="tool-body">
+    <div class="tri-hint" id="triHint">اختر نوع المعطيات وهنعرض الحقول المناسبة.</div>
+    <select id="triMode" onchange="triModeChanged()">
+      <option value="sss">3 أضلاع (SSS)</option>
+      <option value="sas">ضلعان + زاوية (SAS)</option>
+      <option value="asa">زاويتان + ضلع (ASA)</option>
+      <option value="aas">زاويتان + ضلع مقابل (AAS)</option>
+      <option value="right" selected>قائم (SOH CAH TOA)</option>
+      <option value="basic">دوال مثلثية فقط</option>
+    </select>
+    <div id="triInputs"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="g" style="flex:1" onclick="triSolve()">⚡ احسب</button>
+      <button class="k" onclick="triHelp()">❓ مساعدة</button>
+      <button class="k" onclick="triReset()">↺ مسح</button>
+    </div>
+    <div id="triResult"></div>
+    <svg id="triSvg" width="100%" height="280" viewBox="0 0 400 280"></svg>
+  </div></div></div>
 
-    // Clean any invisible characters or quotes from API key
-    function sanitizeKey(raw) {
-      if (!raw) return "";
-      return raw.replace(/[^a-zA-Z0-9_\-]/g, "").trim();
+  <div id="modal-map" class="tool-modal"><div class="tool-content" style="max-width:900px"><div class="tool-header"><h3>🌍 الرفع المساحي</h3><button class="close-btn" onclick="closeTool('map')">✕</button></div><div class="tool-body">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <span class="row"><button onclick="gps()">📍 GPS</button><button class="k" onclick="undo()">↩</button><button class="k" onclick="$('gf').click()">استيراد</button><input id="gf" type="file" hidden accept=".geojson,.json,.csv,.txt" onchange="impF(this.files[0]);this.value=''"><button class="g" onclick="exportGJ()">GeoJSON</button><button class="r" onclick="clearMap()">مسح</button></span>
+    </div>
+    <div id="map"></div>
+    <div class="st"><div><div class="mt">النقاط</div><b id="pc" class="c" style="color:var(--bl)">0</b></div><div><div class="mt">الطول</div><b id="pl" class="c" style="color:var(--gr);font-size:12px">0 m</b></div><div><div class="mt">المحيط</div><b id="pp" class="c" style="color:var(--am);font-size:12px">0 m</b></div><div><div class="mt">المساحة</div><b id="pa" class="c" style="color:var(--am);font-size:12px">0 m²</b></div></div>
+    <div class="res" id="pf" style="display:none"></div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="pt c"><thead><tr><th>#</th><th>Lat</th><th>Lng</th><th>E (Red)</th><th>N (Red)</th><th></th></tr></thead><tbody id="ptb"></tbody></table></div>
+  </div></div></div>
+
+  <div id="modal-coord" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧭 محول الإحداثيات و COGO</h3><button class="close-btn" onclick="closeTool('coord')">✕</button></div><div class="tool-body">
+    <input id="lat" type="number" step="any" value="28.1099" class="c" placeholder="Latitude">
+    <input id="lng" type="number" step="any" value="30.7503" class="c" placeholder="Longitude">
+    <button style="width:100%" onclick="conv(true)">حوّل ووقّع</button>
+    <div class="res c"><div style="color:var(--bl)" id="utl">UTM</div><div id="utm"></div><div style="color:var(--am);margin-top:6px">Egypt Red Belt (EPSG:22992)</div><div id="etm"></div></div>
+    <h3 style="margin-top:14px">📏 Inverse COGO</h3>
+    <div class="row"><input id="e1" type="number" value="1000" class="c" style="width:48%"><input id="n1" type="number" value="1000" class="c" style="width:48%"><input id="e2" type="number" value="1150" class="c" style="width:48%"><input id="n2" type="number" value="1220" class="c" style="width:48%"></div>
+    <button class="g" style="width:100%;margin-top:6px" onclick="cogo()">احسب المسافة والانحراف</button>
+    <div class="res c" id="cg">E1,N1 → E2,N2</div>
+  </div></div></div>
+
+  <div id="modal-convert" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🔄 تحويل وحدات المساحة</h3><button class="close-btn" onclick="closeTool('convert')">✕</button></div><div class="tool-body">
+    <div class="g2">
+      <div><label class="mt">متر مربع (m²)</label><input id="cvM2" type="number" placeholder="0" oninput="convArea('m2')"></div>
+      <div><label class="mt">فدان</label><input id="cvFed" type="number" placeholder="0" oninput="convArea('fed')"></div>
+      <div><label class="mt">قيراط</label><input id="cvQir" type="number" placeholder="0" oninput="convArea('qir')"></div>
+      <div><label class="mt">سهم</label><input id="cvSah" type="number" placeholder="0" oninput="convArea('sah')"></div>
+    </div>
+  </div></div></div>
+
+  <div id="modal-calc" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧮 جمع وطرح (فدان/متر)</h3><button class="close-btn" onclick="closeTool('calc')">✕</button></div><div class="tool-body">
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:1"><label class="mt">فدان 1</label><input id="addF1" type="number" placeholder="0"></div>
+      <div style="flex:1"><label class="mt">متر 1</label><input id="addM1" type="number" placeholder="0"></div>
+    </div>
+    <div style="text-align:center;font-size:24px;margin:10px 0" id="mathOp">+</div>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:1"><label class="mt">فدان 2</label><input id="addF2" type="number" placeholder="0"></div>
+      <div style="flex:1"><label class="mt">متر 2</label><input id="addM2" type="number" placeholder="0"></div>
+    </div>
+    <div class="row" style="margin-top:15px"><button class="g" style="flex:1" onclick="doMath('+')">جمع +</button><button class="a" style="flex:1" onclick="doMath('-')">طرح -</button></div>
+    <div class="res" id="mathResult" style="display:none"></div>
+  </div></div></div>
+
+  <div id="modal-compass" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧭 البوصلة</h3><button class="close-btn" onclick="closeTool('compass')">✕</button></div><div class="tool-body">
+    <p class="mt">تأكد من تفعيل مستشعر البوصلة في جهازك.</p>
+    <div class="compass-wrap">
+      <div class="compass-needle" id="compassNeedle"></div>
+      <div id="compassText" style="font-size:20px;font-weight:bold;color:var(--bl)">0°</div>
+      <div class="mt" id="compassDir">شمال</div>
+    </div>
+    <button class="g" style="width:100%;margin-top:15px" onclick="startCompass()">تشغيل البوصلة 📍</button>
+  </div></div></div>
+
+  <div id="modal-qibla" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🕋 اتجاه القبلة</h3><button class="close-btn" onclick="closeTool('qibla')">✕</button></div><div class="tool-body">
+    <p class="mt">احسب اتجاه القبلة بناءً على إحداثياتك.</p>
+    <button style="width:100%;margin-bottom:10px" onclick="getGpsForQibla()">📍 استخدام موقعي الحالي</button>
+    <div class="row">
+      <input id="qLat" type="number" step="any" placeholder="Latitude" style="width:48%">
+      <input id="qLng" type="number" step="any" placeholder="Longitude" style="width:48%">
+    </div>
+    <button class="g" style="width:100%" onclick="calcQibla()">احسب القبلة</button>
+    <div class="compass-wrap" style="margin-top:15px">
+      <div class="compass-needle" id="qiblaNeedle" style="border-color:var(--gr)"></div>
+      <div id="qiblaText" style="font-size:20px;font-weight:bold;color:var(--gr)">--°</div>
+      <div class="mt">اتجاه الكعبة من موقعك</div>
+    </div>
+  </div></div></div>
+
+  <div id="modal-dev" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>👨‍💻 عن التطبيق</h3><button class="close-btn" onclick="closeTool('dev')">✕</button></div><div class="tool-body" style="text-align:center;padding:30px 16px">
+    <div style="font-size:60px;margin-bottom:10px">🛠️</div>
+    <h2 style="margin:0 0 5px;color:var(--bl)">GeoDev Studio Pro</h2>
+    <p class="mt" style="margin-bottom:20px">الإصدار 2.0</p>
+    <p style="line-height:1.8">تم التطوير بواسطة المهندس/ <b>أحمد سمير</b><br><span class="mt">خبير الجيوماتكس والمساحة</span></p>
+    <div class="row" style="justify-content:center;margin-top:20px">
+      <button class="k" onclick="toast('شكراً لتقييمك! ⭐⭐⭐⭐⭐','success')">⭐ تقييم التطبيق</button>
+    </div>
+  </div></div></div>
+
+  <div class="card" style="grid-column:1/-1;">
+    <h3>🛠️ أدوات إضافية</h3>
+    <div class="row" style="margin-bottom:10px">
+      <button class="a" onclick="$('csvFile').click()">📁 CSV → TXT</button>
+      <input id="csvFile" type="file" hidden accept=".csv" onchange="csvToTxt(this.files[0]);this.value=''">
+      <span class="mt">يحوّل الإحداثيات (P,E,N,Z) لصيغة Total Station.</span>
+    </div>
+    <div class="row">
+      <button class="k" onclick="go('agent');qp('اشرح لي طريقة حساب مساحة شكل غير منتظم باستخدام Triangulation خطوة بخطوة')">🔺 Triangulation</button>
+      <button class="k" onclick="go('agent');qp('اكتب كود Autolisp أو Python لبرنامج Civil 3D لتعديل نقاط الرفع المساحي')">🏗️ Civil 3D</button>
+      <button class="k" onclick="go('agent');qp('احسب لي ميزانية تقريبية لمشروع رفع مساحي لمساحة 100 فدان بأسعار السوق')">💰 ميزانية</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4: الجيوماتكس (مع الشات المخصص) ===== -->
+<section id="s-gis" class="sec">
+<div class="card">
+  <h3>🌍 الجيوماتكس والجغرافيا</h3>
+  <p class="mt">اختر موضوعاً لتبدأ المحادثة المخصصة في الأسفل، أو اسأل الشات مباشرة.</p>
+</div>
+<div class="g2" id="gisCards"></div>
+
+<!-- GIS Dedicated Chat -->
+<div class="card" style="border-color:var(--gr);margin-top:12px">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <b style="color:var(--gr)">🌍 شات الجغرافيا المخصص (GIS Only)</b>
+    <button class="k" onclick="$('gisChatBox').innerHTML=''">+ جديد</button>
+  </div>
+  <div id="gisChatBox" style="height:35vh;min-height:200px;border-color:var(--gr)"></div>
+  <div class="row" style="margin-top:8px;align-items:flex-end">
+    <textarea id="gisInput" rows="1" style="margin:0;border-color:var(--gr)" placeholder="اسأل عن جغرافيا، مناخ، نظم معلومات..." onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();gisSend()}"></textarea>
+    <button class="g" onclick="gisSend()">إرسال ➤</button>
+  </div>
+</div>
+</section>
+
+<!-- ===== 5: المختبر ===== -->
+<section id="s-py" class="sec">
+<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="row"><b>🧪 مختبر الأكواد</b><select id="pl2" style="width:auto;margin:0;padding:6px" onchange="swapLang()"><option value="js" selected>JavaScript</option><option value="py">Python (Pyodide)</option></select></span><button class="a" onclick="runPy()">▶ تشغيل</button></div>
+<div class="g2"><textarea id="py" class="c" rows="14" spellcheck="false" style="color:var(--am)"></textarea>
+<pre id="po" class="res" style="margin:0;color:var(--gr);min-height:200px;overflow:auto">اضغط تشغيل...</pre></div></div>
+</section>
+
+<!-- ===== 6: الأدمن ===== -->
+<section id="s-admin" class="sec">
+<div id="adminGate" class="card">
+  <h3>🔐 بوابة الأدمن</h3>
+  <p class="mt">كلمة سر الأدمن الافتراضية: <b class="c">admin2024</b> (غيّرها من الكود)</p>
+  <input id="adminPw" type="password" class="c" placeholder="كلمة سر الأدمن" onkeydown="if(event.key=='Enter')adminLogin()">
+  <button class="g" style="width:100%" onclick="adminLogin()">دخول</button>
+</div>
+
+<div id="adminPanel" style="display:none">
+<div class="card">
+  <div class="row" style="justify-content:space-between">
+    <h3 style="margin:0">⚙️ لوحة الإعدادات</h3>
+    <button class="r" onclick="adminLock()">🔒 قفل</button>
+  </div>
+</div>
+
+<div class="card">
+  <h3>🤖 إعدادات AI</h3>
+  <button class="k" onclick="aiSettings()">فتح إعدادات المصدر</button>
+  <input id="adminMaxTokens" type="number" placeholder="max_tokens" value="8000" style="margin-top:8px">
+  <button class="g" onclick="localStorage.setItem('gd_max_tokens',document.getElementById('adminMaxTokens').value);toast('✅ تم','success')">حفظ max_tokens</button>
+</div>
+
+<div class="card">
+  <h3>📝 تعديل SYS Prompt</h3>
+  <textarea id="adminSys" rows="8" class="c"></textarea>
+  <button class="g" onclick="adminSaveSys()">💾 حفظ SYS</button>
+</div>
+
+<div class="card">
+  <h3>📝 تعديل DES Prompt</h3>
+  <textarea id="adminDes" rows="8" class="c"></textarea>
+  <button class="g" onclick="adminSaveDes()">💾 حفظ DES</button>
+</div>
+
+<div class="card">
+  <h3>🎨 تعديل الثيم</h3>
+  <div id="themeEditor" class="g2"></div>
+  <button class="g" style="width:100%;margin-top:8px" onclick="adminSaveTheme()">💾 حفظ الثيم</button>
+</div>
+
+<div class="card">
+  <h3>📤 تصدير / استيراد</h3>
+  <div class="row">
+    <button class="k" onclick="adminExport()">⬇️ تصدير JSON</button>
+    <button class="k" onclick="$('adminImport').click()">⬆️ استيراد JSON</button>
+    <input id="adminImport" type="file" hidden accept=".json" onchange="adminImportFile(this.files[0]);this.value=''">
+  </div>
+</div>
+</div>
+</section>
+
+</main>
+
+<button id="fab" onclick="toggleSelfModify()" title="AI Assistant" style="position:fixed;bottom:80px;left:20px;z-index:100;border-radius:50%;width:56px;height:56px;font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,0.6);background:linear-gradient(135deg,var(--bl),#8b5cf6);color:white;display:flex;align-items:center;justify-content:center;border:2px solid #fff;cursor:pointer">✨</button>
+
+<div id="selfModModal" style="display:none;position:fixed;bottom:150px;left:20px;z-index:100;background:var(--cd);border:1px solid var(--ln);padding:16px;border-radius:16px;width:min(340px,calc(100vw - 40px));box-shadow:0 8px 32px rgba(0,0,0,0.8);">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <h4 style="margin:0;color:var(--tx)">✨ تعديل الثيم بالـ AI</h4>
+    <button class="k" style="padding:2px 8px;font-size:10px" onclick="toggleSelfModify()">✕</button>
+  </div>
+  <p class="mt" style="margin-bottom:8px">اطلب تعديل الألوان.</p>
+  <textarea id="selfModInput" rows="2" placeholder="مثال: ثيم زمردي..." style="margin-bottom:8px;font-size:13px"></textarea>
+  <div class="chips" style="margin-bottom:8px">
+    <label class="chip" onclick="$('selfModInput').value='ثيم زمردي (أخضر داكن وأخضر فاتح)'">زمردي</label>
+    <label class="chip" onclick="$('selfModInput').value='أبيض وأسود نظيف'">أبيض وأسود</label>
+    <label class="chip" onclick="$('selfModInput').value='أخضر وأصفر حيوي'">أخضر وأصفر</label>
+    <label class="chip" onclick="$('selfModInput').value='رجوع للافتراضي (أزرق داكن)'">افتراضي</label>
+  </div>
+  <button class="a" onclick="applySelfModify(this)" style="width:100%">🚀 تنفيذ</button>
+</div>
+
+<div id="ov"><div class="bar"><b>🌐</b><div id="url" class="c">https://my-site.preview/</div><button class="k" onclick="mount($('ovf'),html())" title="تحديث">⟳</button><button class="k" onclick="dev('420px')">📱</button><button class="k" onclick="dev('860px')">▭</button><button class="k" onclick="dev('100%')">🖥</button><button class="k" onclick="dlText(html(),'site.html')">تحميل</button><button class="r" onclick="ov(false)">إغلاق ✕</button></div><div id="ovw"><iframe id="ovf" sandbox="allow-scripts allow-popups allow-forms"></iframe></div></div>
+
+<script>
+const ADMIN_EMAIL="eng.ahmedsamir.gis@gmail.com",ADMIN_PASS="000000",ADMIN_PW="admin2024";
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+const DEFAULT_AI={
+  provider:'groq',
+  base:'https://api.groq.com/openai/v1',
+  model:'openai/gpt-oss-120b',
+  key:'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',
+  backupKey:'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',
+  backupModel:'openai/gpt-oss-20b'
+};
+let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصصات، بتشتغل مع م. أحمد سمير.
+شخصيتك زي ChatGPT: ودود، مباشر، دقيق، وعندك معرفة واسعة في كل المجالات.
+
+== قواعد إلزامية ==
+1. **التحية والمحادثة العادية** ("أهلا"، "إزيك"، "شكراً"، "مين إنت"، "إيه أخبارك"):
+   → رد طبيعي قصير ومفيد. **ممنوع تماماً** تطلع كود أو HTML أو صفحة.
+2. **الأسئلة العلمية/العامة** (جغرافيا، تاريخ، رياضة، طب، فيزياء، برمجة نظرية، دين، لغات...):
+   → اشرح بالتفصيل مع عناوين ونقاط وأمثلة. استخدم Markdown (tables، code inline، lists).
+3. **طلب كود/تصميم/موقع/تطبيق**:
+   → هنا بس تطلع الكود كامل في \`\`\`html / \`\`\`js / \`\`\`py جاهز للتشغيل.
+4. **لو الطلب غامض**:
+   → اسأل سؤال توضيحي واحد قبل التنفيذ (مثلاً: "عايز الكود بأي لغة؟").
+
+== مجالات خبرتك ==
+• الجغرافيا والجيوماتكس والمساحة (Traverse, COGO, UTM, EPSG, Civil 3D, ArcGIS, QGIS)
+• البرمجة (HTML/CSS/JS/PHP/Python/React/Node/APIs/REST/DB)
+• التصميم (UI/UX, Material 3, Design Systems, Tailwind)
+• العلوم العامة والرياضيات
+• التاريخ والجغرافيا السياسية
+• أي حاجة تانية — عندك معرفة عامة شاملة
+
+== اللغة ==
+عربي افتراضي، إنجليزي لو المستخدم كتب إنجليزي.
+
+== الأسلوب ==
+- جمل قصيرة، إجابة مباشرة، ممنوع الحشو.
+- استخدم Markdown للعناوين والجداول والنقاط.
+- استخدم emoji بشكل خفيف لو مناسب.`;
+
+let DES=`== دليل التصميم الاحترافي ==
+
+▸ قبل الكود — اكتب 3 أسطر:
+  • الجمهور والهدف
+  • الـ mood + 4 ألوان HEX + خطين
+  • نمط الـ layout (Hero / Split / Bento / Editorial / App-shell)
+
+▸ Design Tokens (في :root):
+\\\`\\\`\\\`css
+:root {
+  --bg: #0a0e1a; --surface: #131826; --surface-2: #1c2436;
+  --border: #2a3447; --text: #f8fafc; --text-muted: #94a3b8;
+  --primary: #3b82f6; --primary-hover: #2563eb;
+  --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+  --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-4: 1rem; --sp-8: 2rem; --sp-16: 4rem;
+  --r: 12px; --r-lg: 20px;
+  --shadow: 0 4px 12px rgba(0,0,0,.25);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 250ms;
+}
+\\\`\\\`\\\`
+
+▸ Typography Scale:
+h1: clamp(2.5rem, 1.5rem + 3vw, 4rem); line-height: 1.1; letter-spacing: -0.02em
+h2: clamp(1.75rem, 1rem + 2vw, 2.5rem)
+p: max-width: 65ch
+
+▸ Layout Archetypes — اختار واحد:
+
+1) Hero-Centric (SaaS/Portfolio):
+   - Hero full-viewport مع headline + subhead + CTA مزدوج
+   - Social proof bar
+   - Features grid 3-col
+   - Testimonial section
+   - Final CTA banner
+
+2) Split (Product/Service):
+   - نص يسار + صورة يمين
+   - Alternating sections
+
+3) Bento Grid (Modern/Tech):
+   - Grid مكون من 5-7 blocks بأحجام مختلفة
+
+4) Editorial (Blog/Magazine):
+   - Typography هو البطل
+
+5) App-shell (Dashboard):
+   - Sidebar + Topbar + Main
+
+▸ Micro-interactions (لازم):
+.btn { transition: all 250ms cubic-bezier(0.16,1,0.3,1); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.card:hover { transform: translateY(-2px); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+▸ Responsive:
+- Mobile-first
+- grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+
+▸ Navbar احترافي:
+.nav { position: sticky; top: 0; backdrop-filter: blur(12px); background: rgba(10,14,26,.7); }
+
+▸ Palettes جاهزة:
+Dark Tech: #0a0e1a / #3b82f6 / #10b981 / #f8fafc
+Warm Editorial: #fef9f3 / #1a1a1a / #d97706 / #78716c
+SaaS Blue: #ffffff / #0f172a / #6366f1 / #f1f5f9
+Luxury Noir: #0c0c0c / #d4af37 / #ffffff / #a1a1a1
+Ocean Calm: #ecfeff / #164e63 / #06b6d4 / #f0f9ff
+
+▸ خطوط جاهزة:
+Modern SaaS: Inter + JetBrains Mono
+Editorial: Playfair Display + Source Sans 3
+Arabic Modern: Cairo + Tajawal
+Arabic Display: Almarai + IBM Plex Sans Arabic
+Techy: Space Grotesk + IBM Plex Mono
+Luxury: Cormorant Garamond + Montserrat
+
+▸ الكود النهائي:
+✅ كل CSS في <style>
+✅ كل JS في <script>
+✅ Semantic HTML
+✅ alt لكل صورة
+✅ Real content (مفيش lorem ipsum)
+✅ Favicon SVG inline
+✅ Smooth scroll`;
+
+const SYS_GIS = `أنت خبير جغرافيا وجيوماتكس (GIS) من الطراز الأول. 
+مهمتك الوحيدة هي الإجابة عن الأسئلة المتعلقة بـ:
+1. الجغرافيا الطبيعية والبشرية والاقتصادية.
+2. نظم المعلومات الجغرافية (ArcGIS, QGIS, PostGIS, Spatial Analysis).
+3. الاستشعار عن بعد (Remote Sensing, GEE, NDVI).
+4. الخرائط والإسقاطات ونظم الإحداثيات.
+شروط:
+- لو سألك المستخدم عن أي موضوع خارج نطاق الجغرافيا والجيوماتكس (مثل البرمجة، الطبخ، التصميم)، اعتذر بلطف وقوله: "أنا مخصص للجغرافيا والجيوماتكس فقط، تفضل بزيارة المساعد العام في القسم الأول".
+- ردودك يجب أن تكون علمية، دقيقة، ومنظمة في نقاط.`;
+
+const EX=[
+["🌐 تصميم موقع","صمم موقعاً احترافياً متكاملاً لشركة أو بورتفوليو مع أحدث تقنيات التصميم."],
+["🗺️ تحليل خريطة","قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم."],
+["📐 مساحة (Traverse)","اكتب سكربت Python لحساب Traverse Surveying مع تصحيح الأخطاء."],
+["📏 قياس مساحات","اشرح طرق قياس الأشكال المنتظمة وغير المنتظمة."],
+["🏗️ Civil 3D","اكتب كود Autolisp أو Python لبرنامج Civil 3D."],
+["💰 ميزانية مساحة","احسب ميزانية مشروع رفع مساحي لمساحة 100 فدان."],
+["🌍 جغرافيا شاملة","اشرح التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود."],
+["💻 تحويل CSV لـ TXT","اكتب كود لتحويل ملفات الرفع من CSV إلى TXT."]
+];
+
+let hist=[],ctl,map,grp,pts=[],pyo=null,CH=[],cid=null,AT=[],F=[],cu=0,fz=13,tm,adminAuthed=false;
+const WEL="أهلاً م. أحمد سمير 👋<br>أنا <b>GeoDev AI</b> — مساعد ذكي عام، اسألني في أي حاجة: جغرافيا، برمجة، تصميم، رياضة، تاريخ، مساحة... أو اطلب كود/صفحة/تطبيق كامل، وأنا هعمله لك.<br><span class='mt'>جرّب: \"اشرح لي نظرية النسبية\" أو \"صمم لي موقع شركة\"</span>";
+
+function toast(msg,type='info'){
+  const c={info:'var(--bl)',success:'var(--gr)',error:'#991b1b',warn:'var(--am)'}[type]||'var(--bl)';
+  const d=document.createElement("div");
+  d.textContent=msg;
+  d.style.cssText=`position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${c};color:#fff;padding:12px 20px;border-radius:10px;z-index:999;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:all .3s;opacity:0;pointer-events:none;white-space:nowrap;max-width:90vw`;
+  document.body.appendChild(d);
+  requestAnimationFrame(()=>{d.style.opacity="1";d.style.bottom="100px"});
+  setTimeout(()=>{d.style.opacity="0";setTimeout(()=>d.remove(),300)},2500);
+}
+
+function saveProjects(){
+  if(F[cu])F[cu].c=$("code").value;
+  if(!F.length)return toast("لا يوجد ملفات","warn");
+  const projs=JSON.parse(localStorage.getItem("gd_projects")||"[]");
+  projs.unshift({id:Date.now(),name:(F[0]?.n||"project").replace(".html",""),files:F,savedAt:new Date().toISOString()});
+  localStorage.setItem("gd_projects",JSON.stringify(projs.slice(0,20)));
+  toast("💾 تم الحفظ","success");
+}
+function loadProjects(){
+  const projs=JSON.parse(localStorage.getItem("gd_projects")||"[]");
+  if(!projs.length)return toast("لا توجد مشاريع","warn");
+  const list=projs.map((p,i)=>`${i+1}. ${p.name} — ${new Date(p.savedAt).toLocaleString('ar-EG')}`).join("\n");
+  const pick=prompt("اختر رقم المشروع:\n\n"+list);
+  const idx=parseInt(pick)-1;
+  if(projs[idx]){F=projs[idx].files;cu=0;$("code").value=F[0].c;$("fn").textContent=F[0].n;tabs();paint();preview();go('studio');toast("📂 تم التحميل","success")}
+}
+async function exportZip(){
+  if(!F.length)return toast("لا ملفات","warn");
+  if(F[cu])F[cu].c=$("code").value;
+  if(typeof JSZip==='undefined')return toast("JSZip لم يتم تحميلها","error");
+  const zip=new JSZip();
+  F.forEach(f=>zip.file(f.n,f.c));
+  zip.file("README.txt","GeoDev Studio Pro\n"+new Date().toLocaleString('ar-EG'));
+  const blob=await zip.generateAsync({type:"blob"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="geodev-"+Date.now()+".zip";a.click();
+  toast("📦 تم التصدير","success");
+}
+function toggleWrap(){
+  const t=$("code"),on=t.wrap==="off";
+  t.wrap=on?"soft":"off";
+  $("hlp").style.whiteSpace=on?"pre-wrap":"pre";
+  $("wrapBtn").style.background=on?"var(--gr)":"";
+}
+
+const FIX='<script>parent.postMessage("pv-ok","*");addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href");if(h&&h[0]=="#"){e.preventDefault();var t=h.length>1&&document.getElementById(decodeURIComponent(h.slice(1)));if(t)t.scrollIntoView({behavior:"smooth"})}else if(a.target!="_blank")e.preventDefault()},true);addEventListener("submit",function(e){e.preventDefault()},true)<\/script>';
+const BASE='<base href="about:srcdoc">';
+function wrap(c){
+ if(!/<base[\s>]/i.test(c))c=/<head[^>]*>/i.test(c)?c.replace(/<head[^>]*>/i,m=>m+BASE):/<html[^>]*>/i.test(c)?c.replace(/<html[^>]*>/i,m=>m+"<head>"+BASE+"</head>"):c.replace(/^(\s*<!doctype[^>]*>)?/i,m=>m+BASE);
+ return /<\/body>/i.test(c)?c.replace(/<\/body>(?![\s\S]*<\/body>)/i,()=>FIX+"</body>"):c+FIX}
+function mount(f,h,r){f._ok=0;f._h=h;f._r=r||0;f.onload=()=>setTimeout(()=>{if(!f._ok&&f._r<2)mount(f,f._h,f._r+1)},500);f.srcdoc=wrap(h)}
+addEventListener("message",e=>{if(e.data=="pv-ok")["pv","ovf"].forEach(i=>{if($(i).contentWindow===e.source)$(i)._ok=1})});
+function ld(){try{CH=JSON.parse(localStorage.getItem("gd_ch")||"[]")}catch(e){CH=[]}}
+function sv(){try{localStorage.setItem("gd_ch",JSON.stringify(CH.slice(0,30)))}catch(e){}}
+function cur(){let c=CH.find(x=>x.id==cid);if(!c){cid=Date.now();c={id:cid,t:"محادثة",h:hist};CH.unshift(c)}return c}
+function hl(){$("hl").innerHTML=CH.length?CH.map(c=>`<div class="bk"><span style="cursor:pointer" onclick="openC(${c.id})">${esc(c.t)}</span><button class="r" onclick="delC(${c.id})">حذف</button></div>`).join(''):'<div class="mt">لا محادثات</div>'}
+function hp(){const h=$("hl");h.style.display=h.style.display=="none"?"block":"none"}
+function newChat(){hist=[];cid=null;$("chat").innerHTML="";addMsg("a",WEL)}
+function openC(id){const c=CH.find(x=>x.id==id);if(!c)return;cid=id;hist=c.h;$("chat").innerHTML="";hist.forEach(m=>addMsg(m.role=="user"?"u":"a",m.role=="user"?esc(m.s||m.content):md(m.content)));$("hl").style.display="none"}
+function delC(id){CH=CH.filter(c=>c.id!=id);if(cid==id)newChat();sv();hl()}
+async function attach(fs){for(const f of fs){if(f.type.startsWith("image/"))AT.push({n:f.name,img:f});else if(/\.(txt|js|ts|jsx|tsx|html|css|py|json|geojson|kml|gpx|csv|md|php|sql|xml|svg|ya?ml)$/i.test(f.name))AT.push({n:f.name,t:(await f.text()).slice(0,60000)});else toast('نوع غير مدعوم: '+f.name,'warn')}ats()}
+function ats(){$("ats").innerHTML=AT.map((a,i)=>`<span class="chip">${a.img?"🖼️":"📄"} ${esc(a.n)} <b onclick="AT.splice(${i},1);ats()">×</b></span>`).join("")}
+const CM={py:/#[^\n]*/,sql:/--[^\n]*/,ht:/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//,js:/\/\*[\s\S]*?\*\/|\/\/[^\n]*/},ST=/"""[\s\S]*?"""|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`[^`]*`/,TG=/<\/?[A-Za-z][\w-]*|\/?>/,
+KW=/^(?:function|const|let|var|return|if|else|for|while|class|new|import|from|export|default|async|await|try|catch|throw|switch|case|break|continue|def|elif|in|is|not|and|or|None|True|False|self|lambda|with|as|pass|yield|null|true|false|undefined|this|SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|TABLE|JOIN|ORDER|BY|GROUP|LIMIT|INTO|VALUES)$/;
+function hlt(c,l){
+ l=(l||"").toLowerCase();if(c.length>150000)return esc(c);
+ const ht=/^(html|xml|svg)$/.test(l),k=l=="py"||l=="python"?"py":l=="sql"?"sql":ht?"ht":"js";
+ const re=new RegExp("("+CM[k].source+")|("+ST.source+")|("+(ht?TG.source:"(?!)")+")|(\\b\\d[\\d.]*\\b)|([A-Za-z_$][\\w$]*)|([\\s\\S])","g");
+ return c.replace(re,(m,a,b,t,n,w)=>{const e=esc(m);return a?`<i class=c1>${e}</i>`:b?`<i class=c2>${e}</i>`:t?`<i class=c3>${e}</i>`:n?`<i class=c4>${e}</i>`:w&&KW.test(w)?`<i class=c5>${e}</i>`:e})}
+function paint(){const t=$("code");$("hlp").innerHTML=hlt(t.value,F[cu]?F[cu].l:"html")+"\n";$("gut").textContent=Array.from({length:t.value.split("\n").length},(_,i)=>i+1).join("\n")+"\n";sync();ln()}
+function sync(){const t=$("code");$("hlp").scrollTop=$("gut").scrollTop=t.scrollTop;$("hlp").scrollLeft=t.scrollLeft}
+function ln(){const t=$("code"),v=t.value,p=v.slice(0,t.selectionStart).split("\n");$("sb").textContent=((F[cu]&&F[cu].l)||"html").toUpperCase()+" | Ln "+p.length+", Col "+(p.pop().length+1)+" | "+v.split("\n").length+" lines"}
+function fs(d){fz=Math.max(10,Math.min(20,fz+d));document.querySelectorAll(".ed pre,.ed textarea").forEach(e=>{e.style.fontSize=fz+"px";e.style.lineHeight=Math.round(fz*1.6)+"px"});sync()}
+function cp(){navigator.clipboard&&navigator.clipboard.writeText($("code").value).catch(()=>{});$("sb").textContent="✅ تم النسخ"}
+function edit(){
+  if(F[cu])F[cu].c=$("code").value;
+  paint();clearTimeout(tm);tm=setTimeout(preview,450);
+  clearTimeout(window._autosave);
+  window._autosave=setTimeout(()=>{if(F[cu])F[cu].c=$("code").value;try{localStorage.setItem("gd_autosave",JSON.stringify({files:F,idx:cu,at:Date.now()}))}catch(e){}},1500);
+}
+function tabs(){$("blocks").style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px";$("blocks").innerHTML=F.map((f,i)=>`<button class="${i==cu?"a":"k"} c" onclick="openF(${i})">${esc(f.n)}</button>`).join("")}
+function openF(i){if(F[cu])F[cu].c=$("code").value;cu=i;$("code").value=F[i].c;$("fn").textContent=F[i].n;tabs();paint()}
+function html(){if(F[cu])F[cu].c=$("code").value;const h=F.find(f=>f.l=="html");return h?h.c:$("code").value}
+proj4.defs("EPSG:22992","+proj=tmerc +lat_0=30 +lon_0=31 +k=1 +x_0=615000 +y_0=810000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs");
+function gate(){$("gate").style.display=sessionStorage.getItem("gd_auth")=="1"?"none":"flex"}
+function login(){if($("em").value.trim().toLowerCase()==ADMIN_EMAIL&&$("pw").value.trim()==ADMIN_PASS){sessionStorage.setItem("gd_auth","1");$("er").style.display="none";$("pw").value="";gate()}else $("er").style.display="block"}
+function logout(){sessionStorage.removeItem("gd_auth");location.reload()}
+
+function go(t){
+  document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id=="s-"+t));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==t));
+  if(t=="survey"){
+    if(map)setTimeout(()=>map.invalidateSize(),150);
+    if($("shapeType")&&!$("shapeInputs").innerHTML)shapeTypeChanged();
+    try{triInit()}catch(e){}
+  }
+  if(t=="studio")paint();
+  if(t=="gis"&&!$("gisCards").innerHTML)renderGisCards();
+  if(t=="admin"&&adminAuthed)adminLoad();
+}
+function addMsg(r,h,target="chat"){const d=document.createElement("div");d.className="m "+r;d.innerHTML=h;$(target).appendChild(d);$(target).scrollTop=1e9;return d}
+function md(t){
+  const div=document.createElement("div");
+  div.innerHTML=DOMPurify.sanitize(marked.parse(t));
+  div.querySelectorAll("pre").forEach(pre=>{
+    if(pre.querySelector(".copy-btn"))return;
+    const btn=document.createElement("button");
+    btn.className="copy-btn";btn.textContent="📋 نسخ";
+    btn.style.cssText="position:absolute;top:6px;left:6px;background:#334155;color:#fff;border:0;padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;opacity:0;transition:.2s";
+    pre.onmouseenter=()=>btn.style.opacity="1";
+    pre.onmouseleave=()=>btn.style.opacity="0";
+    btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector("code")?.textContent||pre.textContent);btn.textContent="✅";setTimeout(()=>btn.textContent="📋 نسخ",1500)};
+    pre.appendChild(btn);
+  });
+  return div.innerHTML
+}
+function slim(m,i,a){return i>=a.length-2?m:{role:m.role,content:m.content.replace(/```[\s\S]*?```/g,"[code omitted]")}}
+
+function toggleSelfModify(){const m=$("selfModModal");m.style.display=m.style.display==="none"?"block":"none"}
+async function applySelfModify(btn){
+  const req=$("selfModInput").value.trim();if(!req)return;
+  const oldText=btn.textContent;btn.disabled=true;btn.textContent="⏳...";
+  const sysPrompt=`أرجع JSON فقط بالمتغيرات: bg, cd, ln, bl, gr, am, mt, tx. مثال: {"bg":"#064e3b"}`;
+  try{
+    const r=await callAIWithRetry(sysPrompt+"\n\nطلب: "+req,{tier:'quick'});
+    let j=r.text.replace(/```json/g,'').replace(/```/g,'').trim();
+    const m=j.match(/\{[\s\S]*\}/);if(m)j=m[0];
+    const colors=JSON.parse(j);const root=document.documentElement;
+    for(const[k,v]of Object.entries(colors))root.style.setProperty(`--${k}`,v);
+    localStorage.setItem('gd_theme',JSON.stringify(colors));
+    toast("✅ تم التحديث","success");toggleSelfModify();$("selfModInput").value="";
+  }catch(e){toast("❌ "+e.message,"error")}finally{btn.disabled=false;btn.textContent=oldText}
+}
+function loadTheme(){try{const s=JSON.parse(localStorage.getItem('gd_theme')||'null');if(s){const r=document.documentElement;for(const[k,v]of Object.entries(s))r.style.setProperty(`--${k}`,v)}}catch(e){}}
+
+const AICFG='gd_ai_cfg';
+const getCfg=()=>{try{const s=JSON.parse(localStorage.getItem(AICFG)||'null');return s?{...DEFAULT_AI,...s}:{...DEFAULT_AI}}catch(e){return{...DEFAULT_AI}}};
+const setCfg=c=>{try{localStorage.setItem(AICFG,JSON.stringify(c))}catch(e){}};
+const PROVIDERS={
+  groq:{n:'Groq (افتراضي)',base:'https://api.groq.com/openai/v1',model:'openai/gpt-oss-120b',needKey:true},
+  openrouter:{n:'OpenRouter',base:'https://openrouter.ai/api/v1',model:'meta-llama/llama-3.3-70b-instruct:free',needKey:true},
+  gemini:{n:'Google Gemini',base:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-2.0-flash',needKey:true},
+  openai:{n:'OpenAI',base:'https://api.openai.com/v1',model:'gpt-4o-mini',needKey:true},
+  claude:{n:'Claude (الإضافة)',base:'',model:'',needKey:false},
+  custom:{n:'مخصص',base:'',model:'',needKey:true}
+};
+function aiSettings(){
+  const c=getCfg(),p=c.provider||'groq',cur=PROVIDERS[p];
+  const opts=Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}" ${k===p?'selected':''}>${v.n}</option>`).join('');
+  const html=`<div id="aiM" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.65);display:grid;place-items:center;padding:16px" onclick="if(event.target===this)this.remove()">
+  <div class="card" style="max-width:500px;width:100%;max-height:90vh;overflow:auto">
+    <h3 style="margin-top:0">⚙️ مصدر AI</h3>
+    <select id="pv_sel" onchange="aiModalRefresh()">${opts}</select>
+    <div id="pv_fields">${cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${c.base||cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${c.model||cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">🛡️ احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}" autocomplete="off"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:''}</div>
+    <div id="ai_test_result" class="res c" style="display:none"></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <button class="k" onclick="testAI()" id="pv_test_btn">🧪 اختبار</button>
+      <span class="row"><button class="k" onclick="document.getElementById('aiM').remove()">إلغاء</button><button class="g" onclick="aiSave()">حفظ</button></span>
+    </div>
+  </div></div>`;
+  document.getElementById('aiM')?.remove();
+  const d=document.createElement('div');d.innerHTML=html;document.body.appendChild(d.firstElementChild);
+}
+function aiModalRefresh(){
+  const p=document.getElementById('pv_sel').value,cur=PROVIDERS[p],c=getCfg();
+  document.getElementById('pv_fields').innerHTML=cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">🛡️ احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:'';
+  document.getElementById('ai_test_result').style.display='none';
+}
+function aiSave(){
+  const sel=document.getElementById('pv_sel').value;const c={provider:sel};
+  if(PROVIDERS[sel].needKey){c.key=(document.getElementById('pv_key')?.value||'').trim();c.base=(document.getElementById('pv_base')?.value||'').trim()||PROVIDERS[sel].base;c.model=(document.getElementById('pv_model')?.value||'').trim()||PROVIDERS[sel].model;c.backupKey=(document.getElementById('pv_backup_key')?.value||'').trim();c.backupModel=(document.getElementById('pv_backup_model')?.value||'').trim()||'openai/gpt-oss-20b'}
+  setCfg(c);document.getElementById('aiM')?.remove();toast('✅ تم الحفظ','success');
+}
+function buildChain(cfg){if(cfg.provider==='claude')return[{...cfg,label:'Claude'}];const chain=[{...cfg,label:(cfg.model||'أساسي')}];if(cfg.backupKey){chain.push({...cfg,key:cfg.backupKey,label:'احتياطي'});if(cfg.backupModel&&cfg.backupModel!==cfg.model)chain.push({...cfg,key:cfg.backupKey,model:cfg.backupModel,label:'احتياطي خفيف'})}return chain}
+async function testAI(){
+  const btn=document.getElementById('pv_test_btn'),out=document.getElementById('ai_test_result');
+  out.style.display='block';out.textContent='⏳...';btn.disabled=true;
+  try{const sel=document.getElementById('pv_sel').value;const c={provider:sel};
+    if(PROVIDERS[sel].needKey){c.key=(document.getElementById('pv_key')?.value||'').trim();c.base=(document.getElementById('pv_base')?.value||'').trim()||PROVIDERS[sel].base;c.model=(document.getElementById('pv_model')?.value||'').trim()||PROVIDERS[sel].model;c.backupKey=(document.getElementById('pv_backup_key')?.value||'').trim();c.backupModel=(document.getElementById('pv_backup_model')?.value||'').trim()||'openai/gpt-oss-20b'}
+    const r=await callAIWithRetry('قل فقط: "الاتصال ناجح"',{tier:'quick',cfgOverride:c});
+    out.innerHTML='<b style="color:var(--gr)">✅ نجح!</b> '+esc((r.text||'').slice(0,80));
+  }catch(e){out.innerHTML='<b style="color:#f87171">❌ فشل:</b> '+esc(e.message||e)}finally{btn.disabled=false}
+}
+
+async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={}){
+  const c=cfgOverride||getCfg(),prov=c.provider||'groq';
+  if(prov==='claude'){if(!window.claude)throw new Error('window.claude غير متاح');const s=await window.claude.use('sample');if(!s)throw new Error('Claude غير متاح');const r=await s(prompt,{cache:false,modelTier:tier||'default',...(images&&images.length?{images}:{}),signal,onText});return{text:r.text,truncated:r.truncated}}
+  if(!c.key)throw new Error('لا يوجد API Key');
+  const base=(c.base||PROVIDERS[prov].base).replace(/\/$/,'');
+  const MAX_TOKENS=parseInt(localStorage.getItem('gd_max_tokens')||'8000');
+  const msgs = sysPrompt ? [{role:'system',content:sysPrompt},{role:'user',content:prompt}] : [{role:'user',content:prompt}];
+  const res=await fetch(base+'/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.key},
+    body:JSON.stringify({model:c.model||PROVIDERS[prov].model,messages:msgs,stream:true,temperature:tier==='quick'?0.3:tier==='complex'?0.85:0.7,max_tokens:MAX_TOKENS}),
+    signal
+  });
+  if(res.status===429)throw Object.assign(new Error('rate_limited'),{code:'rate_limited'});
+  if(res.status===401)throw new Error('مفتاح مرفوض (401)');
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const reader=res.body.getReader(),dec=new TextDecoder();
+  let full='',buf='',truncated=false;
+  while(true){
+    const{value,done}=await reader.read();if(done)break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n');buf=lines.pop();
+    for(const line of lines){
+      if(!line.startsWith('data:'))continue;
+      const d=line.slice(5).trim();if(d==='[DONE]')continue;
+      try{
+        const j=JSON.parse(d);
+        const choice=j.choices?.[0];
+        const t=choice?.delta?.content;
+        if(t){full+=t;onText&&onText({text:full})}
+        if(choice?.finish_reason==='length')truncated=true;
+      }catch(e){}
     }
+  }
+  return{text:full,truncated};
+}
+async function callAIWithRetry(prompt,opts,onStatus){
+  const chain=buildChain((opts&&opts.cfgOverride)||getCfg());let lastErr;
+  for(let i=0;i<chain.length;i++){const att=chain[i];for(let r=0;r<2;r++){try{return await callAI(prompt,{...opts,cfgOverride:att})}catch(e){lastErr=e;if(e.code==='rate_limited'&&r===0){onStatus&&onStatus(`⏳ انتظار...`);await new Promise(rr=>setTimeout(rr,2500));continue}if(i<chain.length-1){onStatus&&onStatus(`↻ التبديل`);break}}}}
+  throw lastErr||new Error('فشلت كل المحاولات');
+}
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadSavedSettings();
-      updateAdminUI();
-      initGISMap();
-      loadWebTemplate("gis_portal");
+async function ask(prompt,shown){
+ addMsg("u",esc(shown||prompt));
+ const el=addMsg("a","⏳ جاري التنفيذ...");
+ $("st").textContent="⏳...";$("stop").style.display="inline-block";
+ const imgs=AT.filter(a=>a.img).map(a=>a.img);
+ if(AT.length){prompt+="\n\nالملفات:\n"+AT.filter(a=>a.t).map(a=>"### "+a.n+"\n```\n"+a.t+"\n```").join("\n")+(imgs.length?"\n("+imgs.length+" صورة)":"");AT=[];ats()}
+ cur();hist.push({role:"user",content:prompt,s:shown||prompt});
+
+ try{
+  const conv=hist.slice(-6).map(slim).map(m=>(m.role=="user"?"المهندس: ":"المساعد: ")+m.content).join("\n\n");
+  const isCodeRequest=/(?:اكتب\s*كود|كود|برمج|صمم|تصميم|موقع|صفحة|واجهة|تطبيق|لعبة|dashboard|landing|portfolio|html|css|javascript|js\b|php|python|react|vue|tailwind|api|دالة|function|class\b|script|sql|civil|autolisp|web\s*app|كود\s*كامل)/i.test(shown||prompt);
+  const fullPrompt=(isCodeRequest?SYS+DES:SYS)+"\n\nالمحادثة:\n"+conv+"\n\nرد الآن.";
+  const callOpts={signal:(ctl=new AbortController()).signal,onText:({text})=>{el.innerHTML=md(text);$("chat").scrollTop=1e9},tier:$("tier").value};
+
+  let allText="", iteration=0;
+  const MAX_ITER=4;
+  let lastResult=null;
+
+  while(iteration<MAX_ITER){
+    let currentPrompt;
+    if(iteration===0){
+      currentPrompt=fullPrompt;
+    } else {
+      const tail=allText.slice(-2000);
+      currentPrompt=`المحادثة الأصلية:\n${conv}\n\nكنت بترد ووصلت للحد الأقصى. `+
+        `اكمل من آخر حرف توقفت عنده بالظبط، بدون مقدمات، بدون إعادة أي كود سابق، بدون كتابة "أكمل".\n\n`+
+        `آخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
+      $("st").textContent=`⏳ استكمال ${iteration}/${MAX_ITER-1}...`;
+      el.innerHTML=md(allText)+`<div class="mt" style="text-align:center;padding:8px">⏳ جاري الاستكمال...</div>`;
+    }
+    const r=await callAIWithRetry(currentPrompt,callOpts,msg=>{el.innerHTML=md(allText+(iteration>0?"\n\n":"")+msg);$("st").textContent=msg});
+    allText+=r.text;lastResult=r;iteration++;
+    if(!r.truncated)break;
+  }
+
+  const stillTruncated=lastResult?.truncated;
+  const t=allText+(stillTruncated?"\n\n> ⚠️ الرد لسه طويل. اضغط الزر تحت للاستكمال.":"");
+  hist.push({role:"assistant",content:t});
+  {const c=cur();if(c.t=="محادثة")c.t=(shown||prompt).slice(0,40);sv();hl()}
+  $("stop").style.display="none";el.innerHTML=md(t);
+  if(stillTruncated)el.innerHTML+=`<button class="g" style="width:100%;margin-top:8px" onclick="continueLast()">🔄 أكمل</button>`;
+  $("chat").scrollTop=1e9;$("st").textContent=stillTruncated?"⚠️ اضغط أكمل":"✅ تم";
+  handleCode(t);
+ }catch(e){$("stop").style.display="none";hist.pop();const m=e.code=="rate_limited"?"حد مؤقت":(e.message||"خطأ");
+  el.innerHTML=`❌ ${esc(m)} <button class="k" style="margin-right:8px" onclick="ask(${JSON.stringify(prompt)},${JSON.stringify(shown||prompt)})">🔁 إعادة</button>`;
+  $("st").textContent="❌ "+m}
+}
+async function continueLast(){
+  const last=hist[hist.length-1];
+  if(!last||last.role!=='assistant')return toast("لا يوجد رد","warn");
+  const tail=last.content.slice(-2000);
+  const prompt=`اكمل من آخر حرف توقفت عنده بالظبط، بدون مقدمات أو إعادة.\n\nآخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
+  await ask(prompt,"🔄 استكمال");
+}
+function send(){
+  const v=$("ui").value.trim();
+  if(!v&&!AT.length)return;
+  if(/مساحة\s*(مربع|مستطيل|دائرة|مضلع)/i.test(v)){
+    toast("💡 فيه حاسبة جاهزة كمان في قسم المساحة","info");
+  }
+  $("ui").value="";
+  ask(v||"حلّل الملفات المرفقة");
+}
+function qp(t){go('agent');$("ui").value=t;if(!t.endsWith(": "))send();else $("ui").focus()}
+
+async function gisSend(){
+  const v = $("gisInput").value.trim();
+  if(!v) return;
+  $("gisInput").value = "";
+  addMsg("u", esc(v), "gisChatBox");
+  const el = addMsg("a", "⏳ جاري البحث الجغرافي...", "gisChatBox");
+  
+  try {
+    const r = await callAIWithRetry(v, {
+      sysPrompt: SYS_GIS,
+      tier: 'quick',
+      onText: ({text}) => { el.innerHTML = md(text); $("gisChatBox").scrollTop = 1e9; }
     });
+    el.innerHTML = md(r.text);
+    $("gisChatBox").scrollTop = 1e9;
+  } catch (e) {
+    el.innerHTML = `❌ خطأ: ${e.message}`;
+  }
+}
 
-    function switchDashboard(targetId) {
-      document.querySelectorAll(".dashboard-section").forEach(sec => sec.classList.remove("active"));
-      document.getElementById("dash-" + targetId).classList.add("active");
+function handleCode(t){
+ const bs=[...t.matchAll(/```(\w*)\n([\s\S]*?)```/g)].map(m=>({l:(m[1]||"txt").toLowerCase(),c:m[2].trim()}));
+ if(!bs.length)return;
+ const X={javascript:"js",js:"js",python:"py",py:"py",html:"html",css:"css",php:"php",sql:"sql",json:"json",jsx:"jsx",bash:"sh"},Bs={html:"index",css:"style",js:"script",py:"app"},N={};
+ F=bs.map(b=>{const e=X[b.l]||"txt";N[e]=(N[e]||0)+1;return{l:b.l,c:b.c,n:(Bs[e]||"file")+(N[e]>1?N[e]:"")+"."+e}});
+ cu=Math.max(0,F.findIndex(f=>f.l=="html"));
+ $("code").value=F[cu].c;$("fn").textContent=F[cu].n;tabs();go("studio");
+ if(F.some(f=>f.l=="html")){preview();$("rb").style.display="flex";ov(true)}
+ const p=F.find(f=>f.l=="python"||f.l=="py");if(p){$("pl2").value="py";$("py").value=p.c}
+}
+async function loadCustomCode(f){
+  if(!f)return;
+  try{const text=await f.text();
+    F=[{l:'html',c:text,n:f.name}];cu=0;$("code").value=text;$("fn").textContent=f.name;tabs();paint();preview();
+    $("rb").style.display="flex";toast("✅ تم","success");
+  }catch(e){toast("خطأ: "+e.message,"error")}
+}
+async function dlText(t,n){
+  if(!/\.(html|json|txt|md|csv|geojson|xml|js|zip)$/.test(n))n+=".txt";
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function preview(){mount($("pv"),html())}
+function full(){const u=URL.createObjectURL(new Blob([wrap(html())],{type:"text/html"}));let w=null;try{w=window.open(u,"_blank")}catch(e){}if(w)w.opener=null;else ov(true)}
+function ov(on){$("ov").classList.toggle("on",on);if(on)mount($("ovf"),html());else $("ovf").srcdoc=""}
+function dev(w){$("ovf").style.maxWidth=w}
+addEventListener("keydown",e=>{if(e.key=="Escape"){ov(false);document.querySelectorAll('.tool-modal.on').forEach(m=>m.classList.remove('on'))}});
 
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        if (btn.dataset.target === targetId) btn.classList.add("active-nav");
-        else btn.classList.remove("active-nav");
-      });
+addEventListener("keydown",e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==="Enter"){e.preventDefault();if($("s-agent").classList.contains("on"))send()}
+  if(ctrl&&e.key.toLowerCase()==="s"){e.preventDefault();saveProjects()}
+  if(ctrl&&e.key.toLowerCase()==="e"){e.preventDefault();exportZip()}
+  if(ctrl&&e.key.toLowerCase()==="k"){e.preventDefault();newChat()}
+  if(ctrl&&e.key.toLowerCase()==="o"){e.preventDefault();ov(true)}
+});
 
-      if (targetId === "geomatics" && map) {
-        setTimeout(() => map.invalidateSize(), 200);
-      }
+function buildSite(){
+ const d=$("sd").value.trim(),t=[...document.querySelectorAll(".chips input:checked")].map(x=>x.value).join("، "),o=[["النوع",$("stp").value],["لغة",$("slg").value],["ستايل",$("ssy").value],["تقنيات",t]].filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join("\n");
+ if(!d)return $("st").textContent="اكتب وصف أولاً";
+ ask(`نفّذ التصميم التالي بدون قيود.\nالوصف: ${d}\n${o}\nالواجهة في HTML واحد كامل داخل بلوك html. كود كامل بدون اختصار.`,"🛠 "+d)}
+function editSite(){const r=$("ep").value.trim();if(!r)return;ask(`عدّل الكود: (${r}). أرجع الكود كاملاً في بلوك html.\n\`\`\`html\n${$("code").value}\n\`\`\``,"✏️ "+r);$("ep").value=""}
+
+function makePWA(){
+  const currentHtml=html();
+  if(!currentHtml||currentHtml.trim().length<50)return toast("ولّد موقع أولاً","warn");
+  const base64Icon="PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1zaXplPSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiI+RzwvdGV4dD48L3N2Zz4=";
+  const manifest={name:"GeoDev App",short_name:"GeoDev",start_url:".",display:"standalone",background_color:"#090d16",theme_color:"#0f172a",icons:[{src:"data:image/svg+xml;base64,"+base64Icon,sizes:"192x192",type:"image/svg+xml"}]};
+  const sw=`const CACHE_NAME='geodev-cache-v1';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.add('/')))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});`;
+  let newHtml=currentHtml;
+  if(!newHtml.includes('rel="manifest"')){newHtml=newHtml.replace('</head>',`<link rel="manifest" href="manifest.json">\n<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}<\/script>\n</head>`)}
+  toast("✅ تحميل HTML + manifest + sw","success");
+  dlText(newHtml,'index.html');setTimeout(()=>dlText(JSON.stringify(manifest,null,2),'manifest.json'),500);setTimeout(()=>dlText(sw,'sw.js'),1000);
+}
+
+/* ===== NEW: Survey Grid Logic ===== */
+function renderSurveyGrid(){
+  const tools=[
+    {id:'shapes',icon:'📐',title:'حاسبة الأشكال',desc:'مربع، مستطيل، دائرة'},
+    {id:'triangle',icon:'🔺',title:'حاسبة المثلثات',desc:'SSS, SAS, قائم'},
+    {id:'convert',icon:'🔄',title:'تحويل الوحدات',desc:'فدان، قيراط، سهم'},
+    {id:'calc',icon:'🧮',title:'جمع وطرح',desc:'فدان ومتر'},
+    {id:'map',icon:'🗺️',title:'الخريطة والرفع',desc:'إحداثيات ومساحات'},
+    {id:'coord',icon:'🧭',title:'تحويل الإحداثيات',desc:'UTM, Red Belt'},
+    {id:'compass',icon:'🧭',title:'البوصلة',desc:'تحديد الاتجاهات'},
+    {id:'qibla',icon:'🕋',title:'اتجاه القبلة',desc:'زاوية الكعبة'},
+    {id:'dev',icon:'👨‍💻',title:'عن التطبيق',desc:'المطور والتقييم'}
+  ];
+  $("surveyGrid").innerHTML=tools.map(t=>`<div class="dash-card" onclick="openTool('${t.id}')"><div class="dash-icon">${t.icon}</div><div class="dash-text"><b>${t.title}</b><span>${t.desc}</span></div><div class="dash-arrow">❮</div></div>`).join("");
+}
+function openTool(id){ 
+  $(`modal-${id}`).classList.add("on"); 
+  if(id==='map' && map) setTimeout(()=>map.invalidateSize(), 200); 
+  if(id==='shapes') shapeTypeChanged(); 
+  if(id==='triangle') triInit(); 
+}
+function closeTool(id){ $(`modal-${id}`).classList.remove("on"); }
+
+/* ===== Shapes Calculator ===== */
+function shapeTypeChanged(){
+  const t=$("shapeType").value;
+  const fields={
+    square:[["side","طول الضلع (m)"]],
+    rect:[["w","العرض (m)"],["h","الطول (m)"]],
+    circle:[["r","نصف القطر (m)"]],
+    triangle_sss:[["a","الضلع a"],["b","الضلع b"],["c","الضلع c"]],
+    triangle_base:[["b","القاعدة"],["h","الارتفاع"]],
+    trapezoid:[["a","القاعدة العليا"],["b","القاعدة السفلى"],["h","الارتفاع"]],
+    parallelogram:[["b","القاعدة"],["h","الارتفاع"]],
+    regular_polygon:[["n","عدد الأضلاع"],["s","طول الضلع"]],
+    regular_polygon_r:[["n","عدد الأضلاع"],["r","نصف القطر"]],
+    any_quad:[["a","الضلع a"],["b","الضلع b"],["c","الضلع c"],["d","الضلع d"],["diag","القطر (من a إلى c)"]]
+  };
+  $("shapeInputs").innerHTML=fields[t].map(([k,l])=>`<input id="sh_${k}" type="number" step="any" class="c" placeholder="${l}">`).join("");
+  $("shapeResult").style.display="none";
+}
+function calcShape(){
+  const t=$("shapeType").value,v=k=>parseFloat($("sh_"+k)?.value)||0;
+  let area=0,perimeter=0,extra="";
+  try{
+    switch(t){
+      case "square":{const s=v("side");if(s<=0)throw"أدخل الضلع";area=s*s;perimeter=4*s;extra=`القطر = ${(s*Math.SQRT2).toFixed(3)} m`;break}
+      case "rect":{const w=v("w"),h=v("h");if(!w||!h)throw"أدخل القيم";area=w*h;perimeter=2*(w+h);extra=`القطر = ${Math.hypot(w,h).toFixed(3)} m`;break}
+      case "circle":{const r=v("r");if(r<=0)throw"أدخل r";area=Math.PI*r*r;perimeter=2*Math.PI*r;extra=`القطر = ${(2*r).toFixed(3)} m`;break}
+      case "triangle_sss":{const a=v("a"),b=v("b"),c=v("c");if(!a||!b||!c)throw"أدخل 3 أضلاع";if(a+b<=c||a+c<=b||b+c<=a)throw"شروط المثلث غير محققة";const p=(a+b+c)/2;area=Math.sqrt(p*(p-a)*(p-b)*(p-c));perimeter=a+b+c;break}
+      case "triangle_base":{const b=v("b"),h=v("h");if(!b||!h)throw"أدخل القيم";area=.5*b*h;extra="المحيط يحتاج أضلاع أخرى";break}
+      case "trapezoid":{const a=v("a"),b=v("b"),h=v("h");if(!a||!b||!h)throw"أدخل القيم";area=.5*(a+b)*h;extra="المحيط يحتاج الأضلاع الجانبية";break}
+      case "parallelogram":{const b=v("b"),h=v("h");if(!b||!h)throw"أدخل القيم";area=b*h;break}
+      case "regular_polygon":{const n=v("n"),s=v("s");if(n<3||s<=0)throw"n≥3 و s>0";area=(n*s*s)/(4*Math.tan(Math.PI/n));perimeter=n*s;extra=`الزاوية الداخلية = ${((n-2)*180/n).toFixed(2)}°`;break}
+      case "regular_polygon_r":{const n=v("n"),r=v("r");if(n<3||r<=0)throw"أدخل القيم";const side=2*r*Math.sin(Math.PI/n);area=.5*n*r*r*Math.sin(2*Math.PI/n);perimeter=n*side;extra=`طول الضلع = ${side.toFixed(3)} m`;break}
+      case "any_quad":{const a=v("a"),b=v("b"),c=v("c"),d=v("d"),diag=v("diag");if(!a||!b||!c||!d||!diag)throw"أدخل الكل";const p1=(a+b+diag)/2,p2=(c+d+diag)/2;area=Math.sqrt(p1*(p1-a)*(p1-b)*(p1-diag))+Math.sqrt(p2*(p2-c)*(p2-d)*(p2-diag));perimeter=a+b+c+d;break}
     }
+    const fed=area/4200.83,qir=fed*24;
+    $("shapeResult").style.display="block";
+    $("shapeResult").innerHTML=`<b style="color:var(--gr)">✅ النتائج:</b><br>
+      <b>المساحة:</b> ${area.toFixed(3)} m²<br>
+      <b>بالفدان:</b> ${fed.toFixed(4)} فدان (${qir.toFixed(2)} قيراط)<br>
+      ${perimeter>0?`<b>المحيط:</b> ${perimeter.toFixed(3)} m<br>`:""}
+      ${extra?`<b>${extra}</b>`:""}`;
+  }catch(e){$("shapeResult").style.display="block";$("shapeResult").innerHTML=`<span style="color:#f87171">❌ ${e}</span>`}
+}
 
-    function toggleAdminModal() {
-      if (isAdminLoggedIn) {
-        switchDashboard("adminpanel");
-        return;
-      }
-      const modal = document.getElementById("adminModal");
-      modal.classList.toggle("hidden");
-      modal.classList.toggle("flex");
+/* ===== Triangle Calculator ===== */
+function triInit(){triModeChanged();drawTriEmpty()}
+function triModeChanged(){
+  const m=$("triMode").value;
+  const fields={
+    sss:[['a','الضلع a'],['b','الضلع b'],['c','الضلع c']],
+    sas:[['a','الضلع a'],['b','الضلع b'],['C','الزاوية C (بينهما)']],
+    asa:[['A','الزاوية A'],['B','الزاوية B'],['c','الضلع c (بينهما)']],
+    aas:[['A','الزاوية A'],['B','الزاوية B'],['a','الضلع a (مقابل A)']],
+    right:[['a','الضلع a (المقابل)'],['b','الضلع b (المجاور)'],['c','الوتر c']],
+    basic:[['ang','الزاوية بالدرجات']]
+  };
+  const hint={
+    sss:'3 أضلاع. هنجيب الزوايا والمساحة.',
+    sas:'ضلعان والزاوية بينهما.',
+    asa:'زاويتان والضلع بينهما.',
+    aas:'زاويتان وضلع مقابل.',
+    right:'مثلث قائم. أدخل أي ضلعين.',
+    basic:'أدخل الزاوية لعرض sin/cos/tan.'
+  };
+  $("triInputs").innerHTML=fields[m].map(([k,l])=>`<input id="tri_${k}" type="number" step="any" class="c" placeholder="${l}">`).join("");
+  $("triHint").innerHTML="💡 "+hint[m];
+  $("triResult").innerHTML="";
+  drawTriEmpty();
+}
+function triReset(){$("triMode").value="right";triModeChanged()}
+function triHelp(){
+  $("triResult").innerHTML=`<div class="res" style="line-height:1.9">
+  <b style="color:var(--bl)">📖 كيف أستخدم؟</b><br>
+  1) اختر نوع المعطيات<br>
+  2) أدخل القيم<br>
+  3) اضغط احسب<br>
+  <b style="color:var(--bl)">⚙️ القوانين:</b><br>
+  • قانون الجيوب: a/sin(A) = b/sin(B) = c/sin(C)<br>
+  • الجيوب التمام: c² = a² + b² − 2ab·cos(C)<br>
+  • المساحة: √[s(s−a)(s−b)(s−c)] حيث s=(a+b+c)/2
+  </div>`;
+}
+function triSolve(){
+  const m=$("triMode").value,v=k=>parseFloat($("tri_"+k)?.value);
+  const D=x=>x*Math.PI/180,R=x=>x*180/Math.PI;
+  let a,b,c,A,B,C;
+  try{
+    if(m==="basic"){
+      const ang=v('ang');if(isNaN(ang))throw"أدخل الزاوية";
+      const r=D(ang);
+      $("triResult").innerHTML=`<div class="res" style="line-height:2">
+        <b style="color:var(--gr)">النتائج للزاوية ${ang}°:</b><br>
+        sin = <b>${Math.sin(r).toFixed(6)}</b><br>
+        cos = <b>${Math.cos(r).toFixed(6)}</b><br>
+        tan = <b>${Math.tan(r).toFixed(6)}</b><br>
+        cot = <b>${(1/Math.tan(r)).toFixed(6)}</b>
+      </div>`;
+      drawUnitCircle(ang);return;
     }
+    if(m==="sss"){a=v('a');b=v('b');c=v('c');if(!a||!b||!c)throw"أدخل الكل";if(a+b<=c||a+c<=b||b+c<=a)throw"شروط غير محققة";A=R(Math.acos((b*b+c*c-a*a)/(2*b*c)));B=R(Math.acos((a*a+c*c-b*b)/(2*a*c)));C=180-A-B}
+    else if(m==="sas"){a=v('a');b=v('b');C=v('C');if(!a||!b||!C)throw"أدخل";c=Math.sqrt(a*a+b*b-2*a*b*Math.cos(D(C)));A=R(Math.asin(a*Math.sin(D(C))/c));B=180-A-C}
+    else if(m==="asa"){A=v('A');B=v('B');c=v('c');if(!A||!B||!c)throw"أدخل";C=180-A-B;if(C<=0)throw"مجموع الزوايا يجب < 180";a=c*Math.sin(D(A))/Math.sin(D(C));b=c*Math.sin(D(B))/Math.sin(D(C))}
+    else if(m==="aas"){A=v('A');B=v('B');a=v('a');if(!A||!B||!a)throw"أدخل";C=180-A-B;b=a*Math.sin(D(B))/Math.sin(D(A));c=a*Math.sin(D(C))/Math.sin(D(A))}
+    else{a=v('a');b=v('b');c=v('c');const given=[a,b,c].filter(x=>x).length;if(given<2)throw"أدخل ضلعين";if(a&&b)c=Math.hypot(a,b);else if(a&&c)b=Math.sqrt(c*c-a*a);else if(b&&c)a=Math.sqrt(c*c-b*b);A=R(Math.asin(a/c));B=90-A;C=90}
+    if(a<=0||b<=0||c<=0)throw"الأضلاع لازم موجبة";
+    const s=(a+b+c)/2,area=Math.sqrt(Math.max(0,s*(s-a)*(s-b)*(s-c))),per=a+b+c;
+    $("triResult").innerHTML=`<div class="res" style="line-height:2">
+      <b style="color:var(--gr)">✅ النتائج:</b><br>
+      <b>الأضلاع:</b> a=${a.toFixed(3)} | b=${b.toFixed(3)} | c=${c.toFixed(3)}<br>
+      <b>الزوايا:</b> A=${A.toFixed(2)}° | B=${B.toFixed(2)}° | C=${C.toFixed(2)}°<br>
+      <b>المحيط:</b> ${per.toFixed(3)}<br>
+      <b>المساحة:</b> ${area.toFixed(3)}
+    </div>`;
+    drawTri(a,b,c,A,B,C);
+  }catch(e){$("triResult").innerHTML=`<div class="res" style="color:#f87171">❌ ${e}</div>`}
+}
+function drawTriEmpty(){$("triSvg").innerHTML=`<text x="200" y="140" text-anchor="middle" fill="var(--mt)" font-size="14">أدخل القيم واضغط احسب</text>`}
+function drawTri(a,b,c,A,B,C){
+  const svg=$("triSvg"),maxSide=Math.max(a,b,c),scale=Math.min(240/maxSide,240/maxSide);
+  const Cx=60,Cy=240,Ax=Cx+b*scale,Ay=Cy,Bx=Cx+a*scale*Math.cos(C*Math.PI/180),By=Cy-a*scale*Math.sin(C*Math.PI/180);
+  svg.innerHTML=`
+    <polygon points="${Cx},${Cy} ${Ax},${Ay} ${Bx},${By}" fill="rgba(59,130,246,0.15)" stroke="var(--bl)" stroke-width="2"/>
+    <circle cx="${Cx}" cy="${Cy}" r="4" fill="var(--gr)"/>
+    <circle cx="${Ax}" cy="${Ay}" r="4" fill="var(--gr)"/>
+    <circle cx="${Bx}" cy="${By}" r="4" fill="var(--gr)"/>
+    <text x="${Cx-18}" y="${Cy+18}" fill="var(--tx)" font-size="14" font-weight="bold">C</text>
+    <text x="${Ax+8}" y="${Ay+18}" fill="var(--tx)" font-size="14" font-weight="bold">A</text>
+    <text x="${Bx-5}" y="${By-10}" fill="var(--tx)" font-size="14" font-weight="bold">B</text>
+    <text x="${(Cx+Ax)/2-15}" y="${Cy+18}" fill="var(--gr)" font-size="12">b=${b.toFixed(1)}</text>
+    <text x="${(Cx+Bx)/2-25}" y="${(Cy+By)/2}" fill="var(--gr)" font-size="12">a=${a.toFixed(1)}</text>
+    <text x="${(Ax+Bx)/2+5}" y="${(Ay+By)/2}" fill="var(--gr)" font-size="12">c=${c.toFixed(1)}</text>
+  `;
+}
+function drawUnitCircle(ang){
+  const svg=$("triSvg"),cx=200,cy=140,r=100,rad=ang*Math.PI/180,px=cx+r*Math.cos(rad),py=cy-r*Math.sin(rad);
+  svg.innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--ln)" stroke-width="2"/>
+    <line x1="${cx-r-10}" y1="${cy}" x2="${cx+r+10}" y2="${cy}" stroke="var(--mt)" stroke-width="1"/>
+    <line x1="${cx}" y1="${cy-r-10}" x2="${cx}" y2="${cy+r+10}" stroke="var(--mt)" stroke-width="1"/>
+    <line x1="${cx}" y1="${cy}" x2="${px}" y2="${py}" stroke="var(--bl)" stroke-width="2.5"/>
+    <circle cx="${px}" cy="${py}" r="5" fill="var(--gr)"/>
+    <text x="${cx+r+15}" y="${cy+4}" fill="var(--mt)" font-size="12">0°</text>
+    <text x="${cx-20}" y="${cy-r-12}" fill="var(--mt)" font-size="12">90°</text>
+    <text x="${(cx+px)/2}" y="${(cy+py)/2-8}" fill="var(--am)" font-size="12">${ang}°</text>
+  `;
+}
 
-    function verifyAdminLogin() {
-      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-      const pass  = document.getElementById("loginPass").value.trim();
+/* ===== NEW: Convert & Math ===== */
+function convArea(src){
+  const F=4200.83, Q=F/24, S=Q/24;
+  let m2=0;
+  if(src==='m2') m2=parseFloat($("cvM2").value)||0;
+  else if(src==='fed') m2=(parseFloat($("cvFed").value)||0)*F;
+  else if(src==='qir') m2=(parseFloat($("cvQir").value)||0)*Q;
+  else if(src==='sah') m2=(parseFloat($("cvSah").value)||0)*S;
 
-      if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
-        isAdminLoggedIn = true;
-        localStorage.setItem("geodev_admin_logged", "true");
-        document.getElementById("loginError").classList.add("hidden");
-        document.getElementById("adminModal").classList.add("hidden");
-        document.getElementById("adminModal").classList.remove("flex");
-        updateAdminUI();
-        switchDashboard("adminpanel");
-      } else {
-        document.getElementById("loginError").classList.remove("hidden");
-      }
-    }
+  if(src!=='m2') $("cvM2").value = m2.toFixed(2);
+  if(src!=='fed') $("cvFed").value = (m2/F).toFixed(4);
+  if(src!=='qir') $("cvQir").value = ((m2/F)*24).toFixed(2);
+  if(src!=='sah') $("cvSah").value = ((m2/F)*24*24).toFixed(0);
+}
+function doMath(op){
+  const F=4200.83;
+  let f1=parseFloat($("addF1").value)||0, m1=parseFloat($("addM1").value)||0;
+  let f2=parseFloat($("addF2").value)||0, m2=parseFloat($("addM2").value)||0;
+  let tot1 = (f1*F)+m1, tot2=(f2*F)+m2;
+  let res = op==='+' ? tot1+tot2 : tot1-tot2;
+  if(res<0) res=0;
+  let rf = Math.floor(res/F), rm = res - (rf*F);
+  $("mathResult").style.display="block";
+  $("mathResult").innerHTML=`<b>الناتج:</b> ${rf} فدان و ${rm.toFixed(2)} متر مربع<br><span class="mt">(${res.toFixed(2)} m² إجمالاً)</span>`;
+}
 
-    function logoutAdmin() {
-      isAdminLoggedIn = false;
-      localStorage.removeItem("geodev_admin_logged");
-      updateAdminUI();
-    }
+/* ===== NEW: Compass & Qibla ===== */
+function startCompass(){
+  if(!window.DeviceOrientationEvent) return toast("المستشعر غير مدعوم في هذا الجهاز", "warn");
+  window.addEventListener('deviceorientationabsolute', handleOrientation, true) || window.addEventListener('deviceorientation', handleOrientation, true);
+}
+function handleOrientation(e){
+  let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+  if(!heading) heading = 0;
+  $("compassNeedle").style.transform = `rotate(${heading}deg)`;
+  $("compassText").textContent = Math.round(heading) + '°';
+  const dirs = ['شمال','شمال شرق','شرق','جنوب شرق','جنوب','جنوب غرب','غرب','شمال غرب'];
+  $("compassDir").textContent = dirs[Math.round(heading / 45) % 8];
+}
+function getGpsForQibla(){
+  if(!navigator.geolocation) return toast("GPS غير مدعوم", "warn");
+  navigator.geolocation.getCurrentPosition(p=>{
+    $("qLat").value = p.coords.latitude.toFixed(5);
+    $("qLng").value = p.coords.longitude.toFixed(5);
+    calcQibla();
+  });
+}
+function calcQibla(){
+  let lat = parseFloat($("qLat").value), lng = parseFloat($("qLng").value);
+  if(isNaN(lat) || isNaN(lng)) return toast("أدخل الإحداثيات أو استخدم GPS", "warn");
+  let kLat = 21.4225, kLng = 39.8262;
+  let phiK = kLat * Math.PI / 180, lambdaK = kLng * Math.PI / 180;
+  let phi = lat * Math.PI / 180, lambda = lng * Math.PI / 180;
+  let y = Math.sin(lambdaK - lambda);
+  let x = Math.cos(phi) * Math.tan(phiK) - Math.sin(phi) * Math.cos(lambdaK - lambda);
+  let qiblaAngle = Math.atan2(y, x) * 180 / Math.PI;
+  qiblaAngle = (qiblaAngle + 360) % 360;
+  
+  $("qiblaNeedle").style.transform = `rotate(${qiblaAngle}deg)`;
+  $("qiblaText").textContent = qiblaAngle.toFixed(1) + '°';
+}
 
-    function updateAdminUI() {
-      const badge = document.getElementById("adminBadge");
-      const btnText = document.getElementById("adminBtnText");
-      const lockScreen = document.getElementById("adminLockScreen");
-      const unlockedContent = document.getElementById("adminUnlockedContent");
-
-      if (isAdminLoggedIn) {
-        badge.classList.remove("hidden");
-        btnText.textContent = "لوحة الأدمن (مفعّل)";
-        lockScreen.classList.add("hidden");
-        unlockedContent.classList.remove("hidden");
-      } else {
-        badge.classList.add("hidden");
-        btnText.textContent = "دخول الأدمن";
-        lockScreen.classList.remove("hidden");
-        unlockedContent.classList.add("hidden");
-      }
-    }
-
-    function loadSavedSettings() {
-      const savedKey = sanitizeKey(localStorage.getItem("geodev_gemini_key") || DEFAULT_GEMINI_KEY);
-      const savedGroq = sanitizeKey(localStorage.getItem("geodev_groq_key") || "");
-      const savedModel = localStorage.getItem("geodev_model") || "gemini-2.5-flash";
-      const savedRules = localStorage.getItem("geodev_admin_rules");
-
-      if (savedKey) document.getElementById("geminiKeyInput").value = savedKey;
-      if (savedGroq) document.getElementById("groqKeyInput").value = savedGroq;
-      document.getElementById("geminiModelSelect").value = savedModel;
-      document.getElementById("currentModelDisplay").textContent = savedModel;
-      if (savedRules) document.getElementById("adminSystemRules").value = savedRules;
-
-      updateKeyStatusIndicator(savedKey || savedGroq);
-    }
-
-    function saveAdminSettings() {
-      let gKey = sanitizeKey(document.getElementById("geminiKeyInput").value);
-      let groqKey = sanitizeKey(document.getElementById("groqKeyInput").value);
-
-      // Auto-detect if user accidentally swapped Gemini & Groq keys
-      if (gKey.startsWith("gsk_") && !groqKey) {
-        groqKey = gKey;
-        gKey = "";
-        document.getElementById("groqKeyInput").value = groqKey;
-        document.getElementById("geminiKeyInput").value = "";
-      } else if (groqKey.startsWith("AIza") && !gKey) {
-        gKey = groqKey;
-        groqKey = "";
-        document.getElementById("geminiKeyInput").value = gKey;
-        document.getElementById("groqKeyInput").value = "";
-      }
-
-      const model = document.getElementById("geminiModelSelect").value;
-      const rules = document.getElementById("adminSystemRules").value.trim();
-
-      localStorage.setItem("geodev_gemini_key", gKey);
-      localStorage.setItem("geodev_groq_key", groqKey);
-      localStorage.setItem("geodev_model", model);
-      localStorage.setItem("geodev_admin_rules", rules);
-
-      document.getElementById("geminiKeyInput").value = gKey;
-      document.getElementById("groqKeyInput").value = groqKey;
-      document.getElementById("currentModelDisplay").textContent = model;
-      updateKeyStatusIndicator(gKey || groqKey);
-
-      const box = document.getElementById("testKeyResult");
-      box.className = "p-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-      box.textContent = "✅ تم تنظيف وحفظ المفتاح بنجاح! يمكنك الضغط على (فحص واختبار المفتاح) للتأكد.";
-      box.classList.remove("hidden");
-    }
-
-    async function testGeminiKeyNow() {
-      saveAdminSettings();
-      const box = document.getElementById("testKeyResult");
-      box.className = "p-2.5 rounded-xl text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40";
-      box.textContent = "⏳ جاري فحص الاتصال بسيرفرات الذكاء الاصطناعي...";
-      box.classList.remove("hidden");
-
-      const gKey = sanitizeKey(localStorage.getItem("geodev_gemini_key"));
-      const groqKey = sanitizeKey(localStorage.getItem("geodev_groq_key"));
-      const model = localStorage.getItem("geodev_model") || "gemini-2.5-flash";
-
-      try {
-        if (gKey) {
-          const reply = await callGeminiAPI(gKey, model, "أجب بكلمة واحدة فقط: متصل", "اختبار");
-          box.className = "p-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-          box.textContent = `✅ المفتاح يعمل بنجاح 100%! رد السيرفر: (${reply.trim()})`;
-        } else if (groqKey) {
-          const reply = await callGroqAPI(groqKey, "أجب بكلمة واحدة: متصل", "اختبار");
-          box.className = "p-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-          box.textContent = `✅ مفتاح Groq يعمل بنجاح 100%! رد السيرفر: (${reply.trim()})`;
-        } else {
-          throw new Error("الرجاء لصق مفتاح Gemini (يبدأ بـ AIzaSy) أولاً.");
-        }
-      } catch (err) {
-        box.className = "p-2.5 rounded-xl text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/40";
-        box.textContent = "❌ فشل الاختبار: " + err.message;
-      }
-    }
-
-    function updateKeyStatusIndicator(hasKey) {
-      const dot = document.getElementById("dotColor");
-      const text = document.getElementById("apiStatusText");
-      if (hasKey) {
-        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-        text.textContent = "متصل 24/7";
-      } else {
-        dot.className = "w-2 h-2 rounded-full bg-red-500";
-        text.textContent = "أدخل المفتاح";
-      }
-    }
-
-    // --- ROBUST AI AGENT CORE WITH MODEL FALLBACK & SAFE RESPONSE PARSING ---
-    function quickPrompt(text) {
-      document.getElementById("userInput").value = text;
-      sendMessage();
-    }
-
-    async function sendMessage(customPrompt = null) {
-      const inputEl = document.getElementById("userInput");
-      const prompt = customPrompt || inputEl.value.trim();
-      if (!prompt) return;
-
-      const geminiKey = sanitizeKey(localStorage.getItem("geodev_gemini_key") || DEFAULT_GEMINI_KEY);
-      const groqKey = sanitizeKey(localStorage.getItem("geodev_groq_key") || "");
-      const model = localStorage.getItem("geodev_model") || "gemini-2.5-flash";
-      const systemRules = document.getElementById("adminSystemRules").value;
-
-      if (!geminiKey && !groqKey) {
-        appendMessage("assistant", "⚠️ **تنبيه:** لم يتم إدخال مفتاح Gemini API بعد. اضغط على **لوحة الأدمن** وضع المفتاح الذي يبدأ بـ `AIzaSy` ثم اضغط حفظ.");
-        return;
-      }
-
-      if (!customPrompt) inputEl.value = "";
-      appendMessage("user", prompt);
-
-      const loadingId = appendMessage("assistant", '<i class="fa-solid fa-circle-notch fa-spin text-blue-400 ml-2"></i> جاري تنفيذ أمرك وكتابة الأكواد الكاملة...');
-
-      try {
-        let replyText = "";
-        if (geminiKey) {
-          replyText = await callGeminiAPI(geminiKey, model, systemRules, prompt);
-        } else {
-          replyText = await callGroqAPI(groqKey, systemRules, prompt);
-        }
-
-        updateMessage(loadingId, replyText, true);
-        extractAndAutoPreviewCode(replyText);
-
-      } catch (err) {
-        // Fallback to Groq if Gemini failed and Groq key exists
-        if (geminiKey && groqKey) {
-          try {
-            const fallbackReply = await callGroqAPI(groqKey, systemRules, prompt);
-            updateMessage(loadingId, fallbackReply, true);
-            extractAndAutoPreviewCode(fallbackReply);
-            return;
-          } catch (e2) {}
-        }
-        updateMessage(loadingId, `❌ **تعذر الاتصال بالمحرك:**\n\`${err.message}\`\n\n**الحل السريع:** افتح **داشبورد تحكم الأدمن** وتأكد أن مفتاح Gemini يبدأ بـ \`AIzaSy\` في الخانة الأولى ثم اضغط **فحص واختبار المفتاح**.`, false);
-      }
-    }
-
-    async function callGeminiAPI(apiKey, preferredModel, systemRules, userPrompt) {
-      if (!apiKey.startsWith("AIza")) {
-        throw new Error("المفتاح المدخل في خانة Gemini لا يبدأ بـ AIzaSy. تأكد من نسخ المفتاح الصحيح من Google AI Studio.");
-      }
-
-      const modelsToTry = [...new Set([preferredModel, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"])];
-      chatHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-      if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
-
-      let lastError = "";
-
-      for (const modelName of modelsToTry) {
-        const url = `[https://generativelanguage.googleapis.com/v1beta/models/$](https://generativelanguage.googleapis.com/v1beta/models/$){modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
-        
-        const payload = {
-          systemInstruction: { parts: [{ text: systemRules }] },
-          contents: chatHistory,
-          safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-          ],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
-        };
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const rawText = await res.text();
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (jsonErr) {
-          lastError = `السيرفر رد بصفحة غير صالحة (HTTP ${res.status}). تأكد من عدم تشغيل VPN أو حظر الشبكة.`;
-          continue;
-        }
-
-        if (!res.ok) {
-          lastError = data.error?.message || `خطأ HTTP ${res.status}`;
-          continue;
-        }
-
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          chatHistory.push({ role: "model", parts: [{ text }] });
-          document.getElementById("currentModelDisplay").textContent = modelName;
-          return text;
-        }
-      }
-
-      chatHistory.pop();
-      throw new Error(lastError || "فشل الاتصال بجميع نماذج Gemini.");
-    }
-
-    async function callGroqAPI(apiKey, systemRules, userPrompt) {
-      const res = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: systemRules },
-            { role: "user", content: userPrompt }
-          ],
-          temperature: 0.4
-        })
-      });
-
-      const rawText = await res.text();
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (e) {
-        throw new Error(`Groq رد بصفحة HTML بدلاً من JSON (تأكد أن مفتاح Groq يبدأ بـ gsk_).`);
-      }
-
-      if (!res.ok) throw new Error(data.error?.message || "Groq API Error");
-      return data.choices[0].message.content;
-    }
-
-    function appendMessage(role, content) {
-      const container = document.getElementById("chatMessages");
-      const id = "msg-" + Date.now() + Math.random().toString(36).substring(2, 6);
-      const div = document.createElement("div");
-      div.id = id;
-
-      if (role === "user") {
-        div.className = "bg-blue-600/20 border border-blue-500/40 rounded-2xl p-3.5 mr-auto max-w-2xl text-white";
-        div.innerHTML = `<div class="text-[11px] font-bold text-blue-400 mb-1"><i class="fa-solid fa-user-tie ml-1"></i>أمر المهندس أحمد سمير:</div><div>${content}</div>`;
-      } else {
-        div.className = "bg-slate-800/80 border border-slate-700 rounded-2xl p-4 max-w-4xl text-slate-100 space-y-2 overflow-x-auto";
-        div.innerHTML = marked.parse(content);
-      }
-
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-      return id;
-    }
-
-    function updateMessage(id, markdownContent, isSuccess = true) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const headerHtml = isSuccess
-        ? `<div class="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-2 text-xs text-emerald-400 font-bold">
-             <span><i class="fa-solid fa-check-double ml-1"></i> تم تنفيذ الأمر بنجاح</span>
-             <button onclick="switchDashboard('webstudio')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[11px]">
-               <i class="fa-solid fa-eye ml-1"></i> فتح في استوديو المعاينة
-             </button>
-           </div>`
-        : `<div class="border-b border-red-500/30 pb-1.5 mb-2 text-xs text-red-400 font-bold">
-             <i class="fa-solid fa-triangle-exclamation ml-1"></i> تنبيه في الاتصال
-           </div>`;
-
-      el.innerHTML = `${headerHtml}<div class="prose prose-invert max-w-none text-xs md:text-sm leading-relaxed">${marked.parse(markdownContent)}</div>`;
-    }
-
-    function clearChat() {
-      chatHistory = [];
-      document.getElementById("chatMessages").innerHTML = "";
-    }
-
-    function extractAndAutoPreviewCode(markdown) {
-      const htmlMatch = markdown.match(/```html\s*([\s\S]*?)```/i);
-      const pyMatch   = markdown.match(/```python\s*([\s\S]*?)```/i);
-
-      if (htmlMatch && htmlMatch[1]) {
-        document.getElementById("codeEditor").value = htmlMatch[1].trim();
-        runLivePreview();
-        switchDashboard("webstudio");
-      } else if (pyMatch && pyMatch[1]) {
-        document.getElementById("pythonCode").value = pyMatch[1].trim();
-      }
-    }
-
-    function runLivePreview() {
-      const code = document.getElementById("codeEditor").value;
-      document.getElementById("livePreviewFrame").srcdoc = code;
-    }
-
-    function openPreviewFullscreen() {
-      const code = document.getElementById("codeEditor").value;
-      const win = window.open("", "_blank");
-      win.document.open();
-      win.document.write(code);
-      win.document.close();
-    }
-
-    function copyEditorCode() {
-      navigator.clipboard.writeText(document.getElementById("codeEditor").value);
-      alert("تم نسخ الكود بالكامل!");
-    }
-
-    function downloadCodeFile() {
-      const blob = new Blob([document.getElementById("codeEditor").value], { type: "text/html" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "geodev_project.html";
-      a.click();
-    }
-
-    async function generateWebFromStudio() {
-      const req = document.getElementById("webPromptInput").value.trim();
-      if (!req) return;
-      const currentCode = document.getElementById("codeEditor").value;
-      const fullPrompt = `صمم أو عدل على كود الموقع التالي بناءً على هذا الطلب: (${req}). أرجع الكود الكامل فقط داخل بلوك \`\`\`html بدون أي اختصار:\n\nالكود الحالي:\n${currentCode}`;
-      switchDashboard("overview");
-      await sendMessage(fullPrompt);
-    }
-
-    function loadWebTemplate(type) {
-      if (!type) return;
-      const templates = {
-        gis_portal: `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script>
-<link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)"/>
-<script src="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.js](https://unpkg.com/leaflet@1.9.4/dist/leaflet.js)"><\/script>
-</head>
-<body class="bg-slate-900 text-white font-sans p-4">
-  <div class="flex justify-between items-center mb-3 bg-slate-800 p-3 rounded-xl">
-    <h1 class="font-bold text-lg text-blue-400">بوابة المنيا المكانية الذكية (Web GIS)</h1>
-    <span class="text-xs bg-emerald-600 px-3 py-1 rounded-full">معاينة حية</span>
-  </div>
-  <div id="map" style="height: 360px; border-radius: 12px;"></div>
-  <script>
-    const map = L.map('map').setView([28.1099, 30.7503], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    L.marker([28.1099, 30.7503]).addTo(map).bindPopup('<b>محافظة المنيا</b><br>نقطة تحكم مساحية رئيسية').openPopup();
-  <\/script>
-</body>
-</html>`,
-        real_estate: `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head><meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script></head>
-<body class="bg-slate-950 text-white p-6">
-  <header class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-    <h1 class="text-2xl font-black text-amber-400">المستشار العقاري والمساحي</h1>
-    <button class="bg-amber-500 text-black font-bold px-4 py-2 rounded-lg text-sm">إضافة عقار أو رفع مساحي</button>
-  </header>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-      <h2 class="font-bold text-lg">أرض مسجلة بمدينة المنيا الجديدة</h2>
-      <p class="text-slate-400 text-sm mt-1">المساحة: 450 م² | مرفوعة بإحداثيات UTM دقيقة</p>
-      <div class="mt-4 text-emerald-400 font-bold">السعر: 2,400,000 ج.م</div>
+/* ===== GIS Cards ===== */
+const GIS_TOPICS=[
+  {icon:"🌍",title:"الجغرافيا الطبيعية",items:["المناخ والأنواع المناخية","التضاريس والظواهر الجيومورفولوجية","التربة وأنواعها","المياه السطحية والجوفية","الغطاء النباتي والحيواني","الأخطار الطبيعية"]},
+  {icon:"👥",title:"الجغرافيا البشرية",items:["السكان والتوزيع","الهجرة والتحضر","العمران والمدن","الثقافات واللغات","الديانات"]},
+  {icon:"💼",title:"الجغرافيا الاقتصادية",items:["الزراعة وأنماطها","الصناعة والمواقع الصناعية","التعدين والطاقة","السياحة","التجارة والنقل"]},
+  {icon:"🗺️",title:"نظم المعلومات الجغرافية",items:["مكونات GIS","أنواع البيانات (Vector/Raster)","الإسقاطات ونظم الإحداثيات","ArcGIS Pro","ArcGIS Online","QGIS","PostGIS","التحليل المكاني"]},
+  {icon:"🛰️",title:"الاستشعار عن بعد",items:["مبادئ الاستشعار","Sentinel-2","Landsat","Google Earth Engine","التصنيف","NDVI والمؤشرات"]},
+  {icon:"📊",title:"التحليل المكاني",items:["Buffer / Overlay","Interpolation (IDW/Kriging)","Network Analysis","Spatial Statistics","Cost Distance","3D Analysis"]}
+];
+function renderGisCards(){
+  if(!$("gisCards"))return;
+  $("gisCards").innerHTML=GIS_TOPICS.map(g=>`
+    <div class="card">
+      <h3>${g.icon} ${g.title}</h3>
+      <div class="chips">
+        ${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}
+      </div>
     </div>
-  </div>
-</body>
-</html>`,
-        survey_calc: `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head><meta charset="UTF-8"><script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"><\/script></head>
-<body class="bg-slate-900 text-white p-6">
-  <h2 class="text-xl font-bold text-blue-400 mb-4">حاسبة الميزانية المساحية (Leveling HI Method)</h2>
-  <div class="bg-slate-800 p-4 rounded-xl space-y-3">
-    <input id="bm" type="number" placeholder="منسوب الروبير (BM)" value="100.00" class="w-full p-2 rounded bg-slate-950">
-    <input id="bs" type="number" placeholder="قراءة المؤخرة (BS)" value="1.450" class="w-full p-2 rounded bg-slate-950">
-    <input id="fs" type="number" placeholder="قراءة المقدمة (FS)" value="2.120" class="w-full p-2 rounded bg-slate-950">
-    <button onclick="calc()" class="w-full bg-blue-600 py-2 rounded font-bold">احسب منسوب النقطة</button>
-    <div id="res" class="text-emerald-400 font-bold pt-2"></div>
-  </div>
-  <script>
-    function calc(){
-      const hi = parseFloat(bm.value) + parseFloat(bs.value);
-      const rl = hi - parseFloat(fs.value);
-      res.innerText = 'منسوب سطح الميزان (MSM) = ' + hi.toFixed(3) + ' م | منسوب النقطة (RL) = ' + rl.toFixed(3) + ' م';
+  `).join("");
+}
+function askGis(topic,category){
+  go('gis');
+  $("gisInput").value=`اشرح لي بالتفصيل: ${topic} (ضمن ${category})`;
+  gisSend();
+}
+
+/* ===== Admin ===== */
+function adminLogin(){
+  if($("adminPw").value===ADMIN_PW){
+    adminAuthed=true;
+    $("adminGate").style.display="none";
+    $("adminPanel").style.display="block";
+    adminLoad();
+    toast("✅ أهلاً في لوحة الأدمن","success");
+  }else toast("❌ كلمة سر خاطئة","error");
+}
+function adminLock(){
+  adminAuthed=false;
+  $("adminGate").style.display="block";
+  $("adminPanel").style.display="none";
+  $("adminPw").value="";
+}
+function adminLoad(){
+  $("adminSys").value=SYS;
+  $("adminDes").value=DES;
+  $("adminMaxTokens").value=localStorage.getItem('gd_max_tokens')||'8000';
+  const vars=['bg','cd','ln','bl','gr','am','mt','tx'];
+  const curr=getComputedStyle(document.documentElement);
+  $("themeEditor").innerHTML=vars.map(v=>`
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="flex:1" class="c">--${v}</label>
+      <input type="color" id="th_${v}" value="${curr.getPropertyValue('--'+v).trim()||'#000000'}" style="width:60px;height:36px;padding:2px;background:transparent;border:1px solid var(--ln);border-radius:6px">
+    </div>
+  `).join("");
+}
+function adminSaveSys(){SYS=$("adminSys").value;localStorage.setItem('gd_sys',SYS);toast("✅ تم حفظ SYS","success")}
+function adminSaveDes(){DES=$("adminDes").value;localStorage.setItem('gd_des',DES);toast("✅ تم حفظ DES","success")}
+function adminSaveTheme(){
+  const t={};
+  ['bg','cd','ln','bl','gr','am','mt','tx'].forEach(v=>{t[v]=$("th_"+v).value});
+  Object.entries(t).forEach(([k,v])=>document.documentElement.style.setProperty('--'+k,v));
+  localStorage.setItem('gd_theme',JSON.stringify(t));
+  toast("✅ تم حفظ الثيم","success");
+}
+function adminExport(){
+  const data={sys:SYS,des:DES,theme:JSON.parse(localStorage.getItem('gd_theme')||'null'),ai:getCfg(),maxTokens:localStorage.getItem('gd_max_tokens')};
+  dlText(JSON.stringify(data,null,2),'geodev-admin-'+Date.now()+'.json');
+  toast("⬇️ تم التصدير","success");
+}
+async function adminImportFile(f){
+  if(!f)return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(d.sys){SYS=d.sys;$("adminSys").value=d.sys;localStorage.setItem('gd_sys',d.sys)}
+    if(d.des){DES=d.des;$("adminDes").value=d.des;localStorage.setItem('gd_des',d.des)}
+    if(d.theme){Object.entries(d.theme).forEach(([k,v])=>document.documentElement.style.setProperty('--'+k,v));localStorage.setItem('gd_theme',JSON.stringify(d.theme))}
+    if(d.ai)setCfg(d.ai);
+      if(d.maxTokens)localStorage.setItem('gd_max_tokens',d.maxTokens);
+    toast("✅ تم الاستيراد بنجاح","success");
+  }catch(e){toast("❌ JSON غير صالح: "+e.message,"error")}
+}
+
+/* ===== MAP / SURVEY ===== */
+function initMap(){
+  if(map) return;
+  map=L.map('map').setView([28.1099,30.7503],10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:''}).addTo(map);
+  grp=L.featureGroup().addTo(map);
+  map.on('click',e=>addPt(e.latlng.lat,e.latlng.lng));
+  setTimeout(()=>map.invalidateSize(),200);
+}
+function addPt(lat,lng){pts.push([lat,lng]);drawMap()}
+function delPt(i){pts.splice(i,1);drawMap()}
+function drawMap(){
+  if(!grp) return;
+  grp.clearLayers();
+  pts.forEach((p,i)=>{
+    L.circleMarker(p,{radius:6,color:'#3b82f6',fillColor:'#3b82f6',fillOpacity:.85,weight:2})
+      .bindPopup(`<b>نقطة #${i+1}</b><br>Lat: ${p[0].toFixed(6)}<br>Lng: ${p[1].toFixed(6)}`).addTo(grp);
+  });
+  if(pts.length>1) L.polyline(pts,{color:'#10b981',weight:2,dashArray:'6,4'}).addTo(grp);
+  if(pts.length>2) L.polygon(pts,{color:'#f59e0b',fillColor:'#f59e0b',fillOpacity:.15,weight:2}).addTo(grp);
+  updateStats();updateTable();
+}
+function updateStats(){
+  $("pc").textContent=pts.length;
+  let len=0,peri=0,area=0;
+  if(pts.length>1){
+    for(let i=1;i<pts.length;i++){
+      len+=turf.distance(turf.point([pts[i-1][1],pts[i-1][0]]),turf.point([pts[i][1],pts[i][0]]),{units:'meters'});
     }
-  <\/script>
-</body>
-</html>`
-      };
-      document.getElementById("codeEditor").value = templates[type];
-      runLivePreview();
-    }
-
-    function initGISMap() {
-      map = L.map("gisMap").setView([28.1099, 30.7503], 13);
-      const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "OSM" });
-      const sat = L.tileLayer("[https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/){z}/{y}/{x}", { attribution: "Esri Satellite" });
-      sat.addTo(map);
-      L.control.layers({ "قمر صناعي (Esri)": sat, "خريطة شوارع (OSM)": osm }).addTo(map);
-
-      map.on("click", (e) => addSurveyPoint(e.latlng.lat, e.latlng.lng));
-    }
-
-    function addSurveyPoint(lat, lng) {
-      drawnPoints.push([lng, lat]);
-      L.circleMarker([lat, lng], { radius: 6, color: "#3b82f6", fillColor: "#60a5fa", fillOpacity: 1 })
-        .addTo(map)
-        .bindPopup(`Pt #${drawnPoints.length}<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`);
-
-      document.getElementById("convLat").value = lat.toFixed(6);
-      document.getElementById("convLng").value = lng.toFixed(6);
-      convertCoordinates(false);
-      updateSpatialCalculations();
-    }
-
-    function updateSpatialCalculations() {
-      document.getElementById("ptsCount").textContent = drawnPoints.length;
-      const latlngs = drawnPoints.map(p => [p[1], p[0]]);
-
-      if (polylineLayer) map.removeLayer(polylineLayer);
-      if (polygonLayer) map.removeLayer(polygonLayer);
-
-      if (drawnPoints.length >= 2) {
-        polylineLayer = L.polyline(latlngs, { color: "#10b981", weight: 3 }).addTo(map);
-        const line = turf.lineString(drawnPoints);
-        const lengthMeters = turf.length(line, { units: "kilometers" }) * 1000;
-        document.getElementById("pathLength").textContent = `${lengthMeters.toFixed(2)} m`;
-      }
-
-      if (drawnPoints.length >= 3) {
-        polygonLayer = L.polygon(latlngs, { color: "#f59e0b", fillOpacity: 0.25 }).addTo(map);
-        const closedPts = [...drawnPoints, drawnPoints[0]];
-        const poly = turf.polygon([closedPts]);
-        const areaSqm = turf.area(poly);
-        const feddan = areaSqm / 4200.83;
-        document.getElementById("polyArea").textContent = `${areaSqm.toFixed(1)} م² (${feddan.toFixed(2)} فدان)`;
-      }
-    }
-
-    function convertCoordinates(panMap = true) {
-      const lat = parseFloat(document.getElementById("convLat").value);
-      const lng = parseFloat(document.getElementById("convLng").value);
-      if (isNaN(lat) || isNaN(lng)) return;
-
-      const utm = proj4("EPSG:4326", "EPSG:32636", [lng, lat]);
-      const etm = proj4("EPSG:4326", "EPSG:22992", [lng, lat]);
-
-      document.getElementById("utmResult").textContent = `E: ${utm[0].toFixed(2)} m | N: ${utm[1].toFixed(2)} m`;
-      document.getElementById("etmResult").textContent = `E: ${etm[0].toFixed(2)} m | N: ${etm[1].toFixed(2)} m`;
-
-      if (panMap && map) {
-        map.setView([lat, lng], 16);
-        L.marker([lat, lng]).addTo(map);
-      }
-    }
-
-    function calcCogo() {
-      const e1 = parseFloat(document.getElementById("e1").value);
-      const n1 = parseFloat(document.getElementById("n1").value);
-      const e2 = parseFloat(document.getElementById("e2").value);
-      const n2 = parseFloat(document.getElementById("n2").value);
-
-      const dE = e2 - e1, dN = n2 - n1;
-      const dist = Math.hypot(dE, dN);
-      const az = (Math.atan2(dE, dN) * 180 / Math.PI + 360) % 360;
-      const backAz = (az + 180) % 360;
-
-      document.getElementById("cogoResult").innerHTML = `
-        المسافة الأفقية = <b>${dist.toFixed(3)} m</b><br>
-        الانحراف الأمامي = <b>${az.toFixed(4)}°</b> | الخلفي = <b>${backAz.toFixed(4)}°</b>
-      `;
-    }
-
-    function locateUserGPS() {
-      if (!navigator.geolocation) return alert("الـ GPS غير مدعوم");
-      navigator.geolocation.getCurrentPosition(pos => {
-        const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 17);
-        addSurveyPoint(latitude, longitude);
-      });
-    }
-
-    function exportGeoJSON() {
-      if (drawnPoints.length === 0) return alert("ارصد نقاط على الخريطة أولاً!");
-      const fc = turf.featureCollection(drawnPoints.map((pt, i) => turf.point(pt, { id: i + 1 })));
-      const blob = new Blob([JSON.stringify(fc, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "survey_points.geojson";
-      a.click();
-    }
-
-    function clearGISMap() {
-      drawnPoints = [];
-      map.eachLayer(layer => {
-        if (layer instanceof L.CircleMarker || layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Marker) {
-          map.removeLayer(layer);
+  }
+  if(pts.length>2){
+    const coords=pts.map(p=>[p[1],p[0]]);coords.push(coords[0]);
+    try{
+      const poly=turf.polygon([coords]);
+      area=turf.area(poly);
+      peri=turf.length(poly,{units:'meters'});
+    }catch(e){}
+  }
+  $("pl").textContent=len.toFixed(2)+" m";
+  $("pp").textContent=peri.toFixed(2)+" m";
+  $("pa").textContent=area.toFixed(2)+" m²";
+  if(area>0){
+    const fed=area/4200.83;
+    $("pf").style.display="block";
+    $("pf").innerHTML=`<b>المساحة:</b> ${area.toFixed(2)} m²<br><b>بالفدان:</b> ${fed.toFixed(4)} فدان<br><b>بالقيراط:</b> ${(fed*24).toFixed(2)} قيراط<br><b>بالسهم:</b> ${(fed*24*24).toFixed(0)} سهم`;
+  }else $("pf").style.display="none";
+}
+function updateTable(){
+  $("ptb").innerHTML=pts.map((p,i)=>{
+    let u={e:0,n:0};
+    try{u=utmConv(p[0],p[1])}catch(e){}
+    return `<tr><td>${i+1}</td><td>${p[0].toFixed(6)}</td><td>${p[1].toFixed(6)}</td><td>${u.e.toFixed(2)}</td><td>${u.n.toFixed(2)}</td><td><button class="r" style="padding:2px 8px" onclick="delPt(${i})">×</button></td></tr>`;
+  }).join("");
+}
+function gps(){
+  if(!navigator.geolocation) return toast("GPS غير مدعوم في المتصفح","warn");
+  if(!map) initMap();
+  toast("📍 جاري تحديد موقعك...","info");
+  navigator.geolocation.getCurrentPosition(p=>{
+    map.setView([p.coords.latitude,p.coords.longitude],17);
+    addPt(p.coords.latitude,p.coords.longitude);
+    toast("✅ تم تحديد موقعك","success");
+  },e=>toast("❌ "+e.message,"error"),{enableHighAccuracy:true,timeout:15000});
+}
+function undo(){if(pts.length){pts.pop();drawMap();toast("↩ تم التراجع","info")}}
+function clearMap(){if(pts.length&&confirm("هل تريد مسح كل النقاط؟")){pts=[];drawMap();toast("تم المسح","info")}}
+async function impF(f){
+  if(!f) return;
+  try{
+    const txt=await f.text();
+    if(/\.(geojson|json)$/i.test(f.name)){
+      const gj=JSON.parse(txt);
+      const coords=[];
+      const walk=c=>{if(!c)return;if(typeof c[0]==='number')coords.push(c);else if(Array.isArray(c))c.forEach(walk)};
+      if(gj.type==='FeatureCollection') gj.features.forEach(ft=>ft.geometry&&walk(ft.geometry.coordinates));
+      else if(gj.geometry) walk(gj.geometry.coordinates);
+      else walk(gj.coordinates);
+      coords.forEach(c=>pts.push([c[1],c[0]]));
+      drawMap();
+      toast(`✅ تم استيراد ${coords.length} نقطة`,"success");
+    }else if(/\.(csv|txt)$/i.test(f.name)){
+      const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+      let n=0;
+      lines.forEach(l=>{
+        const c=l.split(/[,;\t]+/).map(x=>x.trim());
+        if(c.length>=2){
+          const lat=parseFloat(c[0]),lng=parseFloat(c[1]);
+          if(!isNaN(lat)&&!isNaN(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180){pts.push([lat,lng]);n++}
         }
       });
-      document.getElementById("ptsCount").textContent = "0";
-      document.getElementById("pathLength").textContent = "0.00 m";
-      document.getElementById("polyArea").textContent = "0 m²";
-    }
+      drawMap();
+      toast(`✅ تم استيراد ${n} نقطة`,"success");
+    }else toast("صيغة غير مدعومة","warn");
+  }catch(e){toast("❌ "+e.message,"error")}
+}
+function exportGJ(){
+  if(!pts.length) return toast("لا توجد نقاط","warn");
+  const gj={type:"FeatureCollection",features:[]};
+  pts.forEach((p,i)=>gj.features.push({type:"Feature",geometry:{type:"Point",coordinates:[p[1],p[0]]},properties:{id:i+1}}));
+  if(pts.length>1){
+    const lc=pts.map(p=>[p[1],p[0]]);
+    gj.features.push({type:"Feature",geometry:{type:"LineString",coordinates:lc},properties:{length_m:turf.length(turf.lineString(lc),{units:'meters'})}});
+  }
+  if(pts.length>2){
+    const pc=pts.map(p=>[p[1],p[0]]);pc.push(pc[0]);
+    gj.features.push({type:"Feature",geometry:{type:"Polygon",coordinates:[pc]},properties:{area_m2:turf.area(turf.polygon([pc]))}});
+  }
+  dlText(JSON.stringify(gj,null,2),'survey-'+Date.now()+'.geojson');
+  toast("✅ تم التصدير","success");
+}
 
-    async function runPythonInBrowser() {
-      const out = document.getElementById("pythonOutput");
-      const code = document.getElementById("pythonCode").value;
-      out.textContent = "جاري تشغيل مفسر بايثون المساحي...";
+/* ===== COORDINATES ===== */
+function utmConv(lat,lng){
+  const zone=Math.floor((lng+180)/6)+1;
+  const proj=`+proj=utm +zone=${zone} +datum=WGS84 +units=m +no_defs`;
+  const [e,n]=proj4('WGS84',proj,[lng,lat]);
+  return{e,n,zone};
+}
+function conv(){
+  const lat=parseFloat($("lat").value), lng=parseFloat($("lng").value);
+  if(isNaN(lat)||isNaN(lng)) return toast("أدخل إحداثيات صحيحة","warn");
+  try{
+    const u=utmConv(lat,lng);
+    $("utl").textContent=`UTM Zone ${u.zone}${lat>=0?'N':'S'}`;
+    $("utm").innerHTML=`E: ${u.e.toFixed(3)}<br>N: ${u.n.toFixed(3)}`;
+  }catch(e){$("utm").textContent="خطأ"}
+  try{
+    const [e2,n2]=proj4('WGS84','EPSG:22992',[lng,lat]);
+    $("etm").innerHTML=`E: ${e2.toFixed(3)}<br>N: ${n2.toFixed(3)}`;
+  }catch(e){$("etm").textContent="خطأ في التحويل لـ Red Belt"}
+}
+function cogo(){
+  const e1=parseFloat($("e1").value),n1=parseFloat($("n1").value);
+  const e2=parseFloat($("e2").value),n2=parseFloat($("n2").value);
+  if([e1,n1,e2,n2].some(x=>isNaN(x))) return toast("أدخل كل القيم","warn");
+  const de=e2-e1,dn=n2-n1;
+  const dist=Math.hypot(de,dn);
+  let az=Math.atan2(de,dn)*180/Math.PI;
+  if(az<0)az+=360;
+  let rb;
+  if(az<90)rb=`N${az.toFixed(2)}°E`;else if(az<180)rb=`S${(180-az).toFixed(2)}°E`;
+  else if(az<270)rb=`S${(az-180).toFixed(2)}°W`;else rb=`N${(360-az).toFixed(2)}°W`;
+  $("cg").innerHTML=`<b>المسافة الأفقية:</b> ${dist.toFixed(3)} m<br><b>الانحراف (Azimuth):</b> ${az.toFixed(4)}°<br><b>Bearing:</b> ${rb}<br><b>ΔE:</b> ${de.toFixed(3)} | <b>ΔN:</b> ${dn.toFixed(3)}`;
+}
 
-      try {
-        if (!pyodideInstance) {
-          const script = document.createElement("script");
-          script.src = "[https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js](https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js)";
-          document.head.appendChild(script);
-          await new Promise(res => script.onload = res);
-          pyodideInstance = await loadPyodide();
+/* ===== CSV → TXT ===== */
+async function csvToTxt(f){
+  if(!f) return;
+  try{
+    const txt=await f.text();
+    const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+    let out="P,E,N,Z,Code\n";
+    let n=0;
+    lines.forEach(l=>{
+      const c=l.split(/[,;\t]+/).map(x=>x.trim());
+      if(c.length<3) return;
+      const p=c[0]||String(n+1),e=c[1],nn=c[2],z=c[3]||"0",code=c[4]||"";
+      if(isNaN(parseFloat(e))||isNaN(parseFloat(nn))) return;
+      out+=`${p},${e},${nn},${z},${code}\n`;n++;
+    });
+    dlText(out,f.name.replace(/\.csv$/i,'')+'.txt');
+    toast(`✅ تم تحويل ${n} نقطة`,"success");
+  }catch(e){toast("❌ "+e.message,"error")}
+}
+
+/* ===== LAB ===== */
+function swapLang(){
+  const l=$("pl2").value;
+  if(l==='js'){
+    $("py").value=`// JS — GeoDev Lab
+console.log("Hello GeoDev");
+const pts=[[30.7,28.1],[31.2,28.5],[31.5,28.9]];
+pts.forEach((p,i)=>console.log("Point",i+1,p));
+let total=0;
+for(let i=1;i<pts.length;i++){
+  const dx=(pts[i][0]-pts[i-1][0])*111320*Math.cos(pts[i][1]*Math.PI/180);
+  const dy=(pts[i][1]-pts[i-1][1])*110540;
+  total+=Math.hypot(dx,dy);
+}
+console.log("Total length (m):",total.toFixed(2));`;
+  }else{
+    $("py").value=`# Python — GeoDev Lab
+print("Hello GeoDev")
+import math
+pts=[(30.7,28.1),(31.2,28.5),(31.5,28.9)]
+total=0
+for i in range(1,len(pts)):
+    dx=(pts[i][0]-pts[i-1][0])*111320*math.cos(math.radians(pts[i][1]))
+    dy=(pts[i][1]-pts[i-1][1])*110540
+    total+=math.hypot(dx,dy)
+print(f"Total length (m): {total:.2f}")
+print(f"Sqrt(2) = {math.sqrt(2):.6f}")`;
+  }
+}
+async function runPy(){
+  const l=$("pl2").value, code=$("py").value, out=$("po");
+  out.textContent="⏳...";
+  if(l==='js'){
+    const logs=[];
+    const orig=console.log;
+    console.log=(...a)=>{logs.push(a.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(' '));orig(...a)};
+    try{const r=eval(code);if(r!==undefined)logs.push("→ "+String(r));}
+    catch(e){logs.push("❌ "+e.message)}
+    finally{console.log=orig}
+    out.textContent=logs.join('\n')||"✅ لا مخرجات";
+  }else{
+    try{
+      if(!pyo){
+        out.textContent="⏳ تحميل Pyodide (قد يأخذ 15-30 ثانية)...";
+        if(!window.loadPyodide){
+          await new Promise((res,rej)=>{
+            const s=document.createElement('script');
+            s.src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js";
+            s.onload=res;s.onerror=()=>rej(new Error("فشل تحميل Pyodide"));
+            document.head.appendChild(s);
+          });
         }
-        pyodideInstance.runPython(`import sys, io\nsys.stdout = io.StringIO()`);
-        await pyodideInstance.runPythonAsync(code);
-        out.textContent = pyodideInstance.runPython("sys.stdout.getvalue()") || "تم التنفيذ بنجاح.";
-      } catch (err) {
-        out.textContent = "❌ خطأ في كود Python:\n" + err.message;
+        pyo=await loadPyodide();
       }
-    }
+      out.textContent="";
+      pyo.setStdout({batched:s=>{out.textContent+=s+"\n"}});
+      pyo.setStderr({batched:s=>{out.textContent+="⚠️ "+s+"\n"}});
+      await pyo.runPythonAsync(code);
+      if(!out.textContent) out.textContent="✅ تم التنفيذ (بدون مخرجات)";
+    }catch(e){out.textContent="❌ "+(e.message||e)}
+  }
+}
 
-    function startVoiceRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return alert("متصفحك لا يدعم الأوامر الصوتية.");
-      const rec = new SpeechRecognition();
-      rec.lang = "ar-EG";
-      const btn = document.getElementById("voiceBtn");
-      btn.classList.add("bg-red-600", "text-white", "animate-pulse");
-      rec.onresult = (e) => {
-        document.getElementById("userInput").value = e.results[0][0].transcript;
-        sendMessage();
-      };
-      rec.onend = () => btn.classList.remove("bg-red-600", "text-white", "animate-pulse");
-      rec.start();
+/* ===== VOICE ===== */
+function voice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return toast("التعرف على الصوت غير مدعوم","warn");
+  const r=new SR();
+  r.lang='ar-EG';r.interimResults=false;r.continuous=false;
+  r.onstart=()=>{$("mic").style.background="var(--r)";toast("🎤 جاري الاستماع...","info")};
+  r.onresult=e=>{
+    const t=e.results[0][0].transcript;
+    $("ui").value+=($("ui").value?" ":"")+t;
+  };
+  r.onerror=e=>toast("❌ "+e.error,"error");
+  r.onend=()=>{$("mic").style.background="";};
+  try{r.start()}catch(e){toast("❌ "+e.message,"error")}
+}
+
+/* ===== CHIPS INIT ===== */
+function initChips(){
+  if($("ex")) $("ex").innerHTML=EX.map(([t,q])=>`<button class="chip" onclick='qp(${JSON.stringify(q)})'>${t}</button>`).join("");
+  if($("chips")){
+    const techs=["HTML","CSS","JS","React","Vue","Tailwind","PHP","Node","Python","Leaflet","Mapbox","GSAP"];
+    $("chips").innerHTML=techs.map(t=>`<label class="chip"><input type="checkbox" value="${t}">${t}</label>`).join("");
+  }
+}
+
+/* ===== PATCH openTool to init map lazily ===== */
+const _origOpenTool=window.openTool;
+window.openTool=function(id){
+  $(`modal-${id}`).classList.add("on");
+  if(id==='map'){setTimeout(()=>{if(!map)initMap();else map.invalidateSize();},200);}
+  if(id==='shapes'&&!$("shapeInputs").innerHTML) shapeTypeChanged();
+  if(id==='triangle') triInit();
+};
+
+/* ===== INIT ===== */
+(function init(){
+  try{gate()}catch(e){}
+  try{loadTheme()}catch(e){}
+  const s=localStorage.getItem('gd_sys'); if(s) SYS=s;
+  const d=localStorage.getItem('gd_des'); if(d) DES=d;
+  try{ld();hl()}catch(e){}
+  try{renderSurveyGrid()}catch(e){}
+  try{initChips()}catch(e){}
+  if($("chat")&&!$("chat").children.length) addMsg("a",WEL);
+  if($("py")&&!$("py").value) swapLang();
+  try{
+    const auto=JSON.parse(localStorage.getItem("gd_autosave")||"null");
+    if(auto&&auto.files&&auto.files.length&&Date.now()-auto.at<86400000*7){
+      F=auto.files;cu=auto.idx||0;
+      if(F[cu]){$("code").value=F[cu].c;$("fn").textContent=F[cu].n;}
+      tabs();
     }
-  </script>
+  }catch(e){}
+  window.addEventListener('resize',()=>{if(map)setTimeout(()=>map.invalidateSize(),120)});
+})();
+</script>
 </body>
 </html>
+```
