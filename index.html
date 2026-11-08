@@ -202,6 +202,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
   a.leaflet-control-zoom-in, a.leaflet-control-zoom-out{width:42px !important;height:42px !important;line-height:42px !important;font-size:22px !important}
 }
 </style>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
 <div id="gate"><div class="card gt">
@@ -1761,6 +1762,16 @@ window.openTool=function(id){
   }catch(e){}
   window.addEventListener('resize',()=>{if(map)setTimeout(()=>map.invalidateSize(),120)});
 })();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW registered!'))
+        .catch(err => console.log('SW registration failed:', err));
+    });
+  }
 </script>
 </body>
 </html>
