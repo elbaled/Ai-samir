@@ -21,13 +21,15 @@
 }
 *{box-sizing:border-box;font-family:Cairo,sans-serif;-webkit-tap-highlight-color:transparent}
 html{padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--tx);font-size:15px;padding-bottom:72px;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--tx);font-size:15px;padding-bottom:calc(70px + env(safe-area-inset-bottom));overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--cd);z-index:40}
 option{background:var(--cd);color:var(--tx)}input::placeholder,textarea::placeholder{color:var(--mt);opacity:1}
 .c,code,pre{font-family:'Fira Code',monospace;direction:ltr;text-align:left}
 .mt{color:var(--mt);font-size:12px}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--cd);border-bottom:1px solid var(--ln);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-header h1{margin:0;font-size:16px;font-weight:900;background:linear-gradient(90deg,#fff,var(--bl));-webkit-background-clip:text;color:transparent}
+
+/* إخفاء الهيدر بناءً على طلبك */
+header{display:none !important;}
+
 main{padding:12px;max-width:1200px;margin:auto}
 .sec{display:none}.sec.on{display:block}
 .card{background:var(--cd);border:1px solid var(--ln);border-radius:10px;padding:12px;margin-bottom:12px;color:var(--tx)}
@@ -44,6 +46,7 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;justify-conte
 nav button{background:none;color:var(--mt);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;padding:6px 4px;border-radius:8px}
 nav button.on{background:linear-gradient(135deg,var(--bl),var(--cd));color:#fff}
 @media(min-width:1024px){body{padding:0 220px 0 0}nav{top:0;bottom:auto;left:auto;width:220px;flex-direction:column;justify-content:flex-start;gap:6px;border-top:0;border-left:1px solid var(--ln);padding:76px 10px}nav button{flex-direction:row;gap:10px;font-size:13px;padding:11px}header{margin-right:-220px;padding-right:234px}}
+
 #chat,#gisChatBox{height:55vh;overflow-y:auto;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:inset 0 0 10px rgba(0,0,0,0.5)}
 .m{padding:12px 16px;border-radius:12px;margin-bottom:12px;overflow-x:auto;line-height:1.8;font-size:14px}
 .m.u{background:var(--bl);border:1px solid var(--bl);color:#fff;border-bottom-left-radius:2px}
@@ -201,6 +204,101 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
   .chip,.chips label{min-height:32px}
   a.leaflet-control-zoom-in, a.leaflet-control-zoom-out{width:42px !important;height:42px !important;line-height:42px !important;font-size:22px !important}
 }
+
+/* ===== تصميم صندوق الإدخال (Gemini Style) ===== */
+.input-area-wrapper {
+  position: fixed;
+  bottom: calc(65px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  padding: 10px 16px;
+  background: linear-gradient(0deg, var(--bg) 70%, transparent);
+  z-index: 20;
+  max-width: 800px;
+  margin: 0 auto;
+}
+@media(min-width:1024px){ .input-area-wrapper { right: 220px; bottom: 10px; } }
+
+.gemini-input-box {
+  background: var(--cd);
+  border-radius: 24px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.gemini-input-box:focus-within { border-color: #555; }
+
+.gemini-input-box textarea {
+  background: transparent;
+  border: none;
+  color: var(--tx);
+  font-size: 16px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  max-height: 120px;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+}
+
+.gemini-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gemini-left, .gemini-right { display: flex; align-items: center; gap: 10px; }
+
+.icon-btn { background: transparent; border: none; color: #e3e3e3; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 20px; padding: 0;}
+.icon-btn:hover { background: #333; }
+
+.pill-btn {
+  background: transparent;
+  border: 1px solid #444746;
+  border-radius: 20px;
+  color: #e3e3e3;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pill-btn:hover { background: #333; }
+.pill-btn.active { background: #004a77; color: #a8c7fa; border-color: transparent; }
+
+.send-btn { background: var(--bl); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.2s; }
+.send-btn.active { opacity: 1; pointer-events: auto; }
+
+/* القائمة المنبثقة (+) */
+.extra-menu { position: absolute; bottom: 120px; left: 16px; background: #2a2b2f; border: 1px solid #444; border-radius: 16px; padding: 8px; width: 240px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none; flex-direction: column; gap: 4px; z-index: 50; }
+.extra-menu.on { display: flex; }
+.extra-menu button { text-align: right; background: transparent; color: var(--tx); padding: 12px; border-radius: 10px; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; }
+.extra-menu button:hover { background: #3f4045; }
+
+/* أنيميشن التفكير */
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--mt); font-size: 14px; font-weight: bold; }
+.spinner { width: 20px; height: 20px; border: 3px solid var(--ln); border-top: 3px solid var(--bl); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* خيارات الصورة (3 نقط) */
+.img-wrap { position: relative; display: inline-block; margin-top: 10px; max-width: 100%; }
+.img-wrap img { max-width: 100%; border-radius: 12px; display: block; }
+.img-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+.img-dropdown { position: absolute; top: 50px; right: 10px; background: var(--cd); border: 1px solid var(--ln); border-radius: 10px; padding: 5px; display: none; flex-direction: column; gap: 2px; z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.6); width: 150px; }
+.img-dropdown.show { display: flex; }
+.img-dropdown a { color: var(--tx); text-decoration: none; padding: 10px; font-size: 13px; border-radius: 6px; text-align: right; display: block; }
+.img-dropdown a:hover { background: var(--bg); color: var(--bl); }
+
+/* أيقونات التفاعل تحت الرد */
+.msg-actions { display: flex; gap: 16px; margin-top: 12px; align-items: center; }
+.msg-actions svg { width: 20px; height: 20px; fill: #9aa0a6; cursor: pointer; transition: fill 0.2s; }
+.msg-actions svg:hover { fill: #e3e3e3; }
 </style>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -264,16 +362,12 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <button class="k" onclick="qp('اشرح لي التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود')">🌍 جغرافيا</button>
 </div>
 <div class="card">
-<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>🤖 المساعد الذكي (عام — موسوعة شاملة)</b><span class="row"><button class="k" onclick="hp()">🕘 السجل</button><button class="k" onclick="newChat()">+ محادثة جديدة</button></span></div>
+<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>🤖 المساعد الذكي (عام — موسوعة شاملة)</b><span class="row"><button class="k" onclick="hp()">🕘 السجل</button><button class="k" onclick="newChat()">+ محادثة جديدة</button><button class="r" onclick="logout()">خروج</button></span></div>
 <div id="tokstat" class="mt" style="text-align:left;margin-bottom:4px">0 رسالة</div>
 <div id="hl" style="display:none;max-height:170px;overflow:auto;margin-bottom:8px"></div>
 <div id="chat"></div>
-<div id="ats" style="margin-top:6px"></div>
-<div class="row" style="flex-wrap:nowrap;margin-top:8px;align-items:flex-end">
-<button class="k" onclick="$('fl').click()" title="رفع">📎</button><input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''"><button class="k" id="mic" onclick="voice()">🎤</button>
-<textarea id="ui" rows="2" style="margin:0" placeholder="اسأل عن أي حاجة: جغرافيا، برمجة، رياضة، دين، تصميم... أو اطلب كود/صفحة (Ctrl+Enter)" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
-<button onclick="send()">نفّذ ➤</button>
-</div></div>
+<div id="ats" style="margin-top:6px; margin-bottom: 70px;"></div>
+</div>
 </section>
 
 <!-- ===== 2: البرمجة ===== -->
@@ -535,6 +629,47 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 
 </main>
 
+<!-- ===== صندوق الإدخال الجديد (Gemini Style) ===== -->
+<div class="input-area-wrapper" id="mainInputWrapper">
+  <div class="gemini-input-box">
+    <textarea id="ui" rows="1" placeholder="رسالة أو اضغط للتحدث..." oninput="toggleSendBtn()" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+    
+    <div class="gemini-actions-row">
+      <div class="gemini-left">
+        <button class="icon-btn" onclick="voice()" title="التحدث">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+        <button class="icon-btn" onclick="toggleExtraMenu()" title="إضافة">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+        
+        <div id="extraMenu" class="extra-menu">
+          <button onclick="$('fl').click();toggleExtraMenu()">📁 رفع ملف أو صورة</button>
+          <button onclick="toast('سيتم تفعيل الكاميرا هنا','info');toggleExtraMenu()">📷 الكاميرا</button>
+          <button onclick="qp('انشئ لي صورة احترافية لـ ');toggleExtraMenu()">🖼️ إنشاء صورة</button>
+          <button onclick="qp('انشئ لي فيديو ترويجي قصير عن ');toggleExtraMenu()">🎬 إنشاء فيديو</button>
+          <button onclick="qp('انشئ لي عرض تقديمي Presentation عن ');toggleExtraMenu()">📊 عرض تقديمي</button>
+        </div>
+        <input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''">
+      </div>
+      
+      <div class="gemini-right">
+        <button class="pill-btn" id="btn-search" onclick="toggleSearch(this)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+          بحث
+        </button>
+        <button class="pill-btn" id="btn-think" onclick="toggleThink(this)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.79-1.79C8.93 20.26 10.88 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/><circle cx="12" cy="12" r="3"/></svg>
+          تفكير
+        </button>
+        <button class="send-btn" id="sendBtn" onclick="send()">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <button id="fab" onclick="toggleSelfModify()" title="AI Assistant" style="position:fixed;bottom:80px;left:20px;z-index:100;border-radius:50%;width:56px;height:56px;font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,0.6);background:linear-gradient(135deg,var(--bl),#8b5cf6);color:white;display:flex;align-items:center;justify-content:center;border:2px solid #fff;cursor:pointer">✨</button>
 
 <div id="selfModModal" style="display:none;position:fixed;bottom:150px;left:20px;z-index:100;background:var(--cd);border:1px solid var(--ln);padding:16px;border-radius:16px;width:min(340px,calc(100vw - 40px));box-shadow:0 8px 32px rgba(0,0,0,0.8);">
@@ -563,39 +698,32 @@ const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const DEFAULT_AI={
   provider:'groq',
   base:'https://api.groq.com/openai/v1',
-  model:'openai/gpt-oss-120b',
+  model:'llama-3.3-70b-versatile',
   key:'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',
   backupKey:'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',
   backupModel:'openai/gpt-oss-20b'
 };
-let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصصات، بتشتغل مع م. أحمد سمير.
-شخصيتك زي ChatGPT: ودود، مباشر، دقيق، وعندك معرفة واسعة في كل المجالات.
 
-== قواعد إلزامية ==
-1. **التحية والمحادثة العادية** ("أهلا"، "إزيك"، "شكراً"، "مين إنت"، "إيه أخبارك"):
-   → رد طبيعي قصير ومفيد. **ممنوع تماماً** تطلع كود أو HTML أو صفحة.
-2. **الأسئلة العلمية/العامة** (جغرافيا، تاريخ، رياضة، طب، فيزياء، برمجة نظرية، دين، لغات...):
-   → اشرح بالتفصيل مع عناوين ونقاط وأمثلة. استخدم Markdown (tables، code inline، lists).
-3. **طلب كود/تصميم/موقع/تطبيق**:
-   → هنا بس تطلع الكود كامل في \`\`\`html / \`\`\`js / \`\`\`py جاهز للتشغيل.
-4. **لو الطلب غامض**:
-   → اسأل سؤال توضيحي واحد قبل التنفيذ (مثلاً: "عايز الكود بأي لغة؟").
+let SYS=`أنت "GeoDev AI" — المساعد الذكي المتقدم لمنصة GeoDev Studio Pro، ومطورك هو المهندس/ أحمد سمير. 
+شخصيتك مستوحاة من ChatGPT: ودود، مباشر، دقيق، تمتلك معرفة واسعة في كل المجالات، وتنفذ طلبات المستخدم باحترافية تامة.
 
-== مجالات خبرتك ==
-• الجغرافيا والجيوماتكس والمساحة (Traverse, COGO, UTM, EPSG, Civil 3D, ArcGIS, QGIS)
-• البرمجة (HTML/CSS/JS/PHP/Python/React/Node/APIs/REST/DB)
-• التصميم (UI/UX, Material 3, Design Systems, Tailwind)
-• العلوم العامة والرياضيات
-• التاريخ والجغرافيا السياسية
-• أي حاجة تانية — عندك معرفة عامة شاملة
+== قواعد الاستجابة الأساسية ==
+1. **التحية والمحادثة العادية** ("أهلاً"، "إزيك"، "شكراً"، "مين إنت"): رد طبيعي قصير ومفيد. **ممنوع تماماً** كتابة أكواد أو HTML.
+2. **الأسئلة العلمية والعامة**: اشرح بالتفصيل مع عناوين ونقاط وأمثلة باستخدام Markdown.
+3. **طلب كود برمجي (Python/JS/PHP/إلخ) أو خريطة برمجية**: اكتب الكود كاملاً 100% داخل بلوك كود Markdown، بدون أي اختصار.
+4. **طلب تصميم موقع/واجهة/تطبيق ويب**: اكتب كود HTML/CSS/JS كامل في بلوك كود.
+5. **طلب صور أو رسم (توليد الصور)**: **ممنوع كتابة كود**. استخدم صيغة الصور التالية بالظبط (مع ترجمة الوصف للإنجليزية):
+   \`![صورة توضيحية](https://image.pollinations.ai/prompt/[English_Prompt]_high_quality_4k?width=1024&height=768&nologo=true&seed=42)\`
+   واكتب جملة قصيرة قبلها مثل "تفضل، هذه الصورة التي طلبتها:".
+6. **قاعدة الخرائط المهمة جداً:** إذا طلب المستخدم خريطة كصورة، لا ترسم مجرد أشكال، بل استخدم برومبت إنجليزي دقيق جداً في رابط الصورة لضمان جودة الخريطة الحقيقية، مثلاً: \`realistic satellite topographic map of Egypt, accurate borders, Nile river, geographical features, 4k resolution\`.
+7. **قدرة الرؤية:** أنت الآن قادر على رؤية وتحليل الصور التي يرفعها المستخدم بدقة، قم بوصفها والإجابة على أسئلته بناءً عليها.
+== مجالات الخبرة ==
+- الجغرافيا، الجيوماتكس، المساحة (Traverse, COGO, UTM).
+- البرمجة والتصميم (HTML/CSS/JS/Python/React).
+- العلوم العامة والمعرفة الشاملة.
 
-== اللغة ==
-عربي افتراضي، إنجليزي لو المستخدم كتب إنجليزي.
-
-== الأسلوب ==
-- جمل قصيرة، إجابة مباشرة، ممنوع الحشو.
-- استخدم Markdown للعناوين والجداول والنقاط.
-- استخدم emoji بشكل خفيف لو مناسب.`;
+== اللغة والأسلوب ==
+عربي افتراضي، إنجليزي لو المستخدم كتب إنجليزي. استخدم Markdown دائماً.`;
 
 let DES=`== دليل التصميم الاحترافي ==
 
@@ -705,7 +833,22 @@ const EX=[
 ];
 
 let hist=[],ctl,map,grp,pts=[],pyo=null,CH=[],cid=null,AT=[],F=[],cu=0,fz=13,tm,adminAuthed=false;
+let isThinkOn = false, isSearchOn = false;
 const WEL="أهلاً م. أحمد سمير 👋<br>أنا <b>GeoDev AI</b> — مساعد ذكي عام، اسألني في أي حاجة: جغرافيا، برمجة، تصميم، رياضة، تاريخ، مساحة... أو اطلب كود/صفحة/تطبيق كامل، وأنا هعمله لك.<br><span class='mt'>جرّب: \"اشرح لي نظرية النسبية\" أو \"صمم لي موقع شركة\"</span>";
+
+function toggleSendBtn() {
+  const val = $("ui").value.trim();
+  $("sendBtn").classList.toggle("active", val.length > 0);
+}
+
+function toggleThink(btn) {
+  isThinkOn = !isThinkOn;
+  btn.classList.toggle('active', isThinkOn);
+}
+function toggleSearch(btn) {
+  isSearchOn = !isSearchOn;
+  btn.classList.toggle('active', isSearchOn);
+}
 
 function toast(msg,type='info'){
   const c={info:'var(--bl)',success:'var(--gr)',error:'#991b1b',warn:'var(--am)'}[type]||'var(--bl)';
@@ -767,7 +910,29 @@ function hp(){const h=$("hl");h.style.display=h.style.display=="none"?"block":"n
 function newChat(){hist=[];cid=null;$("chat").innerHTML="";addMsg("a",WEL)}
 function openC(id){const c=CH.find(x=>x.id==id);if(!c)return;cid=id;hist=c.h;$("chat").innerHTML="";hist.forEach(m=>addMsg(m.role=="user"?"u":"a",m.role=="user"?esc(m.s||m.content):md(m.content)));$("hl").style.display="none"}
 function delC(id){CH=CH.filter(c=>c.id!=id);if(cid==id)newChat();sv();hl()}
-async function attach(fs){for(const f of fs){if(f.type.startsWith("image/"))AT.push({n:f.name,img:f});else if(/\.(txt|js|ts|jsx|tsx|html|css|py|json|geojson|kml|gpx|csv|md|php|sql|xml|svg|ya?ml)$/i.test(f.name))AT.push({n:f.name,t:(await f.text()).slice(0,60000)});else toast('نوع غير مدعوم: '+f.name,'warn')}ats()}
+
+function toggleExtraMenu(){
+  document.getElementById('extraMenu').classList.toggle('on');
+}
+
+async function attach(fs){
+  for(const f of fs){
+    if(f.type.startsWith("image/")){
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(f);
+      });
+      AT.push({n: f.name, img: base64});
+    }
+    else if(/\.(txt|js|ts|jsx|tsx|html|css|py|json|geojson|kml|gpx|csv|md|php|sql|xml|svg|ya?ml)$/i.test(f.name)){
+      AT.push({n: f.name, t: (await f.text()).slice(0, 30000)});
+    }
+    else { toast('نوع غير مدعوم: ' + f.name, 'warn'); }
+  }
+  ats();
+}
+
 function ats(){$("ats").innerHTML=AT.map((a,i)=>`<span class="chip">${a.img?"🖼️":"📄"} ${esc(a.n)} <b onclick="AT.splice(${i},1);ats()">×</b></span>`).join("")}
 const CM={py:/#[^\n]*/,sql:/--[^\n]*/,ht:/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//,js:/\/\*[\s\S]*?\*\/|\/\/[^\n]*/},ST=/"""[\s\S]*?"""|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`[^`]*`/,TG=/<\/?[A-Za-z][\w-]*|\/?>/,
 KW=/^(?:function|const|let|var|return|if|else|for|while|class|new|import|from|export|default|async|await|try|catch|throw|switch|case|break|continue|def|elif|in|is|not|and|or|None|True|False|self|lambda|with|as|pass|yield|null|true|false|undefined|this|SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|TABLE|JOIN|ORDER|BY|GROUP|LIMIT|INTO|VALUES)$/;
@@ -818,7 +983,6 @@ function register(){
     return;
   }
 
-  // التحقق من حساب الأدمن إنه متسجلش كـ مستخدم عادي
   if(email === ADMIN_EMAIL){
     $("regEr").style.display = "block";
     $("regEr").textContent = "هذا البريد مخصص للأدمن فقط";
@@ -833,13 +997,11 @@ function register(){
     return;
   }
 
-  // حفظ المستخدم الجديد
   users.push({ name, email, phone, pw });
   localStorage.setItem("gd_users", JSON.stringify(users));
   
   toast("✅ تم إنشاء الحساب بنجاح", "success");
   
-  // الدخول تلقائياً بعد التسجيل
   sessionStorage.setItem("gd_auth", "1");
   sessionStorage.setItem("gd_role", "user");
   sessionStorage.setItem("gd_name", name);
@@ -851,7 +1013,6 @@ function login(){
   const em = $("em").value.trim().toLowerCase();
   const pw = $("pw").value.trim();
 
-  // 1. التحقق من حساب الأدمن الأساسي
   if(em === ADMIN_EMAIL && pw === ADMIN_PASS){
     sessionStorage.setItem("gd_auth", "1");
     sessionStorage.setItem("gd_role", "admin");
@@ -863,7 +1024,6 @@ function login(){
     return;
   }
 
-  // 2. التحقق من المستخدمين العاديين
   let users = JSON.parse(localStorage.getItem("gd_users") || "[]");
   const user = users.find(u => u.email === em && u.pw === pw);
   
@@ -900,10 +1060,31 @@ function go(t){
   if(t=="gis"&&!$("gisCards").innerHTML)renderGisCards();
   if(t=="admin"&&adminAuthed)adminLoad();
 }
-function addMsg(r,h,target="chat"){const d=document.createElement("div");d.className="m "+r;d.innerHTML=h;$(target).appendChild(d);$(target).scrollTop=1e9;return d}
+
+function addMsg(r,h,target="chat"){
+  const d=document.createElement("div");
+  d.className="m "+r;
+  d.innerHTML = h;
+  
+  if(r === 'a' && h !== '<div class="thinking"><div class="spinner"></div> جاري التفكير...</div>') {
+      const actionsHTML = `
+        <div class="msg-actions">
+            <svg viewBox="0 0 24 24" onclick="toast('تم التحديث','success')"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M21 11h-8V3h-2v8H3v2h8v8h2v-8h8z"/></svg>
+            <svg viewBox="0 0 24 24" onclick="toast('شكراً لتقييمك','success')"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        </div>`;
+      d.innerHTML += actionsHTML;
+  }
+  $(target).appendChild(d);
+  $(target).scrollTop=1e9;
+  return d;
+}
+
 function md(t){
   const div=document.createElement("div");
   div.innerHTML=DOMPurify.sanitize(marked.parse(t));
+  
   div.querySelectorAll("pre").forEach(pre=>{
     if(pre.querySelector(".copy-btn"))return;
     const btn=document.createElement("button");
@@ -914,6 +1095,28 @@ function md(t){
     btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector("code")?.textContent||pre.textContent);btn.textContent="✅";setTimeout(()=>btn.textContent="📋 نسخ",1500)};
     pre.appendChild(btn);
   });
+
+  div.querySelectorAll("img").forEach(img=>{
+    const wrap = document.createElement("div");
+    wrap.className = "img-wrap";
+    img.parentNode.insertBefore(wrap, img);
+    wrap.appendChild(img);
+
+    const btn = document.createElement("button");
+    btn.className = "img-btn";
+    btn.innerHTML = "⋮";
+    
+    const dropdown = document.createElement("div");
+    dropdown.className = "img-dropdown";
+    dropdown.innerHTML = `
+      <a href="${img.src}" download="GeoDev_Image.jpg">💾 حفظ</a>
+      <a href="${img.src}" target="_blank">↗️ مشاركة</a>
+    `;
+    wrap.appendChild(btn);
+    wrap.appendChild(dropdown);
+    btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle("show"); };
+  });
+
   return div.innerHTML
 }
 function slim(m,i,a){return i>=a.length-2?m:{role:m.role,content:m.content.replace(/```[\s\S]*?```/g,"[code omitted]")}}
@@ -939,7 +1142,7 @@ const AICFG='gd_ai_cfg';
 const getCfg=()=>{try{const s=JSON.parse(localStorage.getItem(AICFG)||'null');return s?{...DEFAULT_AI,...s}:{...DEFAULT_AI}}catch(e){return{...DEFAULT_AI}}};
 const setCfg=c=>{try{localStorage.setItem(AICFG,JSON.stringify(c))}catch(e){}};
 const PROVIDERS={
-  groq:{n:'Groq (افتراضي)',base:'https://api.groq.com/openai/v1',model:'openai/gpt-oss-120b',needKey:true},
+  groq:{n:'Groq (افتراضي)',base:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile',needKey:true},
   openrouter:{n:'OpenRouter',base:'https://openrouter.ai/api/v1',model:'meta-llama/llama-3.3-70b-instruct:free',needKey:true},
   gemini:{n:'Google Gemini',base:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-2.0-flash',needKey:true},
   openai:{n:'OpenAI',base:'https://api.openai.com/v1',model:'gpt-4o-mini',needKey:true},
@@ -983,22 +1186,33 @@ async function testAI(){
     out.innerHTML='<b style="color:var(--gr)">✅ نجح!</b> '+esc((r.text||'').slice(0,80));
   }catch(e){out.innerHTML='<b style="color:#f87171">❌ فشل:</b> '+esc(e.message||e)}finally{btn.disabled=false}
 }
-
 async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={}){
   const c=cfgOverride||getCfg(),prov=c.provider||'groq';
-  if(prov==='claude'){if(!window.claude)throw new Error('window.claude غير متاح');const s=await window.claude.use('sample');if(!s)throw new Error('Claude غير متاح');const r=await s(prompt,{cache:false,modelTier:tier||'default',...(images&&images.length?{images}:{}),signal,onText});return{text:r.text,truncated:r.truncated}}
   if(!c.key)throw new Error('لا يوجد API Key');
   const base=(c.base||PROVIDERS[prov].base).replace(/\/$/,'');
   const MAX_TOKENS=parseInt(localStorage.getItem('gd_max_tokens')||'8000');
-  const msgs = sysPrompt ? [{role:'system',content:sysPrompt},{role:'user',content:prompt}] : [{role:'user',content:prompt}];
+  
+  let msgs = sysPrompt ? [{role:'system',content:sysPrompt}] : [];
+  let modelToUse = c.model || PROVIDERS[prov].model;
+  
+  if(images && images.length > 0) {
+    if(prov === 'groq') modelToUse = 'llama-3.2-11b-vision-preview';
+    const userContent = [{ type: "text", text: prompt }];
+    images.forEach(imgBase64 => {
+      userContent.push({ type: "image_url", image_url: { url: imgBase64 } });
+    });
+    msgs.push({ role: "user", content: userContent });
+  } else {
+    msgs.push({ role: "user", content: prompt });
+  }
+
   const res=await fetch(base+'/chat/completions',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.key},
-    body:JSON.stringify({model:c.model||PROVIDERS[prov].model,messages:msgs,stream:true,temperature:tier==='quick'?0.3:tier==='complex'?0.85:0.7,max_tokens:MAX_TOKENS}),
+    body:JSON.stringify({model:modelToUse,messages:msgs,stream:true,temperature:tier==='quick'?0.3:tier==='complex'?0.85:0.7,max_tokens:MAX_TOKENS}),
     signal
   });
   if(res.status===429)throw Object.assign(new Error('rate_limited'),{code:'rate_limited'});
-  if(res.status===401)throw new Error('مفتاح مرفوض (401)');
   if(!res.ok)throw new Error('HTTP '+res.status);
   const reader=res.body.getReader(),dec=new TextDecoder();
   let full='',buf='',truncated=false;
@@ -1028,50 +1242,37 @@ async function callAIWithRetry(prompt,opts,onStatus){
 
 async function ask(prompt,shown){
  addMsg("u",esc(shown||prompt));
- const el=addMsg("a","⏳ جاري التنفيذ...");
- $("st").textContent="⏳...";$("stop").style.display="inline-block";
- const imgs=AT.filter(a=>a.img).map(a=>a.img);
- if(AT.length){prompt+="\n\nالملفات:\n"+AT.filter(a=>a.t).map(a=>"### "+a.n+"\n```\n"+a.t+"\n```").join("\n")+(imgs.length?"\n("+imgs.length+" صورة)":"");AT=[];ats()}
- cur();hist.push({role:"user",content:prompt,s:shown||prompt});
+ const el=addMsg("a",'<div class="thinking"><div class="spinner"></div> جاري التفكير...</div>');
+ 
+ const imgs = AT.filter(a => a.img).map(a => a.img);
+ const textFiles = AT.filter(a => a.t);
+ 
+ if (textFiles.length) {
+    prompt += "\n\nمحتوى الملفات المرفقة:\n" + textFiles.map(a => `<file name="${a.n}">\n${a.t}\n</file>`).join("\n");
+ }
+ if (imgs.length) { prompt += `\n\n[المستخدم أرفق ${imgs.length} صورة. قم بتحليلها والإجابة بناءً عليها.]`; }
+ AT=[];ats();
+ 
+ if (isThinkOn) prompt = "فكر بخطوات منطقية متسلسلة قبل الإجابة. " + prompt;
+ if (isSearchOn) prompt = "اعطني إجابة شاملة ودقيقة وكأنك تبحث في محرك بحث. " + prompt;
+
+ cur(); hist.push({role:"user",content:prompt,s:shown||prompt});
 
  try{
   const conv=hist.slice(-6).map(slim).map(m=>(m.role=="user"?"المهندس: ":"المساعد: ")+m.content).join("\n\n");
-  const isCodeRequest=/(?:اكتب\s*كود|كود|برمج|صمم|تصميم|موقع|صفحة|واجهة|تطبيق|لعبة|dashboard|landing|portfolio|html|css|javascript|js\b|php|python|react|vue|tailwind|api|دالة|function|class\b|script|sql|civil|autolisp|web\s*app|كود\s*كامل)/i.test(shown||prompt);
-  const fullPrompt=(isCodeRequest?SYS+DES:SYS)+"\n\nالمحادثة:\n"+conv+"\n\nرد الآن.";
-  const callOpts={signal:(ctl=new AbortController()).signal,onText:({text})=>{el.innerHTML=md(text);$("chat").scrollTop=1e9},tier:$("tier").value};
+  const isDesignRequest=/(?:موقع\s*ويب|موقع\s*إنترنت|صفحة\s*ويب|واجهة\s*موقع|تطبيق\s*ويب|صمم\s*موقع|صمم\s*صفحة|صمم\s*واجهة|تصميم\s*موقع|تصميم\s*واجهة|dashboard|landing\s*page|portfolio|بورتفوليو|html|css|react|vue|tailwind|web\s*app)/i.test(shown||prompt);
+  const fullPrompt=(isDesignRequest?SYS+DES:SYS)+"\n\nالمحادثة:\n"+conv+"\n\nرد الآن.";
+  
+  const callOpts={signal:(ctl=new AbortController()).signal,onText:({text})=>{el.innerHTML=md(text);$("chat").scrollTop=1e9},tier:isThinkOn?'complex':'default', images: imgs};
 
-  let allText="", iteration=0;
-  const MAX_ITER=4;
-  let lastResult=null;
-
-  while(iteration<MAX_ITER){
-    let currentPrompt;
-    if(iteration===0){
-      currentPrompt=fullPrompt;
-    } else {
-      const tail=allText.slice(-2000);
-      currentPrompt=`المحادثة الأصلية:\n${conv}\n\nكنت بترد ووصلت للحد الأقصى. `+
-        `اكمل من آخر حرف توقفت عنده بالظبط، بدون مقدمات، بدون إعادة أي كود سابق، بدون كتابة "أكمل".\n\n`+
-        `آخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
-      $("st").textContent=`⏳ استكمال ${iteration}/${MAX_ITER-1}...`;
-      el.innerHTML=md(allText)+`<div class="mt" style="text-align:center;padding:8px">⏳ جاري الاستكمال...</div>`;
-    }
-    const r=await callAIWithRetry(currentPrompt,callOpts,msg=>{el.innerHTML=md(allText+(iteration>0?"\n\n":"")+msg);$("st").textContent=msg});
-    allText+=r.text;lastResult=r;iteration++;
-    if(!r.truncated)break;
-  }
-
-  const stillTruncated=lastResult?.truncated;
-  const t=allText+(stillTruncated?"\n\n> ⚠️ الرد لسه طويل. اضغط الزر تحت للاستكمال.":"");
+  const r=await callAI(fullPrompt, callOpts);
+  const t=r.text;
   hist.push({role:"assistant",content:t});
-  {const c=cur();if(c.t=="محادثة")c.t=(shown||prompt).slice(0,40);sv();hl()}
-  $("stop").style.display="none";el.innerHTML=md(t);
-  if(stillTruncated)el.innerHTML+=`<button class="g" style="width:100%;margin-top:8px" onclick="continueLast()">🔄 أكمل</button>`;
-  $("chat").scrollTop=1e9;$("st").textContent=stillTruncated?"⚠️ اضغط أكمل":"✅ تم";
+  
+  el.innerHTML=md(t) + `<div class="msg-actions"><svg viewBox="0 0 24 24" onclick="toast('تم التحديث','success')"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><svg viewBox="0 0 24 24"><path d="M21 11h-8V3h-2v8H3v2h8v8h2v-8h8z"/></svg><svg viewBox="0 0 24 24" onclick="toast('شكراً لتقييمك','success')"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></div>`;
+  $("chat").scrollTop=1e9;
   handleCode(t);
- }catch(e){$("stop").style.display="none";hist.pop();const m=e.code=="rate_limited"?"حد مؤقت":(e.message||"خطأ");
-  el.innerHTML=`❌ ${esc(m)} <button class="k" style="margin-right:8px" onclick="ask(${JSON.stringify(prompt)},${JSON.stringify(shown||prompt)})">🔁 إعادة</button>`;
-  $("st").textContent="❌ "+m}
+ }catch(e){ el.innerHTML=`❌ خطأ: ${e.message}`; }
 }
 async function continueLast(){
   const last=hist[hist.length-1];
@@ -1083,10 +1284,9 @@ async function continueLast(){
 function send(){
   const v=$("ui").value.trim();
   if(!v&&!AT.length)return;
-  if(/مساحة\s*(مربع|مستطيل|دائرة|مضلع)/i.test(v)){
-    toast("💡 فيه حاسبة جاهزة كمان في قسم المساحة","info");
-  }
   $("ui").value="";
+  $("ui").style.height = 'auto';
+  toggleSendBtn();
   ask(v||"حلّل الملفات المرفقة");
 }
 function qp(t){go('agent');$("ui").value=t;if(!t.endsWith(": "))send();else $("ui").focus()}
@@ -1427,6 +1627,12 @@ function askGis(topic,category){
 
 /* ===== Admin ===== */
 function adminLogin(){
+  // التحقق إن اللي داخل هو الأدمن الأساسي
+  if(sessionStorage.getItem("gd_role") !== "admin") {
+    toast("❌ غير مصرح لك بدخول لوحة الأدمن", "error");
+    return;
+  }
+
   if($("adminPw").value===ADMIN_PW){
     adminAuthed=true;
     $("adminGate").style.display="none";
@@ -1715,13 +1921,14 @@ function voice(){
   if(!SR) return toast("التعرف على الصوت غير مدعوم","warn");
   const r=new SR();
   r.lang='ar-EG';r.interimResults=false;r.continuous=false;
-  r.onstart=()=>{$("mic").style.background="var(--r)";toast("🎤 جاري الاستماع...","info")};
+  r.onstart=()=>{toast("🎤 جاري الاستماع...","info")};
   r.onresult=e=>{
     const t=e.results[0][0].transcript;
     $("ui").value+=($("ui").value?" ":"")+t;
+    toggleSendBtn();
   };
   r.onerror=e=>toast("❌ "+e.error,"error");
-  r.onend=()=>{$("mic").style.background="";};
+  r.onend=()=>{};
   try{r.start()}catch(e){toast("❌ "+e.message,"error")}
 }
 
@@ -1763,6 +1970,14 @@ window.openTool=function(id){
     }
   }catch(e){}
   window.addEventListener('resize',()=>{if(map)setTimeout(()=>map.invalidateSize(),120)});
+  
+  // تفعيل زر الإرسال وحجم المربع
+  $("ui").addEventListener("input", function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+    toggleSendBtn();
+  });
+  toggleSendBtn();
 })();
 </script>
 
