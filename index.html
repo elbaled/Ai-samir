@@ -986,7 +986,7 @@ async function testAI(){
 
 async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={}){
   const c=cfgOverride||getCfg(),prov=c.provider||'groq';
-  if(prov==='claude'){if(!window.claude)throw new Error('window.claude غير متاح');const s=await window.claude.use('sample');if(!s)throw new Error('Claude غير متاح');const r=await s(prompt,{cache:false,modelTier:tier||'default',...(images&&images.length?{images}:{}),signal,onText});return{text:r.text,truncated:r.truncated}}
+  if(prov==='claude'){if(!window.claude)throw new Error('window.claude غير متاح');const s=await window.claude.use('sample');if(!s)throw new Error('Claude غير متاح');const base={cache:false,modelTier:tier||'default',...(images&&images.length?{images}:{})};let r;try{r=await s(prompt,{...base,onText})}catch(e){if(e&&(e.name==='DataCloneError'||/cloned/i.test(e.message||''))){r=await s(prompt,base);onText&&onText({text:r.text})}else throw e}return{text:r.text,truncated:r.truncated}}
   if(!c.key)throw new Error('لا يوجد API Key');
   const base=(c.base||PROVIDERS[prov].base).replace(/\/$/,'');
   const MAX_TOKENS=parseInt(localStorage.getItem('gd_max_tokens')||'8000');
@@ -1767,6 +1767,184 @@ window.openTool=function(id){
 </script>
 
 <script>
+/* GeoDev Studio Pro — Patch v2.9
+   الاستخدام: ضع <script src="geo-patch.js"><\/script> قبل سكربت الـ serviceWorker في آخر index.html */
+const GOOGLE_CLIENT_ID="";            // ← ضع Client ID من Google Cloud Console لتفعيل الدخول بجوجل
+const GEO_SECRET="geo-sec-2026",D3=3*864e5,DAY=864e5;
+const PROT=['triangle','map','coord','compass','qibla'];   // أدوات المساحة المعلّمة PRO
+const ENGS={
+ g29:{n:"GEO 2.9",d:"مجاني • تفكير محدود",tier:"quick",max:3500,pro:0,note:"أنت GEO 2.9 (نسخة مجانية): تفكير محدود، إجابات موجزة ومباشرة."},
+ g38:{n:"GEO 3.8 FLASH",d:"سريع • شبه متكامل بكل الأدوات",tier:"default",max:8000,pro:1,note:"أنت GEO 3.8 FLASH: سريع ومتكامل مع كل أدوات المنصة."},
+ g52:{n:"GEO 5.2 ULTRA",d:"موسوعي • مصادر الويب العالمية",tier:"complex",max:12000,pro:1,web:1,note:"أنت GEO 5.2 ULTRA: موسوعي بتفكير عميق، اعتمد على مصادر الويب المرفقة وأحدث الأفكار العالمية."}};
+let eng=localStorage.getItem("gd_eng")||"g29";if(!ENGS[eng])eng="g29";
+const SYS0=SYS;let qB=null,qH=0;const SEN={};
+
+/* ---------- CSS ---------- */
+(function(){const s=document.createElement("style");s.textContent=`
+#dov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:70;display:none}#dov.on{display:block}
+#drw{position:fixed;top:0;right:0;bottom:0;width:min(300px,85vw);background:var(--cd);border-left:1px solid var(--ln);z-index:75;transform:translateX(105%);transition:.25s;padding:calc(14px + env(safe-area-inset-top,0px)) 12px 12px;overflow:auto}#drw.on{transform:none}
+#drw .dm button{width:100%;text-align:right;background:var(--bg);border:1px solid var(--ln);padding:12px;margin-bottom:6px;font-size:13px}#drw .dm .r{background:#991b1b}
+.du{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:10px;margin:12px 0}.av{font-size:30px}
+.plan-b{font-size:10px;font-weight:900;padding:3px 9px;border-radius:20px;background:#334155;color:#fff}.plan-b.pro{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.pro-b{position:absolute;top:8px;left:10px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:9px;font-weight:900;padding:2px 8px;border-radius:20px;z-index:2}.gcard{position:relative}
+.engbar{display:flex;gap:6px;overflow-x:auto;margin-top:8px}
+.eng{flex:1;min-width:108px;background:var(--bg);border:1px solid var(--ln);color:var(--tx);display:flex;flex-direction:column;gap:2px;padding:7px 9px;text-align:right;border-radius:10px}
+.eng b{font-size:12px}.eng small{font-size:9px;color:var(--mt);font-weight:400}.eng.on{border-color:var(--bl);background:linear-gradient(135deg,rgba(59,130,246,.28),var(--bg))}
+.trial{background:rgba(245,158,11,.12);border:1px solid var(--am);border-radius:10px;padding:10px;font-weight:700;color:var(--am);margin:8px 0;text-align:center}
+.pl{padding-right:18px;line-height:2;font-size:13px;margin:6px 0}
+.qd{position:relative;width:260px;height:260px;margin:26px auto 10px}
+.qr{position:absolute;inset:0;border-radius:50%;border:3px solid var(--ln);background:radial-gradient(circle,var(--bg) 60%,var(--cd));transition:transform .15s linear}
+.qr i{position:absolute;left:50%;top:0;width:2px;height:9px;margin-left:-1px;background:var(--mt);transform-origin:1px 127px}
+.ql{position:absolute;inset:0;text-align:center;padding-top:14px;font-size:14px;font-weight:900}.ql.n{color:#ef4444}
+.qm{position:absolute;inset:0;text-align:center;padding-top:34px;font-size:28px}.qm::after{content:"";position:absolute;left:50%;top:72px;bottom:50%;width:2px;background:var(--gr);transform:translateX(-50%);opacity:.7}
+.qp{position:absolute;top:-16px;left:50%;margin-left:-9px;border:9px solid transparent;border-top:16px solid var(--am);z-index:2}
+.qc{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;background:var(--am)}
+.qt{text-align:center;font-size:24px;font-weight:900;color:var(--gr)}`;document.head.appendChild(s)})();
+
+/* ---------- Users / Plan ---------- */
+const uname=()=>sessionStorage.getItem("gd_name")||"ضيف",uemail=()=>sessionStorage.getItem("gd_email")||"",isAdm=()=>sessionStorage.getItem("gd_role")=="admin";
+const users=()=>{try{return JSON.parse(localStorage.getItem("gd_users")||"[]")}catch(e){return[]}};
+const me=()=>users().find(u=>u.email==uemail());
+function upMe(fn){const a=users(),m=a.find(x=>x.email==uemail());if(m){fn(m);localStorage.setItem("gd_users",JSON.stringify(a))}return m}
+function proLeft(){if(isAdm())return 1e12;const m=me();return m?Math.max(m.proUntil||0,m.trialEnd||0)-Date.now():0}
+const isPro=()=>proLeft()>0;
+const welc=()=>WEL.replace("م. أحمد سمير",esc(uname()));
+function personalize(){SYS=SYS0.split("م. أحمد سمير").join(uname())}
+function needPro(){if(isPro())return false;showPro("lock");return true}
+
+function startSession(name,email,role){["auth","role","name","email"].forEach((k,i)=>sessionStorage.setItem("gd_"+k,[1,role,name,email][i]));gate();afterLogin()}
+function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").innerHTML="";addMsg("a",welc())}if(!isAdm())setTimeout(()=>showPro("welcome"),400)}
+function register(){
+ const name=$("regName").value.trim(),email=$("regEmail").value.trim().toLowerCase(),phone=$("regPhone").value.trim(),pw=$("regPw").value.trim(),er=$("regEr"),bad=t=>{er.style.display="block";er.textContent=t};
+ if(!name||!email||!phone||!pw)return bad("يرجى ملء جميع الحقول");
+ if(email===ADMIN_EMAIL)return bad("هذا البريد مخصص للأدمن فقط");
+ const a=users();if(a.find(u=>u.email===email))return bad("هذا البريد مسجل بالفعل");
+ a.push({name,email,phone,pw,trialEnd:Date.now()+D3,proUntil:0,usedCodes:[]});localStorage.setItem("gd_users",JSON.stringify(a));
+ startSession(name,email,"user")}
+function login(){
+ const em=$("em").value.trim().toLowerCase(),pw=$("pw").value.trim();
+ if(em===ADMIN_EMAIL&&pw===ADMIN_PASS){$("pw").value="";return startSession("م. أحمد سمير",em,"admin")}
+ const u=users().find(x=>x.email===em&&x.pw&&x.pw===pw);
+ if(!u){$("er").style.display="block";$("er").textContent="البريد الإلكتروني أو كلمة المرور غير صحيحة";return}
+ if(!u.trialEnd&&!u.proUntil)u.trialEnd=Date.now()+D3,localStorage.setItem("gd_users",JSON.stringify(users().map(x=>x.email==em?u:x)));
+ $("pw").value="";startSession(u.name,em,"user")}
+function logout(){sessionStorage.clear();location.reload()}
+function googleLogin(){
+ if(!GOOGLE_CLIENT_ID)return toast("ضع GOOGLE_CLIENT_ID في أول geo-patch.js","warn");
+ const run=()=>{google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:r=>{try{const p=JSON.parse(decodeURIComponent(escape(atob(r.credential.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))));
+  const em=p.email.toLowerCase(),a=users();let u=a.find(x=>x.email==em);if(!u){u={name:p.name||em,email:em,phone:"",pw:"",google:1,trialEnd:Date.now()+D3,proUntil:0,usedCodes:[]};a.push(u);localStorage.setItem("gd_users",JSON.stringify(a))}
+  startSession(u.name,em,em===ADMIN_EMAIL?"admin":"user")}catch(e){toast("فشل الدخول بجوجل","error")}}});google.accounts.id.prompt()};
+ if(window.google&&google.accounts)return run();
+ const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=run;s.onerror=()=>toast("تعذر تحميل Google","error");document.head.appendChild(s)}
+
+/* ---------- Subscription codes (single-use per account) ---------- */
+const chk=s=>{let h=5381;for(const c of s+GEO_SECRET)h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36).toUpperCase().padStart(4,"0").slice(-4)};
+function mkCode(d){const b=String(d).padStart(3,"0")+(Math.random().toString(36)+"0000").slice(2,6).toUpperCase();return"GEO-"+b+"-"+chk(b)}
+function redeem(id){
+ const c=($(id).value||"").trim().toUpperCase(),m=c.match(/^GEO-(\d{3})([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+ if(!m||chk(m[1]+m[2])!==m[3])return toast("❌ كود غير صحيح","error");
+ if(isAdm()||!uemail())return toast("سجّل بحساب مستخدم لتفعيل الكود","warn");
+ const used=JSON.parse(localStorage.getItem("gd_used")||"[]"),mm=me();
+ if(used.includes(c)||(mm.usedCodes||[]).includes(c))return toast("❌ الكود مستخدم من قبل","error");
+ used.push(c);localStorage.setItem("gd_used",JSON.stringify(used));
+ upMe(u=>{u.usedCodes=(u.usedCodes||[]).concat(c);u.proUntil=Math.max(u.proUntil||0,Date.now())+(+m[1])*DAY});
+ document.getElementById("proM")?.remove();refreshUI();toast("🎉 تم تفعيل PRO لمدة "+(+m[1])+" يوم","success")}
+function genCodes(){const d=parseInt($("cdDays").value)||30,n=Math.min(50,parseInt($("cdN").value)||1),l=JSON.parse(localStorage.getItem("gd_codes")||"[]");for(let i=0;i<n;i++)l.unshift({c:mkCode(d),d});localStorage.setItem("gd_codes",JSON.stringify(l.slice(0,200)));listCodes()}
+function listCodes(){const u=JSON.parse(localStorage.getItem("gd_used")||"[]"),l=JSON.parse(localStorage.getItem("gd_codes")||"[]");$("cdList").innerHTML=l.map(x=>`<div>${x.c} — ${x.d} يوم ${u.includes(x.c)?"❌ مستخدم":"✅"}</div>`).join("")||"لا أكواد"}
+
+/* ---------- PRO modal ---------- */
+function showPro(mode){
+ document.getElementById("proM")?.remove();
+ const L=proLeft(),m=me(),paid=m&&m.proUntil>Date.now(),day=x=>Math.ceil(x/DAY);
+ const head=isAdm()?"👑 حساب الأدمن — كل المزايا مفعّلة":paid?`✅ اشتراك PRO فعّال — متبقي ${day(m.proUntil-Date.now())} يوم`:L>0?`🎁 تجربة مجانية لمدة 3 أيام — متبقي ${day(L)} يوم`:"⏳ انتهت التجربة المجانية — أنت الآن ضيف في الباقة المجانية";
+ document.body.insertAdjacentHTML("beforeend",`<div id="proM" class="tool-modal on" style="z-index:110" onclick="if(event.target===this)this.remove()"><div class="tool-content" style="padding:20px">
+ <button class="close-btn" style="position:absolute;top:6px;right:8px;z-index:5" onclick="document.getElementById('proM').remove()">✕</button>
+ <div style="text-align:center;padding-top:14px"><div style="font-size:34px">👋</div><h3 style="font-size:17px">أهلاً ${esc(uname())}</h3><div class="trial">${head}</div></div>
+ ${mode=="lock"?'<div class="res" style="color:var(--am);text-align:center">🔒 هذه الميزة متاحة لمشتركي PRO فقط</div>':""}
+ <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0"><h3 style="color:var(--am)">⭐ اشترك في PRO</h3>
+ <p class="mt">لكي تتاح لك جميع الأدوات والمحركات — أنت الآن ضيف، وهذه مزايا PRO:</p>
+ <ul class="pl"><li>🧠 <b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li>🚀 <b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>📐 كل أدوات المساحة (مثلثات، رفع، إحداثيات، بوصلة، قبلة)</li><li>🌍 كل متصفحات الجيوماتكس</li><li>💻 توليد مواقع وأكواد كاملة بدون قيود</li></ul>
+ <input id="proCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('proCode')">تفعيل كود الاشتراك</button>
+ <a href="mailto:${ADMIN_EMAIL}" style="display:block;text-align:center;margin-top:10px;color:var(--bl);font-size:12px">للحصول على كود اشتراك تواصل مع المطور</a></div></div>`)}
+
+/* ---------- Engines / Drawer / UI ---------- */
+function renderEng(){const b=$("engBar");if(b)b.innerHTML=Object.entries(ENGS).map(([k,e])=>`<button class="eng ${k==eng?"on":""}" onclick="pickEng('${k}')"><b>${e.n}</b><small>${e.pro&&!isPro()?"🔒 PRO":e.d}</small></button>`).join("")}
+function pickEng(k){if(ENGS[k].pro&&needPro())return;eng=k;localStorage.setItem("gd_eng",k);renderEng();toast("✅ "+ENGS[k].n,"success")}
+function toggleDrawer(){$("drw").classList.toggle("on");$("dov").classList.toggle("on")}
+function refreshUI(){const m=me(),paid=m&&m.proUntil>Date.now(),t=isAdm()?"ADMIN":paid?"PRO":proLeft()>0?"TRIAL":"FREE";
+ ["planBadge","dPlan"].forEach(i=>{const e=$(i);if(e){e.textContent=t;e.className="plan-b"+(t!="FREE"?" pro":"")}});
+ $("dName").textContent=uname();$("dMail").textContent=uemail();renderEng()}
+async function webCtx(q){const o=[];
+ await Promise.all(["ar","en"].map(async l=>{try{const j=await(await fetch(`https://${l}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=3&format=json&origin=*`)).json();(j.query?.search||[]).forEach(s=>o.push(`[${l}.wikipedia] ${s.title}: ${s.snippet.replace(/<[^>]+>/g,"")}`))}catch(e){}}));
+ try{const j=await(await fetch("https://api.duckduckgo.com/?q="+encodeURIComponent(q)+"&format=json&no_html=1&skip_disambig=1")).json();if(j.AbstractText)o.push("[DuckDuckGo] "+j.AbstractText)}catch(e){}
+ return o.length?"\n\nمصادر ويب حية (استخدمها لو مفيدة):\n"+o.join("\n"):""}
+const _ask=ask;
+ask=async function(p,s){
+ if(ENGS[eng].pro&&!isPro()){eng="g29";renderEng()}
+ const E=ENGS[eng],shown=s||p;$("tier").value=E.tier;localStorage.setItem("gd_max_tokens",E.max);
+ let q=p+"\n\n("+E.note+")";
+ if(E.web&&!AT.length&&!/(?:كود|برمج|صمم|تصميم|موقع|صفحة|html|css|js\b)/i.test(shown))q+=await webCtx(shown.slice(0,200));
+ return _ask(q,shown)};
+function newChat(){hist=[];cid=null;$("chat").innerHTML="";addMsg("a",welc())}
+
+/* ---------- Preview fix: robust code extraction ---------- */
+function handleCode(t){
+ t=t.replace(/\n*> ⚠️[^\n]*\s*$/,"");
+ let bs=[...t.matchAll(/```[ \t]*([\w+-]*)[ \t]*\r?\n([\s\S]*?)(?:```|$)/g)].map(m=>({l:(m[1]||"txt").toLowerCase(),c:m[2].trim()})).filter(b=>b.c);
+ bs.forEach(b=>{if(/^(htm|html5)$/.test(b.l)||/^\s*<(!doctype html|html)/i.test(b.c))b.l="html"});
+ if(!bs.some(b=>b.l=="html")){const m=t.match(/<!doctype html[\s\S]*$/i)||t.match(/<html[\s\S]*$/i);if(m)bs.unshift({l:"html",c:m[0].replace(/```[\s\S]*$/,"").trim()})}
+ if(!bs.length)return;
+ const X={javascript:"js",js:"js",python:"py",py:"py",html:"html",css:"css",php:"php",sql:"sql",json:"json",jsx:"jsx",bash:"sh"},Bs={html:"index",css:"style",js:"script",py:"app"},N={};
+ F=bs.map(b=>{const e=X[b.l]||"txt";N[e]=(N[e]||0)+1;return{l:b.l,c:b.c,n:(Bs[e]||"file")+(N[e]>1?N[e]:"")+"."+e}});
+ cu=Math.max(0,F.findIndex(f=>f.l=="html"));
+ $("code").value=F[cu].c;$("fn").textContent=F[cu].n;tabs();go("studio");paint();
+ if(F.some(f=>f.l=="html")){preview();$("rb").style.display="flex";ov(true)}
+ const p=F.find(f=>f.l=="python"||f.l=="py");if(p){$("pl2").value="py";$("py").value=p.c}}
+
+/* ---------- Qibla ---------- */
+async function startSensor(k,cb){SEN[k]=cb;if(SEN.on)return;
+ if(!window.DeviceOrientationEvent)return toast("المستشعر غير مدعوم","warn");
+ try{if(DeviceOrientationEvent.requestPermission&&await DeviceOrientationEvent.requestPermission()!=="granted")return}catch(e){}
+ SEN.on=1;addEventListener("ondeviceorientationabsolute" in window?"deviceorientationabsolute":"deviceorientation",e=>{const v=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.alpha!=null?(360-e.alpha)%360:null);if(v!=null)Object.values(SEN).forEach(f=>typeof f=="function"&&f(v))},true)}
+function startCompass(){startSensor("c",h=>handleOrientation({webkitCompassHeading:h||.01}))}
+function qInit(){const r=$("qRing");if(!r||r.children.length)return;let h="";
+ for(let i=0;i<360;i+=10)h+=`<i style="transform:rotate(${i}deg);${i%90?"":"height:16px;background:var(--tx)"}"></i>`;
+ [["N",0],["E",90],["S",180],["W",270]].forEach(([l,a])=>h+=`<b class="ql ${l=="N"?"n":""}" style="transform:rotate(${a}deg)">${l}</b>`);
+ r.innerHTML=h+'<div class="qm" id="qMark"><span>🕋</span></div>';qDraw()}
+function qDraw(){const r=$("qRing");if(!r)return;r.style.transform=`rotate(${-qH}deg)`;const m=$("qMark");if(m)m.style.transform=`rotate(${qB||0}deg)`;
+ if(qB!=null){const d=((qB-qH+540)%360)-180,ok=Math.abs(d)<4;$("qiblaText").textContent=qB.toFixed(1)+"°";$("qDiff").innerHTML=ok?'<b style="color:var(--gr)">✅ أنت في اتجاه القبلة</b>':"دُر "+(d>0?"يميناً":"يساراً")+" "+Math.abs(d).toFixed(0)+"°";r.style.borderColor=ok?"var(--gr)":""}}
+function calcQibla(){const lat=parseFloat($("qLat").value),lng=parseFloat($("qLng").value);if(isNaN(lat)||isNaN(lng))return toast("أدخل الإحداثيات أو استخدم GPS","warn");
+ const R=Math.PI/180,pk=21.4225*R,lk=39.8262*R,p=lat*R,l=lng*R;qB=(Math.atan2(Math.sin(lk-l),Math.cos(p)*Math.tan(pk)-Math.sin(p)*Math.cos(lk-l))/R+360)%360;qInit();qDraw()}
+function startQibla(){if(qB==null)getGpsForQibla();startSensor("q",h=>{qH=h;qDraw()})}
+
+/* ---------- GIS cards / tools gating ---------- */
+function renderGisCards(){if(!$("gisCards"))return;$("gisCards").innerHTML=GIS_TOPICS.map(g=>`<div class="card gcard"><span class="pro-b">PRO</span><h3 style="margin-top:14px">${g.icon} ${g.title}</h3><div class="chips">${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}</div></div>`).join("")}
+const _ag=askGis;askGis=function(t,c){if(needPro())return;_ag(t,c)};
+const _ot=window.openTool;window.openTool=function(id){if(PROT.includes(id)&&needPro())return;_ot(id);if(id==="qibla")qInit()};
+const _rs=renderSurveyGrid;renderSurveyGrid=function(){_rs();document.querySelectorAll("#surveyGrid .dash-card").forEach(c=>{const id=((c.getAttribute("onclick")||"").match(/'(\w+)'/)||[])[1];if(PROT.includes(id))c.insertAdjacentHTML("afterbegin",'<span class="pro-b">PRO</span>')})};
+const _al=adminLoad;adminLoad=function(){_al();listCodes()};
+
+/* ---------- DOM injection & init ---------- */
+(function(){
+ document.querySelector("header").innerHTML=`<button class="k" onclick="toggleDrawer()" style="font-size:20px;padding:6px 12px" title="القائمة">☰</button><div style="flex:1"><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div><span id="planBadge" class="plan-b">FREE</span><select id="tier" hidden><option value="quick">q</option><option value="default" selected>d</option><option value="complex">c</option></select>`;
+ document.body.insertAdjacentHTML("beforeend",`<div id="dov" onclick="toggleDrawer()"></div><aside id="drw"><div class="row" style="justify-content:space-between"><b>GeoDev Studio Pro</b><button class="k" onclick="toggleDrawer()">✕</button></div>
+ <div class="du"><div class="av">👤</div><div><b id="dName"></b><div class="mt" id="dMail"></div><span id="dPlan" class="plan-b">FREE</span></div></div>
+ <div class="dm"><button onclick="saveProjects();toggleDrawer()">💾 حفظ المشروع</button><button onclick="loadProjects();toggleDrawer()">📂 فتح مشروع محفوظ</button><button onclick="aiSettings();toggleDrawer()">⚙️ إعدادات AI</button><button onclick="toggleDrawer();showPro('info')">⭐ PRO وكود الاشتراك</button><button class="r" onclick="logout()">🚪 خروج</button></div></aside>`);
+ $("ui").closest(".row").insertAdjacentHTML("afterend",'<div class="engbar" id="engBar"></div>');
+ document.querySelector("#loginForm button.a").insertAdjacentHTML("afterend",'<button class="k" style="width:100%;padding:12px;margin-top:8px" onclick="googleLogin()">🟢 المتابعة بحساب Google</button>');
+ document.querySelector("#modal-qibla .tool-body").innerHTML=`<button style="width:100%;margin-bottom:8px" onclick="getGpsForQibla()">📍 استخدام موقعي الحالي</button>
+ <div class="row"><input id="qLat" type="number" step="any" placeholder="Latitude" style="width:48%"><input id="qLng" type="number" step="any" placeholder="Longitude" style="width:48%"></div>
+ <div class="row"><button class="g" style="flex:1" onclick="calcQibla()">احسب القبلة</button><button class="a" style="flex:1" onclick="startQibla()">🧭 بوصلة حية</button></div>
+ <div class="qd"><div class="qp"></div><div class="qr" id="qRing"></div><div class="qc"></div></div><div id="qiblaText" class="qt">--°</div><div class="mt" id="qDiff" style="text-align:center">اتجاه الكعبة من موقعك</div>`;
+ $("adminPanel").insertAdjacentHTML("beforeend",'<div class="card"><h3>🎟️ أكواد الاشتراك</h3><div class="row"><input id="cdDays" type="number" value="30" style="width:90px" placeholder="أيام"><input id="cdN" type="number" value="1" style="width:90px" placeholder="العدد"><button class="g" onclick="genCodes()">إنشاء</button></div><div id="cdList" class="res c" style="max-height:220px;overflow:auto"></div></div>');
+ const c=$("code");c.addEventListener("input",edit);c.addEventListener("scroll",sync);["keyup","click"].forEach(e=>c.addEventListener(e,ln));
+ try{renderGisCards();renderSurveyGrid();personalize();refreshUI()}catch(e){console.warn(e)}
+ if(!hist.length&&$("chat").children.length==1){$("chat").innerHTML="";addMsg("a",welc())}
+})();
+
+</script>
+
+<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -1777,4 +1955,3 @@ window.openTool=function(id){
 </script>
 </body>
 </html>
-```
