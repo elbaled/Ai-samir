@@ -1829,7 +1829,10 @@ function login(){
  if(!u.trialEnd&&!u.proUntil)u.trialEnd=Date.now()+D3,localStorage.setItem("gd_users",JSON.stringify(users().map(x=>x.email==em?u:x)));
  $("pw").value="";startSession(u.name,em,"user")}
 function logout(){sessionStorage.clear();location.reload()}
+  
 async function googleLogin() {
+  alert("الزرار اشتغل!"); // <--- ضيف السطر ده
+  toast("⏳ جاري الاتصال بجوجل...", "info"); {
   toast("⏳ جاري الاتصال بجوجل...", "info");
   if (!GOOGLE_CLIENT_ID) return toast("❌ خطأ: Client ID فارغ", "error");
   
