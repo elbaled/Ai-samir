@@ -1829,14 +1829,62 @@ function login(){
  if(!u.trialEnd&&!u.proUntil)u.trialEnd=Date.now()+D3,localStorage.setItem("gd_users",JSON.stringify(users().map(x=>x.email==em?u:x)));
  $("pw").value="";startSession(u.name,em,"user")}
 function logout(){sessionStorage.clear();location.reload()}
-function googleLogin(){
- if(!GOOGLE_CLIENT_ID)return toast("ضع GOOGLE_CLIENT_ID في أول geo-patch.js","warn");
- const run=()=>{google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:r=>{try{const p=JSON.parse(decodeURIComponent(escape(atob(r.credential.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))));
-  const em=p.email.toLowerCase(),a=users();let u=a.find(x=>x.email==em);if(!u){u={name:p.name||em,email:em,phone:"",pw:"",google:1,trialEnd:Date.now()+D3,proUntil:0,usedCodes:[]};a.push(u);localStorage.setItem("gd_users",JSON.stringify(a))}
-  startSession(u.name,em,em===ADMIN_EMAIL?"admin":"user")}catch(e){toast("فشل الدخول بجوجل","error")}}});google.accounts.id.prompt()};
- if(window.google&&google.accounts)return run();
- const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=run;s.onerror=()=>toast("تعذر تحميل Google","error");document.head.appendChild(s)}
+async function googleLogin() {
+  toast("⏳ جاري الاتصال بجوجل...", "info");
+  if (!GOOGLE_CLIENT_ID) return toast("❌ خطأ: Client ID فارغ", "error");
+  
+  const run = () => {
+    try {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => {
+          try {
+            // فك تشفير بيانات المستخدم
+            const base64Url = response.credential.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            const p = JSON.parse(jsonPayload);
+            const em = p.email.toLowerCase();
+            const a = users();
+            let u = a.find(x => x.email == em);
+            
+            if (!u) {
+              u = {name: p.name || em, email: em, phone: "", pw: "", google: 1, trialEnd: Date.now() + D3, proUntil: 0, usedCodes: []};
+              a.push(u);
+              localStorage.setItem("gd_users", JSON.stringify(a));
+            }
+            startSession(u.name, em, em === ADMIN_EMAIL ? "admin" : "user");
+            toast("✅ تم الدخول بنجاح", "success");
+            
+          } catch(e) {
+            toast("❌ فشل استخراج البيانات: " + e.message, "error");
+          }
+        }
+      });
+      
+      // محاولة فتح النافذة
+      google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          toast("⚠️ المتصفح منع نافذة جوجل. جرب تفتح الموقع من Chrome أو Safari مباشرة.", "warn");
+        }
+      });
+      
+    } catch (e) {
+      toast("❌ خطأ في الإعدادات: " + e.message, "error");
+    }
+  };
 
+  if (window.google && google.accounts) return run();
+  
+  const s = document.createElement("script");
+  s.src = "https://accounts.google.com/gsi/client";
+  s.onload = run;
+  s.onerror = () => toast("❌ فشل تحميل سيرفر جوجل. تأكد من الإنترنت أو أوقف مانع الإعلانات.", "error");
+  document.head.appendChild(s);
+  }
 /* ---------- Subscription codes (single-use per account) ---------- */
 const chk=s=>{let h=5381;for(const c of s+GEO_SECRET)h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36).toUpperCase().padStart(4,"0").slice(-4)};
 function mkCode(d){const b=String(d).padStart(3,"0")+(Math.random().toString(36)+"0000").slice(2,6).toUpperCase();return"GEO-"+b+"-"+chk(b)}
