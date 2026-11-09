@@ -273,7 +273,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <div id="ats" style="margin-top:6px"></div>
 <div class="row" style="flex-wrap:nowrap;margin-top:8px;align-items:flex-end">
 <button class="k" onclick="$('fl').click()" title="رفع">📎</button><input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''"><button class="k" id="mic" onclick="voice()">🎤</button>
-<textarea id="ui" rows="2" style="margin:0" placeholder="اسأل عن أي حاجة: جغرافيا، برمجة، رياضة، دين، تصميم... أو اطلب كود/صفحة (Ctrl+Enter)" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+<textarea id="ui" rows="2" style="margin:0" placeholder="اسأل عن أي حاجة: جغرافيا، برمجة،  الخ " onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
 <button onclick="send()">نفّذ ➤</button>
 </div></div>
 </section>
@@ -2067,12 +2067,12 @@ function showPro(mode){
  <button class="close-btn" style="position:absolute;top:6px;right:8px;z-index:5" onclick="document.getElementById('proM').remove()">✕</button>
  <div style="text-align:center;padding-top:14px"><div style="font-size:34px">👋</div><h3 style="font-size:17px">أهلاً ${esc(uname())}</h3><div class="trial">${head}</div></div>
  ${mode=="lock"?'<div class="res" style="color:var(--am);text-align:center">🔒 هذه الميزة متاحة لمشتركي PRO فقط</div>':""}
- <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0"><h3 style="color:var(--am)">⭐ اشترك في PRO</h3>
+ <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0"><h3 style="color:var(--am)">⭐ اشترك في عرض تفعيل ال PRO</h3>
  <p class="mt">لكي تتاح لك جميع الأدوات والمحركات — أنت الآن ضيف، وهذه مزايا PRO:</p>
- <ul class="pl"><li>🧠 <b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li>🚀 <b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>📐 كل أدوات المساحة (مثلثات، رفع، إحداثيات، بوصلة، قبلة)</li><li>🌍 كل متصفحات الجيوماتكس</li><li>💻 توليد مواقع وأكواد كاملة بدون قيود</li></ul>
+ <ul class="pl"><li>🧠 <b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li>🚀 <b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>📐 كل أدوات المساحة (مثلثات، رفع، إحداثيات، الحاسبة الفائقة)</li><li>🌍 كل متصفحات الجيوماتكس</li><li>💻 توليد مواقع وأكواد كاملة بدون قيود</li></ul>
  <input id="proCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('proCode')">تفعيل كود الاشتراك</button>
  <div style="display:flex;gap:8px;margin-top:10px">
-   <a href="https://wa.me/201000000000?text=${encodeURIComponent('أريد الاشتراك في باقة PRO لمنصة GeoDev')}" target="_blank" style="flex:1;text-align:center;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">📱 واتساب</a>
+   <a href="https://wa.me/201015912371?text=${encodeURIComponent('أريد الاشتراك في باقة PRO لمنصة GeoDev')}" target="_blank" style="flex:1;text-align:center;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">📱 واتساب</a>
    <a href="mailto:${ADMIN_EMAIL}" style="flex:1;text-align:center;background:#334155;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">✉️ إيميل</a>
  </div></div></div>`)}
  
@@ -2191,4 +2191,4 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
   }
 </script>
 </body>
-</html>
+  </html>
