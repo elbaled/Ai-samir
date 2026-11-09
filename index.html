@@ -13,6 +13,8 @@
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- مكتبة تحويل الـ PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
   color-scheme:dark;
@@ -1094,7 +1096,84 @@ function send(){
 }
 function qp(t){go('agent');$("ui").value=t;if(!t.endsWith(": "))send();else $("ui").focus()}
 
+function downloadGISPDF(element) {
+  if (typeof html2pdf === 'undefined') {
+    return toast("❌ مكتبة الـ PDF لم يتم تحميلها. تأكد من الإنترنت.", "error");
+  }
+
+  const btn = element.querySelector('button');
+  if(btn) btn.style.display = 'none'; // إخفاء الزرار من ملف الـ PDF
+
+  // إنشاء عنصر مؤقت بخلفية بيضاء وتنسيقات مخصصة للطباعة
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.inset = '0';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.zIndex = '9999';
+  wrapper.style.overflow = 'auto';
+  wrapper.style.padding = '20px';
+  wrapper.style.direction = 'rtl';
+  wrapper.style.fontFamily = 'Cairo, sans-serif';
+  wrapper.style.color = '#000000';
+  wrapper.style.width = '800px'; // عرض ثابت عشان الجودة
+
+  const contentDiv = document.createElement('div');
+  contentDiv.innerHTML = element.innerHTML;
+  
+  // تعديل الألوان عشان تبان كويسة على الخلفية البيضاء
+  wrapper.innerHTML = `
+    <style>
+      * { color: #111 !important; background: transparent !important; box-sizing: border-box; }
+      body { background: #fff !important; }
+      h1, h2, h3, h4 { color: #000 !important; margin-top: 15px; margin-bottom: 10px; }
+      p { margin-bottom: 10px; line-height: 1.6; }
+      pre { background: #f1f5f9 !important; padding: 10px; border-radius: 5px; direction: ltr; text-align: left; border: 1px solid #cbd5e1; white-space: pre-wrap; word-break: break-all; }
+      code { color: #111 !important; font-family: 'Fira Code', monospace; font-size: 13px; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }
+      td, th { border: 1px solid #cbd5e1 !important; padding: 8px; text-align: right; }
+      th { background: #f8fafc !important; font-weight: bold; }
+      .gis-content-text { width: 100%; }
+    </style>
+  `;
+  wrapper.appendChild(contentDiv);
+  
+  document.body.appendChild(wrapper);
+
+  const opt = {
+    margin:       10,
+    filename:     'GeoDev-GIS-Report.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  toast("⏳ جاري تحضير الـ PDF...", "info");
+  
+  setTimeout(() => {
+    // بنستخدم outputPdf عشان نجيب اللينك ونفتحه في تاب جديد
+    html2pdf().set(opt).from(contentDiv).outputPdf('bloburl').then((blobUrl) => {
+      const newWindow = window.open(blobUrl, '_blank');
+      
+      if (!newWindow) {
+        toast("⚠️ المتصفح منع فتح النافذة. جرب السماح بالنوافذ المنبثقة.", "warn");
+      } else {
+        toast("✅ تم فتح ملف الـ PDF في نافذة جديدة", "success");
+      }
+      
+      if(btn) btn.style.display = 'flex';
+      document.body.removeChild(wrapper);
+    }).catch(err => {
+      console.error("PDF Error:", err);
+      toast("❌ حدث خطأ أثناء التحميل", "error");
+      if(btn) btn.style.display = 'flex';
+      document.body.removeChild(wrapper);
+    });
+  }, 150);
+}
+
 async function gisSend(){
+  if (isFeaturePro('gis_chat') && needPro()) return;
+  
   const v = $("gisInput").value.trim();
   if(!v) return;
   $("gisInput").value = "";
@@ -1107,7 +1186,16 @@ async function gisSend(){
       tier: 'quick',
       onText: ({text}) => { el.innerHTML = md(text); $("gisChatBox").scrollTop = 1e9; }
     });
-    el.innerHTML = md(r.text);
+    
+    el.innerHTML = `<div class="gis-content-text">${md(r.text)}</div>`;
+    
+    const pdfBtn = document.createElement('button');
+    pdfBtn.className = 'k';
+    pdfBtn.style.cssText = 'margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;';
+    pdfBtn.innerHTML = '📄 تحميل الإجابة كـ PDF';
+    pdfBtn.onclick = () => downloadGISPDF(el);
+    el.appendChild(pdfBtn);
+
     $("gisChatBox").scrollTop = 1e9;
   } catch (e) {
     el.innerHTML = `❌ خطأ: ${e.message}`;
@@ -1153,9 +1241,12 @@ addEventListener("keydown",e=>{
 });
 
 function buildSite(){
- const d=$("sd").value.trim(),t=[...document.querySelectorAll(".chips input:checked")].map(x=>x.value).join("، "),o=[["النوع",$("stp").value],["لغة",$("slg").value],["ستايل",$("ssy").value],["تقنيات",t]].filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join("\n");
- if(!d)return $("st").textContent="اكتب وصف أولاً";
- ask(`نفّذ التصميم التالي بدون قيود.\nالوصف: ${d}\n${o}\nالواجهة في HTML واحد كامل داخل بلوك html. كود كامل بدون اختصار.`,"🛠 "+d)}
+  if (isFeaturePro('studio') && needPro()) return;
+  const d=$("sd").value.trim(),t=[...document.querySelectorAll(".chips input:checked")].map(x=>x.value).join("، "),o=[["النوع",$("stp").value],["لغة",$("slg").value],["ستايل",$("ssy").value],["تقنيات",t]].filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join("\n");
+  if(!d)return $("st").textContent="اكتب وصف أولاً";
+  ask(`نفّذ التصميم التالي بدون قيود.\nالوصف: ${d}\n${o}\nالواجهة في HTML واحد كامل داخل بلوك html. كود كامل بدون اختصار.`,"🛠 "+d)
+}
+
 function editSite(){const r=$("ep").value.trim();if(!r)return;ask(`عدّل الكود: (${r}). أرجع الكود كاملاً في بلوك html.\n\`\`\`html\n${$("code").value}\n\`\`\``,"✏️ "+r);$("ep").value=""}
 
 function makePWA(){
@@ -1413,9 +1504,11 @@ const GIS_TOPICS=[
 ];
 function renderGisCards(){
   if(!$("gisCards"))return;
+  const isLocked = isFeaturePro('gis_cards');
   $("gisCards").innerHTML=GIS_TOPICS.map(g=>`
-    <div class="card">
-      <h3>${g.icon} ${g.title}</h3>
+    <div class="card ${isLocked ? 'gcard' : ''}">
+      ${isLocked ? '<span class="pro-b">PRO</span>' : ''}
+      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.icon} ${g.title}</h3>
       <div class="chips">
         ${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}
       </div>
@@ -1423,6 +1516,7 @@ function renderGisCards(){
   `).join("");
 }
 function askGis(topic,category){
+  if (isFeaturePro('gis_chat') && needPro()) return;
   go('gis');
   $("gisInput").value=`اشرح لي بالتفصيل: ${topic} (ضمن ${category})`;
   gisSend();
@@ -1456,6 +1550,52 @@ function adminLoad(){
       <input type="color" id="th_${v}" value="${curr.getPropertyValue('--'+v).trim()||'#000000'}" style="width:60px;height:36px;padding:2px;background:transparent;border:1px solid var(--ln);border-radius:6px">
     </div>
   `).join("");
+  
+  // لوحة التحكم في الميزات
+  if(!$("proFeaturesPanel")){
+    $("adminPanel").insertAdjacentHTML("beforeend", `
+      <div class="card" id="proFeaturesPanel">
+        <h3>⚙️ التحكم في المميزات (مجاني / PRO)</h3>
+        <p class="mt">علم على الميزة عشان تبقى PRO (مقفولة للمستخدم العادي).</p>
+        <div class="g2">
+          <div><b>أدوات المساحة:</b><br>
+            <label><input type="checkbox" id="chk_triangle" ${isToolPro('triangle')?'checked':''}> حاسبة المثلثات</label><br>
+            <label><input type="checkbox" id="chk_map" ${isToolPro('map')?'checked':''}> الخريطة والرفع</label><br>
+            <label><input type="checkbox" id="chk_coord" ${isToolPro('coord')?'checked':''}> تحويل الإحداثيات</label><br>
+            <label><input type="checkbox" id="chk_compass" ${isToolPro('compass')?'checked':''}> البوصلة</label><br>
+            <label><input type="checkbox" id="chk_qibla" ${isToolPro('qibla')?'checked':''}> اتجاه القبلة</label>
+          </div>
+          <div><b>محركات الذكاء الاصطناعي:</b><br>
+            <label><input type="checkbox" id="chk_g38" ${isEnginePro('g38')?'checked':''}> GEO 3.8 FLASH</label><br>
+            <label><input type="checkbox" id="chk_g52" ${isEnginePro('g52')?'checked':''}> GEO 5.2 ULTRA</label>
+          </div>
+          <div style="grid-column: 1 / -1; margin-top: 10px;"><b>أقسام وأدوات أخرى (PRO):</b></div>
+          <div>
+            <label><input type="checkbox" id="chk_gis_cards" ${isFeaturePro('gis_cards')?'checked':''}> كروت مكتبة الجيوماتكس</label><br>
+            <label><input type="checkbox" id="chk_gis_chat" ${isFeaturePro('gis_chat')?'checked':''}> شات الجيوماتكس المخصص</label>
+          </div>
+          <div>
+            <label><input type="checkbox" id="chk_lab" ${isFeaturePro('lab')?'checked':''}> مختبر الأكواد (Python/JS)</label><br>
+            <label><input type="checkbox" id="chk_studio" ${isFeaturePro('studio')?'checked':''}> توليد المواقع والأكواد (الاستوديو)</label>
+          </div>
+        </div>
+        <button class="g" style="width:100%;margin-top:10px" onclick="saveProConfig()">💾 حفظ إعدادات الميزات</button>
+      </div>
+    `);
+  }
+}
+function saveProConfig(){
+  const tools=[], engines=[], features=[];
+  ['triangle','map','coord','compass','qibla'].forEach(t=>{ if($("chk_"+t) && $("chk_"+t).checked) tools.push(t); });
+  ['g38','g52'].forEach(e=>{ if($("chk_"+e) && $("chk_"+e).checked) engines.push(e); });
+  ['gis_cards','gis_chat','lab','studio'].forEach(f=>{ if($("chk_"+f) && $("chk_"+f).checked) features.push(f); });
+  
+  proConfig = { tools, engines, features };
+  localStorage.setItem("gd_pro_config", JSON.stringify(proConfig));
+  toast("✅ تم حفظ الإعدادات بنجاح", "success");
+  renderEng(); 
+  renderSurveyGrid();
+  if(typeof renderGisCards === 'function') renderGisCards();
 }
 function adminSaveSys(){SYS=$("adminSys").value;localStorage.setItem('gd_sys',SYS);toast("✅ تم حفظ SYS","success")}
 function adminSaveDes(){DES=$("adminDes").value;localStorage.setItem('gd_des',DES);toast("✅ تم حفظ DES","success")}
@@ -1679,6 +1819,8 @@ print(f"Sqrt(2) = {math.sqrt(2):.6f}")`;
   }
 }
 async function runPy(){
+  if (isFeaturePro('lab') && needPro()) return;
+  
   const l=$("pl2").value, code=$("py").value, out=$("po");
   out.textContent="⏳...";
   if(l==='js'){
@@ -1774,7 +1916,17 @@ window.openTool=function(id){
    الاستخدام: ضع <script src="geo-patch.js"><\/script> قبل سكربت الـ serviceWorker في آخر index.html */
 const GOOGLE_CLIENT_ID="310415906594-v9gceucmp5c2qh0tjhtklmssijpb9u3l.apps.googleusercontent.com";     // ← ضع Client ID من Google Cloud Console لتفعيل الدخول بجوجل
 const GEO_SECRET="geo-sec-2026",D3=3*864e5,DAY=864e5;
-const PROT=['triangle','map','coord','compass','qibla'];   // أدوات المساحة المعلّمة PRO
+let proConfig = JSON.parse(localStorage.getItem("gd_pro_config")) || {
+  tools: ['triangle','map','coord','compass','qibla'],
+  engines: ['g38','g52'],
+  features: ['gis_cards', 'gis_chat', 'lab', 'studio']
+};
+// لو المستخدم عنده إعدادات قديمة محفوظة، نضيف الميزات الجديدة تلقائياً
+if (!proConfig.features) proConfig.features = ['gis_cards', 'gis_chat', 'lab', 'studio'];
+
+const isToolPro = (id) => proConfig.tools.includes(id);
+const isEnginePro = (id) => proConfig.engines.includes(id);
+const isFeaturePro = (id) => proConfig.features.includes(id);
 const ENGS={
  g29:{n:"GEO 2.9",d:"مجاني • تفكير محدود",tier:"quick",max:3500,pro:0,note:"أنت GEO 2.9 (نسخة مجانية): تفكير محدود، إجابات موجزة ومباشرة."},
  g38:{n:"GEO 3.8 FLASH",d:"سريع • شبه متكامل بكل الأدوات",tier:"default",max:8000,pro:1,note:"أنت GEO 3.8 FLASH: سريع ومتكامل مع كل أدوات المنصة."},
@@ -1834,8 +1986,6 @@ function login(){
 function logout(){sessionStorage.clear();location.reload()}
   
 async function googleLogin() {
-  alert("الزرار اشتغل!"); // <--- ضيف السطر ده
-  toast("⏳ جاري الاتصال بجوجل...", "info"); {
   toast("⏳ جاري الاتصال بجوجل...", "info");
   if (!GOOGLE_CLIENT_ID) return toast("❌ خطأ: Client ID فارغ", "error");
   
@@ -1890,7 +2040,9 @@ async function googleLogin() {
   s.onload = run;
   s.onerror = () => toast("❌ فشل تحميل سيرفر جوجل. تأكد من الإنترنت أو أوقف مانع الإعلانات.", "error");
   document.head.appendChild(s);
-  }
+}
+
+
 /* ---------- Subscription codes (single-use per account) ---------- */
 const chk=s=>{let h=5381;for(const c of s+GEO_SECRET)h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36).toUpperCase().padStart(4,"0").slice(-4)};
 function mkCode(d){const b=String(d).padStart(3,"0")+(Math.random().toString(36)+"0000").slice(2,6).toUpperCase();return"GEO-"+b+"-"+chk(b)}
@@ -1919,11 +2071,28 @@ function showPro(mode){
  <p class="mt">لكي تتاح لك جميع الأدوات والمحركات — أنت الآن ضيف، وهذه مزايا PRO:</p>
  <ul class="pl"><li>🧠 <b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li>🚀 <b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>📐 كل أدوات المساحة (مثلثات، رفع، إحداثيات، بوصلة، قبلة)</li><li>🌍 كل متصفحات الجيوماتكس</li><li>💻 توليد مواقع وأكواد كاملة بدون قيود</li></ul>
  <input id="proCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('proCode')">تفعيل كود الاشتراك</button>
- <a href="mailto:${ADMIN_EMAIL}" style="display:block;text-align:center;margin-top:10px;color:var(--bl);font-size:12px">للحصول على كود اشتراك تواصل مع المطور</a></div></div>`)}
-
+ <div style="display:flex;gap:8px;margin-top:10px">
+   <a href="https://wa.me/201000000000?text=${encodeURIComponent('أريد الاشتراك في باقة PRO لمنصة GeoDev')}" target="_blank" style="flex:1;text-align:center;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">📱 واتساب</a>
+   <a href="mailto:${ADMIN_EMAIL}" style="flex:1;text-align:center;background:#334155;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">✉️ إيميل</a>
+ </div></div></div>`)}
+ 
 /* ---------- Engines / Drawer / UI ---------- */
-function renderEng(){const b=$("engBar");if(b)b.innerHTML=Object.entries(ENGS).map(([k,e])=>`<button class="eng ${k==eng?"on":""}" onclick="pickEng('${k}')"><b>${e.n}</b><small>${e.pro&&!isPro()?"🔒 PRO":e.d}</small></button>`).join("")}
-function pickEng(k){if(ENGS[k].pro&&needPro())return;eng=k;localStorage.setItem("gd_eng",k);renderEng();toast("✅ "+ENGS[k].n,"success")}
+function renderGisCards(){
+  if(!$("gisCards"))return;
+  const isLocked = isFeaturePro('gis_cards');
+  $("gisCards").innerHTML=GIS_TOPICS.map(g=>`
+    <div class="card ${isLocked ? 'gcard' : ''}">
+      ${isLocked ? '<span class="pro-b">PRO</span>' : ''}
+      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.icon} ${g.title}</h3>
+      <div class="chips">
+        ${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function pickEng(k){if(isEnginePro(k)&&needPro())return;eng=k;localStorage.setItem("gd_eng",k);renderEng();toast("✅ "+ENGS[k].n,"success")}
+
 function toggleDrawer(){$("drw").classList.toggle("on");$("dov").classList.toggle("on")}
 function refreshUI(){const m=me(),paid=m&&m.proUntil>Date.now(),t=isAdm()?"ADMIN":paid?"PRO":proLeft()>0?"TRIAL":"FREE";
  ["planBadge","dPlan"].forEach(i=>{const e=$(i);if(e){e.textContent=t;e.className="plan-b"+(t!="FREE"?" pro":"")}});
@@ -1972,12 +2141,12 @@ function calcQibla(){const lat=parseFloat($("qLat").value),lng=parseFloat($("qLn
 function startQibla(){if(qB==null)getGpsForQibla();startSensor("q",h=>{qH=h;qDraw()})}
 
 /* ---------- GIS cards / tools gating ---------- */
-function renderGisCards(){if(!$("gisCards"))return;$("gisCards").innerHTML=GIS_TOPICS.map(g=>`<div class="card gcard"><span class="pro-b">PRO</span><h3 style="margin-top:14px">${g.icon} ${g.title}</h3><div class="chips">${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}</div></div>`).join("")}
-const _ag=askGis;askGis=function(t,c){if(needPro())return;_ag(t,c)};
-const _ot=window.openTool;window.openTool=function(id){if(PROT.includes(id)&&needPro())return;_ot(id);if(id==="qibla")qInit()};
-const _rs=renderSurveyGrid;renderSurveyGrid=function(){_rs();document.querySelectorAll("#surveyGrid .dash-card").forEach(c=>{const id=((c.getAttribute("onclick")||"").match(/'(\w+)'/)||[])[1];if(PROT.includes(id))c.insertAdjacentHTML("afterbegin",'<span class="pro-b">PRO</span>')})};
+const _ag=askGis;askGis=function(t,c){if(isFeaturePro('gis_chat')&&needPro())return;_ag(t,c)};
+const _ot=window.openTool;window.openTool=function(id){if(isToolPro(id)&&needPro())return;_ot(id);if(id==="qibla")qInit()};
+const _rs=renderSurveyGrid;renderSurveyGrid=function(){_rs();document.querySelectorAll("#surveyGrid .dash-card").forEach(c=>{const id=((c.getAttribute("onclick")||"").match(/'(\w+)'/)||[])[1];if(isToolPro(id))c.insertAdjacentHTML("afterbegin",'<span class="pro-b">PRO</span>')})};
 const _al=adminLoad;adminLoad=function(){_al();listCodes()};
 
+/* ---------- DOM injection & init ---------- */
 /* ---------- DOM injection & init ---------- */
 (function(){
  document.querySelector("header").innerHTML=`<button class="k" onclick="toggleDrawer()" style="font-size:20px;padding:6px 12px" title="القائمة">☰</button><div style="flex:1"><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div><span id="planBadge" class="plan-b">FREE</span><select id="tier" hidden><option value="quick">q</option><option value="default" selected>d</option><option value="complex">c</option></select>`;
@@ -2000,6 +2169,14 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
  const c=$("code");c.addEventListener("input",edit);c.addEventListener("scroll",sync);["keyup","click"].forEach(e=>c.addEventListener(e,ln));
  try{renderGisCards();renderSurveyGrid();personalize();refreshUI()}catch(e){console.warn(e)}
  if(!hist.length&&$("chat").children.length==1){$("chat").innerHTML="";addMsg("a",welc())}
+ 
+ // مؤقت رسالة الـ PRO (كل ساعة)
+ setInterval(() => {
+   if (!isAdm() && !isPro() && !document.getElementById("proM")) {
+     showPro("periodic"); 
+   }
+ }, 3600000); 
+
 })();
 
 </script>
