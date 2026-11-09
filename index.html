@@ -558,7 +558,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <div id="ov"><div class="bar"><b>🌐</b><div id="url" class="c">https://my-site.preview/</div><button class="k" onclick="mount($('ovf'),html())" title="تحديث">⟳</button><button class="k" onclick="dev('420px')">📱</button><button class="k" onclick="dev('860px')">▭</button><button class="k" onclick="dev('100%')">🖥</button><button class="k" onclick="dlText(html(),'site.html')">تحميل</button><button class="r" onclick="ov(false)">إغلاق ✕</button></div><div id="ovw"><iframe id="ovf" sandbox="allow-scripts allow-popups allow-forms"></iframe></div></div>
 
 <script>
-const ADMIN_EMAIL="eng.ahmedsamir.gis@gmail.com",ADMIN_PASS="000000",ADMIN_PW="admin2024";
+const ADMIN_EMAIL="eng.ahmedsamir.gis@gmail.com";
 const $=id=>document.getElementById(id);
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
@@ -566,8 +566,8 @@ const DEFAULT_AI={
   provider:'groq',
   base:'https://api.groq.com/openai/v1',
   model:'openai/gpt-oss-120b',
-  key:'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',
-  backupKey:'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',
+  key:'',
+  backupKey:'',
   backupModel:'openai/gpt-oss-20b'
 };
 let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصصات، بتشتغل مع م. أحمد سمير.
@@ -2181,7 +2181,11 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
 
 </script>
 
-<script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="geo-cf.js"></script>
+  <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
