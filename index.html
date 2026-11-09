@@ -947,6 +947,9 @@ const PROVIDERS={
   custom:{n:'مخصص',base:'',model:'',needKey:true}
 };
 function aiSettings(){
+  if (sessionStorage.getItem("gd_role") !== "admin") {
+    return toast("❌ إعدادات الذكاء الاصطناعي متاحة للأدمن فقط", "error");
+  }
   const c=getCfg(),p=c.provider||'groq',cur=PROVIDERS[p];
   const opts=Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}" ${k===p?'selected':''}>${v.n}</option>`).join('');
   const html=`<div id="aiM" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.65);display:grid;place-items:center;padding:16px" onclick="if(event.target===this)this.remove()">
@@ -1980,7 +1983,13 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
  document.querySelector("header").innerHTML=`<button class="k" onclick="toggleDrawer()" style="font-size:20px;padding:6px 12px" title="القائمة">☰</button><div style="flex:1"><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div><span id="planBadge" class="plan-b">FREE</span><select id="tier" hidden><option value="quick">q</option><option value="default" selected>d</option><option value="complex">c</option></select>`;
  document.body.insertAdjacentHTML("beforeend",`<div id="dov" onclick="toggleDrawer()"></div><aside id="drw"><div class="row" style="justify-content:space-between"><b>GeoDev Studio Pro</b><button class="k" onclick="toggleDrawer()">✕</button></div>
  <div class="du"><div class="av">👤</div><div><b id="dName"></b><div class="mt" id="dMail"></div><span id="dPlan" class="plan-b">FREE</span></div></div>
- <div class="dm"><button onclick="saveProjects();toggleDrawer()">💾 حفظ المشروع</button><button onclick="loadProjects();toggleDrawer()">📂 فتح مشروع محفوظ</button><button onclick="aiSettings();toggleDrawer()">⚙️ إعدادات AI</button><button onclick="toggleDrawer();showPro('info')">⭐ PRO وكود الاشتراك</button><button class="r" onclick="logout()">🚪 خروج</button></div></aside>`);
+ <div class="dm">
+   <button onclick="saveProjects();toggleDrawer()">💾 حفظ المشروع</button>
+   <button onclick="loadProjects();toggleDrawer()">📂 فتح مشروع محفوظ</button>
+   ${sessionStorage.getItem("gd_role") === "admin" ? '<button onclick="aiSettings();toggleDrawer()">⚙️ إعدادات AI</button>' : ''}
+   <button onclick="toggleDrawer();showPro('info')">⭐ PRO وكود الاشتراك</button>
+   <button class="r" onclick="logout()">🚪 خروج</button>
+ </div></aside>`);
  $("ui").closest(".row").insertAdjacentHTML("afterend",'<div class="engbar" id="engBar"></div>');
  document.querySelector("#loginForm button.a").insertAdjacentHTML("afterend",'<button class="k" style="width:100%;padding:12px;margin-top:8px" onclick="googleLogin()">🟢 المتابعة بحساب Google</button>');
  document.querySelector("#modal-qibla .tool-body").innerHTML=`<button style="width:100%;margin-bottom:8px" onclick="getGpsForQibla()">📍 استخدام موقعي الحالي</button>
