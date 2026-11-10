@@ -1116,6 +1116,7 @@ function getPlatformInfo(rawUrl) {
   };
 }
 
+
 function renderAnalysisMarkdown(markdown) {
   const source = String(markdown || "");
   if (!source) return "";
@@ -1126,8 +1127,13 @@ function renderAnalysisMarkdown(markdown) {
     window.DOMPurify &&
     typeof window.DOMPurify.sanitize === "function"
   ) {
-    return window.DOMPurify.sanitize(
+    const safeHTML = window.DOMPurify.sanitize(
       window.marked.parse(source)
+    );
+
+    return safeHTML.replace(
+      /<a\b(?![^>]*\btarget=)/gi,
+      '<a target="_blank" rel="noopener noreferrer"'
     );
   }
 
@@ -1135,6 +1141,7 @@ function renderAnalysisMarkdown(markdown) {
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\n/g, "<br>")}</p>`;
 }
+
 
 
 function renderSearchResults(data) {
