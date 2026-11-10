@@ -261,6 +261,75 @@
         #s-academy { padding:9px; }
         #s-academy .academy-header { padding:17px; }
       }
+      
+#s-academy .academy-search-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 260px), 1fr)
+  );
+  gap: 13px;
+  margin: 12px 0;
+}
+
+#s-academy .academy-course-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--border, #334155);
+  border-radius: 15px;
+  padding: 15px;
+  background: var(--card, #182334);
+  box-shadow: 0 3px 12px rgba(0,0,0,.10);
+}
+
+#s-academy .academy-course-platform {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#s-academy .academy-platform-icon,
+#s-academy .academy-platform-fallback {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  box-sizing: border-box;
+  border-radius: 11px;
+}
+
+#s-academy .academy-platform-icon {
+  object-fit: contain;
+  background: #fff;
+  padding: 5px;
+}
+
+#s-academy .academy-platform-fallback {
+  display: grid;
+  place-items: center;
+  background: #26384d;
+  font-size: 23px;
+}
+
+#s-academy .academy-course-result h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+#s-academy .academy-course-result p {
+  margin: 0;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+#s-academy .academy-analysis {
+  overflow-x: auto;
+  line-height: 1.9;
+}
+
     `;
 
     document.head.appendChild(style);
@@ -745,55 +814,150 @@
     }
   }
 
-  function renderSearchResults(data) {
-    const results = Array.isArray(data.results) ? data.results : [];
+  
+function getPlatformInfo(rawUrl) {
+  let host = "";
 
-    const analysis = data.analysis
-      ? `
-        <div class="academy-card" style="margin-bottom:14px">
-          <h3>🤖 تحليل GEO AI</h3>
-          <div style="white-space:pre-wrap;line-height:1.9">${escapeHTML(data.analysis)}</div>
+  try {
+    const parsed = new URL(String(rawUrl || ""));
+    if (!["https:", "http:"].includes(parsed.protocol)) {
+      throw new Error("Invalid URL");
+    }
+    host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  } catch (_) {
+    return { name: "مصدر تعليمي", emoji: "🌐", icon: "" };
+  }
+
+  const platforms = [
+    { match: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/, name: "YouTube", emoji: "▶️" },
+    { match: /(^|\.)coursera\.org$/, name: "Coursera", emoji: "🎓" },
+    { match: /(^|\.)udemy\.com$/, name: "Udemy", emoji: "🟣" },
+    { match: /(^|\.)autodesk\.com$/, name: "Autodesk", emoji: "🅰️" },
+    { match: /(^|\.)edx\.org$/, name: "edX", emoji: "🎓" },
+    { match: /(^|\.)linkedin\.com$/, name: "LinkedIn Learning", emoji: "in" },
+    { match: /(^|\.)m3aarf\.com$/, name: "معارف", emoji: "📚" },
+    { match: /(^|\.)teracourses\.com$/, name: "Teracourses", emoji: "📖" },
+    { match: /(^|\.)skillshare\.com$/, name: "Skillshare", emoji: "✏️" },
+    { match: /(^|\.)esri\.com$/, name: "Esri", emoji: "🌍" }
+  ];
+
+  const found = platforms.find(p => p.match.test(host));
+
+  return {
+    name: found ? found.name : host,
+    emoji: found ? found.emoji : "🌐",
+    icon: "https://www.google.com/s2/favicons?domain=" +
+      encodeURIComponent(host) + "&sz=64"
+  };
+}
+
+function renderAnalysisMarkdown(markdown) {
+  const source = String(markdown || "");
+  if (!source) return "";
+
+  if (
+    window.marked &&
+    typeof window.marked.parse === "function" &&
+    window.DOMPurify &&
+    typeof window.DOMPurify.sanitize === "function"
+  ) {
+    return window.DOMPurify.sanitize(
+      window.marked.parse(source)
+    );
+  }
+
+  return `<p>${escapeHTML(source)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>")}</p>`;
+}
+
+function renderSearchResults(data) {
+  const results = Array.isArray(data.results) ? data.results : [];
+
+  const analysis = data.analysis
+    ? `
+      <div class="academy-card" style="margin-bottom:14px">
+        <h3>🤖 تحليل GEO AI</h3>
+        <div class="academy-analysis">
+          ${renderAnalysisMarkdown(data.analysis)}
         </div>
-      `
+      </div>
+    `
+    : "";
+
+  const summary = data.answer
+    ? `
+      <div class="academy-card" style="margin-bottom:14px">
+        <h3>📝 ملخص البحث</h3>
+        <p>${escapeHTML(data.answer)}</p>
+      </div>
+    `
+    : "";
+
+  const cards = results.map((item, index) => {
+    const platform = getPlatformInfo(item.url);
+    const title = escapeHTML(
+      item.title || "مصدر تعليمي " + (index + 1)
+    );
+    const description = escapeHTML(
+      item.content || "لا يوجد وصف متاح."
+    );
+    const url = safeURL(item.url);
+
+    const icon = platform.icon
+      ? `<img class="academy-platform-icon"
+          src="${platform.icon}"
+          alt=""
+          loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
       : "";
 
-    const summary = data.answer
-      ? `
-        <div class="academy-card" style="margin-bottom:14px">
-          <h3>📝 ملخص البحث</h3>
-          <p>${escapeHTML(data.answer)}</p>
-        </div>
-      `
-      : "";
-
-    const cards = results.map((item, index) => {
-      const title = escapeHTML(item.title || ("نتيجة البحث " + (index + 1)));
-      const description = escapeHTML(item.content || "لا يوجد وصف متاح.");
-      const url = safeURL(item.url);
-
-      return `
-        <article class="academy-card" style="margin:12px 0">
-          <h3>${index + 1}. ${title}</h3>
-          <p>${description}</p>
-          ${url
-            ? `<a href="${url}" target="_blank" rel="noopener noreferrer"
-                class="academy-btn" style="display:inline-block;text-decoration:none">
-                فتح المصدر الأصلي ↗
-              </a>`
-            : `<span class="academy-muted">الرابط غير متاح</span>`
-          }
-        </article>
-      `;
-    }).join("");
+    const fallback = `
+      <span class="academy-platform-fallback"
+        style="${platform.icon ? "display:none" : ""}">
+        ${escapeHTML(platform.emoji)}
+      </span>
+    `;
 
     return `
-      <h3>📚 نتائج البحث (${results.length})</h3>
-      ${analysis}
-      ${summary}
-      <h3>🔗 مصادر البحث</h3>
-      ${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}
+      <article class="academy-course-result">
+        <div class="academy-course-platform">
+          ${icon}
+          ${fallback}
+          <div>
+            <div class="academy-muted">المنصة التعليمية</div>
+            <strong>${escapeHTML(platform.name)}</strong>
+          </div>
+        </div>
+
+        <h4>${index + 1}. ${title}</h4>
+        <p>${description}</p>
+
+        ${
+          url
+            ? `<a href="${url}" target="_blank"
+                rel="noopener noreferrer"
+                class="academy-btn"
+                style="display:block;text-align:center;text-decoration:none;margin-top:auto">
+                فتح المصدر على ${escapeHTML(platform.name)} ↗
+              </a>`
+            : `<span class="academy-muted">الرابط غير متاح</span>`
+        }
+      </article>
     `;
-  }
+  }).join("");
+
+  return `
+    <h3>📚 الكورسات والمصادر (${results.length})</h3>
+    ${analysis}
+    ${summary}
+    <h3>🎓 نتائج البحث</h3>
+    <div class="academy-search-grid">
+      ${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}
+    </div>
+  `;
+}
+
 
   function bindEvents() {
     document.addEventListener("click", async event => {
