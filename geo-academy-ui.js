@@ -320,7 +320,7 @@
               </div>
               <div class="academy-muted">التقدم: ${percent}%</div>
               <button class="academy-btn" data-course="${course.id}">
-                ${item?.progress?.completed ? "مكتمل ✓" : "تسجيل إتمام الكورس"}
+               ${percent >= 100 ? "مكتمل ✓" : "تسجيل إتمام الكورس"}
               </button>
             </div>
           `;
