@@ -1129,6 +1129,81 @@ function renderSearchResults(data) {
         return;
       }
 
+      const teacherBtn = event.target.closest("#academyTeacherSend");
+
+if (teacherBtn) {
+  const questionInput = $("academyTeacherQuestion");
+  const subjectInput = $("academyTeacherSubject");
+  const messagesBox = $("academyTeacherMessages");
+
+  const question = questionInput?.value.trim();
+  const subject = subjectInput?.value || "الجغرافيا العامة";
+
+  if (!question) {
+    notify("اكتب سؤالك للمدرس أولاً.", "warning");
+    return;
+  }
+
+  if (!window.GEOAcademyEngines?.teacherChat) {
+    notify("محرك المدرس الذكي غير متصل.", "error");
+    return;
+  }
+
+  teacherBtn.disabled = true;
+  teacherBtn.textContent = "⏳ المدرس يجهز الإجابة...";
+
+  const userMessage = document.createElement("div");
+  userMessage.className = "academy-card";
+  userMessage.style.cssText =
+    "margin:10px 0;padding:12px;background:#e8f3ff;color:#17324d;white-space:pre-wrap;";
+  userMessage.textContent = "👤 أنت:\n" + question;
+
+  messagesBox.appendChild(userMessage);
+
+  teacherMessages.push({
+    role: "user",
+    content: question
+  });
+
+  try {
+    const answer = await window.GEOAcademyEngines.teacherChat(
+      teacherMessages,
+      subject
+    );
+
+    teacherMessages.push({
+      role: "assistant",
+      content: answer
+    });
+
+    const assistantMessage = document.createElement("div");
+    assistantMessage.className = "academy-card";
+    assistantMessage.style.cssText =
+      "margin:10px 0;padding:12px;white-space:pre-wrap;line-height:1.8;";
+
+    assistantMessage.textContent = "👨‍🏫 المدرس الذكي:\n" + answer;
+
+    messagesBox.appendChild(assistantMessage);
+
+    questionInput.value = "";
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+
+  } catch (error) {
+    teacherMessages.pop();
+
+    notify(
+      error.message || "حدث خطأ أثناء سؤال المدرس.",
+      "error"
+    );
+
+  } finally {
+    teacherBtn.disabled = false;
+    teacherBtn.textContent = "📩 اسأل المدرس الذكي";
+  }
+
+  return;
+}
+
       const course = event.target.closest("[data-course]");
 
       if (course) {
