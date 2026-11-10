@@ -243,7 +243,88 @@
    * روابط بحث مخصصة لكل تخصص.
    * البحث يفتح نتائج المنصة الأصلية.
    */
-
+const realCourses = [
+  {
+    id: "qgis-intro",
+    title: "Introduction to QGIS",
+    category: "gis",
+    provider: "Spatial Thoughts",
+    level: "مبتدئ",
+    language: "English",
+    price: "مجاني للدراسة الذاتية",
+    url: "https://spatialthoughts.com/courses/introduction-to-qgis/"
+  },
+  {
+    id: "qgis-advanced",
+    title: "Advanced QGIS",
+    category: "gis",
+    provider: "Spatial Thoughts",
+    level: "متوسط",
+    language: "English",
+    price: "راجع المصدر",
+    url: "https://courses.spatialthoughts.com/"
+  },
+  {
+    id: "narss-remote",
+    title: "Introduction to Remote Sensing",
+    category: "remote-sensing",
+    provider: "NARSS",
+    level: "مبتدئ",
+    language: "Arabic / English",
+    price: "مجاني حسب الكتالوج",
+    url: "https://narss.sci.eg/search"
+  },
+  {
+    id: "narss-surveying",
+    title: "Terrestrial and Airborne Surveying",
+    category: "surveying",
+    provider: "NARSS",
+    level: "متوسط",
+    language: "Arabic / English",
+    price: "مجاني حسب صفحة الدورة",
+    url: "https://narss.sci.eg/course-description/terrestrial-and-airborne-surveying"
+  },
+  {
+    id: "esa-civil3d",
+    title: "Basic AutoCAD Civil 3D",
+    category: "civil3d",
+    provider: "Egyptian Survey Authority",
+    level: "مبتدئ",
+    language: "Arabic",
+    price: "مدفوع",
+    url: "https://www.esa.gov.eg/AutoCADCivilA.aspx"
+  },
+  {
+    id: "autodesk-civil3d",
+    title: "Learn Civil 3D in 90 Minutes",
+    category: "civil3d",
+    provider: "Autodesk",
+    level: "مبتدئ",
+    language: "English",
+    price: "راجع المصدر",
+    url: "https://app.learn-one.autodesk.com/learn/ondemand/course/learn-civil-3d-in-90-minutes"
+  },
+  {
+    id: "autodesk-autocad",
+    title: "AutoCAD Tutorials",
+    category: "autocad",
+    provider: "Autodesk",
+    level: "متعدد المستويات",
+    language: "English",
+    price: "مجاني ومدفوع حسب المحتوى",
+    url: "https://www.autodesk.com/solutions/aec/autocad-tutorials"
+  },
+  {
+    id: "spatial-python",
+    title: "Python Foundation for Spatial Analysis",
+    category: "python-gis",
+    provider: "Spatial Thoughts",
+    level: "مبتدئ",
+    language: "English",
+    price: "راجع المصدر",
+    url: "https://courses.spatialthoughts.com/"
+  }
+];
   const searchTemplates = {
     youtube: "https://www.youtube.com/results?search_query=",
     coursera: "https://www.coursera.org/search?query=",
