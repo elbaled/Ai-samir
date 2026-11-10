@@ -15,11 +15,12 @@
     { id: "autocad-ai", title: "AutoCAD + AI", icon: "🤖", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
   ];
 
-  let currentUser = null;
-  let notes = [];
-  let memories = [];
-  let progress = [];
-  let activeTab = "courses";
+ let currentUser = null;
+let notes = [];
+let memories = [];
+let progress = [];
+let teacherMessages = [];
+let activeTab = "courses";
 
   const $ = id => document.getElementById(id);
 
