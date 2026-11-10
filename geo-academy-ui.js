@@ -802,15 +802,48 @@ async function completeCourse(courseId) {
   }
 
   function bindEvents() {
-    document.addEventListener("click", event => {
+        document.addEventListener("click", async event => {
       const tab = event.target.closest("[data-academy-tab]");
       if (tab) {
         activeTab = tab.dataset.academyTab;
         renderTab();
+                return;
+      }
+
+      const smartBtn = event.target.closest("#academySmartSearchBtn");
+
+      if (smartBtn) {
+        const query = $("academySmartQuery")?.value.trim();
+        const output = $("academySmartResults");
+
+        if (!query) {
+          output.textContent = "اكتب موضوع الكورس الذي تريد البحث عنه أولاً.";
+          return;
+        }
+
+        smartBtn.disabled = true;
+        smartBtn.textContent = "⏳ جاري البحث والتحليل...";
+        output.textContent = "يبحث GEO 5.2 ULTRA على الويب، ثم يحلل GEO 3.8 FLASH النتائج...";
+
+        try {
+          const data = await window.GEOAcademyEngines.search(query);
+
+          output.textContent =
+            "نتائج البحث:\n\n" + data.results +
+            "\n\nمصادر البحث:\n" + data.sources;
+        } catch (error) {
+          output.textContent = "حدث خطأ: " + error.message;
+        } finally {
+          smartBtn.disabled = false;
+          smartBtn.textContent = "🔍 ابدأ البحث الذكي";
+        }
+
         return;
       }
 
       const course = event.target.closest("[data-course]");
+
+
       if (course) {
         completeCourse(course.dataset.course);
         return;
