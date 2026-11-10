@@ -344,36 +344,143 @@
     if (element) element.textContent = message;
   }
 
-  function renderCourses() {
-    const content = $("academyContent");
-    if (!content) return;
+function renderCourses(query = "") {
+  const content = $("academyContent");
+  if (!content) return;
 
+  const catalog = window.GEOAcademyContent;
+
+  if (!catalog) {
     content.innerHTML = `
-      <div class="academy-grid">
-        ${courses.map(course => {
-          const item = progress.find(p => p.id === course.id);
-          const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
-          return `
-            <div class="academy-card">
-              <div class="academy-icon">${course.icon}</div>
-              <h3>${escapeHTML(course.title)}</h3>
-              <p>${escapeHTML(course.desc)}</p>
-              <div class="academy-progress">
-                <span style="width:${percent}%"></span>
-              </div>
-              <div class="academy-muted">التقدم: ${percent}%</div>
-              <button class="academy-btn" data-course="${course.id}">
-               ${percent >= 100 ? "مكتمل ✓" : "تسجيل إتمام الكورس"}
-              </button>
-            </div>
-          `;
-        }).join("")}
+      <div class="academy-empty">
+        تعذر تحميل دليل الكورسات. تأكد من إضافة ملف geo-academy-content.js.
       </div>
-      <p class="academy-muted" style="margin-top:15px">
-        ملاحظة: هذه قائمة المسارات التعليمية. محتوى الدروس التفصيلي سيُضاف في مرحلة بناء الكورسات.
-      </p>
     `;
+    return;
   }
+
+  const categories = catalog.getAllCategories();
+  const search = String(query || "").trim().toLowerCase();
+
+  const filtered = categories.filter(category =>
+    category.name.toLowerCase().includes(search) ||
+    category.topics.some(topic => topic.toLowerCase().includes(search))
+  );
+
+  content.innerHTML = `
+    <div class="academy-card">
+      <h3>🌐 مكتبة الكورسات العالمية</h3>
+      <p>
+        ابحث عن الدورات التعليمية في GIS والمساحة والاستشعار عن بعد
+        والبرمجة والتصميم الهندسي.
+      </p>
+
+      <input
+        id="academyCatalogSearch"
+        class="academy-input"
+        placeholder="ابحث عن ArcGIS أو AutoCAD أو Python..."
+        value="${escapeHTML(query)}"
+        oninput="window.GEOAcademyUI.search(this.value)"
+      >
+
+      <div class="academy-muted">
+        ${filtered.length} تخصص متاح في الدليل
+      </div>
+    </div>
+
+    <div class="academy-grid">
+      ${filtered.length ? filtered.map(category => {
+        const sources = catalog.getSources(category.id);
+
+        return `
+          <div class="academy-card">
+            <div class="academy-icon">📚</div>
+
+            <h3>${escapeHTML(category.name)}</h3>
+
+            <p class="academy-muted">
+              ${category.topics.length} موضوعًا تعليميًا
+            </p>
+
+            <h4>الموضوعات</h4>
+
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${category.topics.map(topic => `
+                <a
+                  class="academy-btn secondary"
+                  style="text-decoration:none;font-size:11px"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="${escapeHTML(catalog.searchUrl("youtube", topic))}"
+                >
+                  ${escapeHTML(topic)} 🔎
+                </a>
+              `).join("")}
+            </div>
+
+            <hr style="border-color:var(--border,#334155);margin:15px 0">
+
+            <h4>المصادر والمنصات</h4>
+
+            ${sources.map(source => `
+              <div style="margin:9px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
+                <b>${escapeHTML(source.name)}</b>
+
+                <div class="academy-muted">
+                  ${escapeHTML(source.platform)}
+                  • ${escapeHTML(source.language || "لغات متعددة")}
+                  ${source.price === "free" ? " • مجاني" : ""}
+                </div>
+
+                <a
+                  href="${escapeHTML(source.url)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="academy-btn"
+                  style="display:inline-block;text-decoration:none;margin-top:7px"
+                >
+                  زيارة المصدر ↗
+                </a>
+              </div>
+            `).join("")}
+
+            <h4>ابحث في المنصات التعليمية</h4>
+
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${["youtube","coursera","udemy","edx"].map(platform => `
+                <a
+                  class="academy-btn secondary"
+                  style="text-decoration:none"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="${escapeHTML(catalog.searchUrl(platform, category.name))}"
+                >
+                  ${platform === "youtube" ? "YouTube" :
+                    platform === "coursera" ? "Coursera" :
+                    platform === "udemy" ? "Udemy" : "edX"}
+                </a>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }).join("") : `
+        <div class="academy-empty">
+          لا توجد تخصصات مطابقة للبحث.
+        </div>
+      `}
+    </div>
+
+    <div class="academy-card" style="margin-top:15px">
+      <h3>ℹ️ معلومات عن الدليل</h3>
+      <p class="academy-muted">
+        يعرض الدليل روابط المصادر الأصلية ونتائج البحث عن الكورسات.
+        الأسعار والتوافر قد يتغيران حسب المنصة والبلد.
+        سيتم تطوير نظام فهرسة وتحديث تلقائي للدورات في المرحلة التالية.
+      </p>
+    </div>
+  `;
+}
+
 
   function renderNotes() {
     const content = $("academyContent");
