@@ -721,55 +721,70 @@ let activeTab = "courses";
   }
 
 
+
 function renderTeacher() {
   const content = $("academyContent");
   if (!content) return;
 
   content.innerHTML = `
-    <div class="academy-card">
-      <div class="academy-icon">👨‍🏫</div>
-      <h3>المدرس الذكي GEO Teacher</h3>
-      <p>مدرس متخصص في الجغرافيا والجيوماتكس والمساحة والبرمجة.</p>
+    <section class="academy-teacher">
 
-      <div class="academy-status">
-        🟢 واجهة المدرس جاهزة للربط بالمحرك الذكي
+      <header class="teacher-header">
+        <div class="teacher-avatar">👨‍🏫</div>
+        <div>
+          <h3>GEO Teacher</h3>
+          <p>مدرسك الذكي في الجغرافيا والجيوماتكس</p>
+          <span class="teacher-online">● متصل بالمحرك الذكي</span>
+        </div>
+      </header>
+
+      <div class="teacher-subject">
+        <label for="academyTeacherSubject">التخصص الدراسي</label>
+        <select id="academyTeacherSubject" class="academy-input">
+          <option value="الجغرافيا العامة">الجغرافيا العامة</option>
+          <option value="نظم المعلومات الجغرافية GIS">GIS</option>
+          <option value="المساحة والرفع المساحي">المساحة</option>
+          <option value="الاستشعار عن بعد ERDAS">الاستشعار عن بعد</option>
+          <option value="AutoCAD و Civil 3D">AutoCAD و Civil 3D</option>
+          <option value="Python و GIS Programming">برمجة GIS</option>
+          <option value="الخرائط والكارتوجرافيا">الخرائط والكارتوجرافيا</option>
+          <option value="موضوع عام">موضوع آخر</option>
+        </select>
       </div>
-
-      <label for="academyTeacherSubject">المادة أو التخصص</label>
-      <select id="academyTeacherSubject" class="academy-input">
-        <option value="الجغرافيا العامة">الجغرافيا العامة</option>
-        <option value="نظم المعلومات الجغرافية GIS">GIS</option>
-        <option value="المساحة والرفع المساحي">المساحة</option>
-        <option value="الاستشعار عن بعد ERDAS">الاستشعار عن بعد</option>
-        <option value="AutoCAD و Civil 3D">AutoCAD و Civil 3D</option>
-        <option value="Python و GIS Programming">برمجة GIS</option>
-        <option value="الخرائط والكارتوجرافيا">الخرائط والكارتوجرافيا</option>
-        <option value="موضوع عام">موضوع آخر</option>
-      </select>
 
       <div id="academyTeacherMessages"
-        class="academy-teacher-messages"
-        aria-live="polite">
-        <div class="academy-card">
-          👋 أهلاً بك! أنا مدرسك الذكي.
-          <p>اختر التخصص واسألني عن أي درس، وسأشرح لك خطوة بخطوة.</p>
+           class="academy-teacher-messages"
+           aria-live="polite">
+
+        <div class="teacher-welcome">
+          <div class="teacher-avatar">👨‍🏫</div>
+          <div class="teacher-bubble">
+            <strong>أهلاً بك في GEO Teacher!</strong>
+            <p>أنا مدرسك الذكي. اسألني عن أي درس وسأشرحه لك خطوة بخطوة مع الأمثلة والتطبيقات.</p>
+          </div>
         </div>
+
       </div>
 
-      <textarea id="academyTeacherQuestion"
-        class="academy-textarea"
-        rows="3"
-        placeholder="اكتب سؤالك أو اسم الدرس الذي تريد شرحه..."></textarea>
+      <div class="teacher-composer">
+        <textarea
+          id="academyTeacherQuestion"
+          class="academy-textarea"
+          rows="3"
+          placeholder="اكتب سؤالك أو اسم الدرس هنا..."
+        ></textarea>
 
-      <button type="button"
-        class="academy-btn"
-        id="academyTeacherSend"
-        style="width:100%;margin-top:10px">
-        📩 اسأل المدرس الذكي
-      </button>
-    </div>
+        <button type="button"
+                class="academy-btn"
+                id="academyTeacherSend">
+          إرسال السؤال ➤
+        </button>
+      </div>
+
+    </section>
   `;
 }
+
 
 
 
