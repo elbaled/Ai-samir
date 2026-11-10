@@ -7,7 +7,7 @@ const CFG={
   appId:"1:781857834627:web:630847182a4b5eebe4bdb6"
 };
 const API="https://fancy-king-30f2geodev-ai.123456789012345678o01234567898.workers.dev";
-
+window.GEO_API=API;window.geoToken=token;
 firebase.initializeApp(CFG);
 const auth=firebase.auth();
 
