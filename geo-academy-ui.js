@@ -954,6 +954,7 @@ function renderAnalysisMarkdown(markdown) {
     .replace(/\n/g, "<br>")}</p>`;
 }
 
+
 function renderSearchResults(data) {
   const results = Array.isArray(data.results) ? data.results : [];
 
@@ -1031,15 +1032,17 @@ function renderSearchResults(data) {
   }).join("");
 
   return `
-    <h3>📚 الكورسات والمصادر (${results.length})</h3>
-    ${analysis}
-    ${summary}
-    <h3>🎓 نتائج البحث</h3>
+    <h3>🎓 نتائج البحث (${results.length})</h3>
+
     <div class="academy-search-grid">
       ${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}
     </div>
+
+    ${summary}
+    ${analysis}
   `;
 }
+
 
 
   function bindEvents() {
