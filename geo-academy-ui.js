@@ -366,7 +366,13 @@ function renderCourses(query = "") {
     category.name.toLowerCase().includes(search) ||
     category.topics.some(topic => topic.toLowerCase().includes(search))
   );
-
+  const realCourses = catalog.getCourses();
+  const filteredCourses = realCourses.filter(course =>
+    !search ||
+    course.title.toLowerCase().includes(search) ||
+    course.provider.toLowerCase().includes(search) ||
+    course.category.toLowerCase().includes(search)
+  );
   content.innerHTML = `
     <div class="academy-card">
       <h3>🌐 مكتبة الكورسات العالمية</h3>
