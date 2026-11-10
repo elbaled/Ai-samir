@@ -5,55 +5,15 @@
   if (window.GEOAcademyUI) return;
 
   const courses = [
-  {
-    id: "gis",
-    title: "نظم المعلومات الجغرافية GIS",
-    icon: "🌍",
-    desc: "تعلم GIS والخرائط والتحليل المكاني."
-  },
-  {
-    id: "surveying",
-    title: "المساحة والرفع المساحي",
-    icon: "📐",
-    desc: "أساسيات المساحة والأجهزة والحسابات."
-  },
-  {
-    id: "remote-sensing",
-    title: "الاستشعار عن بعد",
-    icon: "🛰️",
-    desc: "الأقمار الصناعية والصور الفضائية وتحليلها."
-  },
-  {
-    id: "civil3d",
-    title: "Civil 3D",
-    icon: "🏗️",
-    desc: "تصميم الطرق والأعمال المساحية."
-  },
-  {
-    id: "python-gis",
-    title: "Python for GIS",
-    icon: "🐍",
-    desc: "برمجة وتحليل البيانات الجغرافية."
-  },
-  {
-    id: "gis-programming",
-    title: "GIS Programming",
-    icon: "💻",
-    desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS."
-  },
-  {
-    id: "autocad",
-    title: "AutoCAD",
-    icon: "📏",
-    desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد."
-  },
-  {
-    id: "autocad-ai",
-    title: "AutoCAD + AI",
-    icon: "🤖",
-    desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية."
-  }
-];
+    { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "🌍", desc: "تعلم GIS والخرائط والتحليل المكاني." },
+    { id: "surveying", title: "المساحة والرفع المساحي", icon: "📐", desc: "أساسيات المساحة والأجهزة والحسابات." },
+    { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "🛰️", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
+    { id: "civil3d", title: "Civil 3D", icon: "🏗️", desc: "تصميم الطرق والأعمال المساحية." },
+    { id: "python-gis", title: "Python for GIS", icon: "🐍", desc: "برمجة وتحليل البيانات الجغرافية." },
+    { id: "gis-programming", title: "GIS Programming", icon: "💻", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
+    { id: "autocad", title: "AutoCAD", icon: "📏", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
+    { id: "autocad-ai", title: "AutoCAD + AI", icon: "🤖", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
+  ];
 
   let currentUser = null;
   let notes = [];
@@ -61,16 +21,26 @@
   let progress = [];
   let activeTab = "courses";
 
-  const $ = (id) => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
   function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#039;"
     })[char]);
+  }
+
+  function safeURL(value) {
+    try {
+      const url = new URL(String(value || ""));
+      if (url.protocol === "https:" || url.protocol === "http:") {
+        return escapeHTML(url.href);
+      }
+    } catch (_) {}
+    return "";
   }
 
   function notify(message, type = "info") {
@@ -98,235 +68,198 @@
 
     style.textContent = `
       #s-academy {
-        padding: 14px;
-        direction: rtl;
-        color: var(--text, #e8edf7);
+        padding:14px;
+        direction:rtl;
+        color:var(--text,#e8edf7);
       }
 
       #s-academy .academy-header {
-        padding: 22px;
-        border-radius: 18px;
-        background: linear-gradient(135deg,#142b48,#174b68);
-        margin-bottom: 18px;
+        padding:22px;
+        border-radius:18px;
+        background:linear-gradient(135deg,#142b48,#174b68);
+        margin-bottom:18px;
       }
 
       #s-academy .academy-header h2 {
-        margin: 0 0 9px;
-        font-size: 23px;
+        margin:0 0 9px;
+        font-size:23px;
       }
 
       #s-academy .academy-header p {
-        margin: 0;
-        line-height: 1.8;
-        opacity: .9;
+        margin:0;
+        line-height:1.8;
+        opacity:.9;
       }
 
       #s-academy .academy-tabs {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 5px 0 13px;
-        margin-bottom: 12px;
+        display:flex;
+        gap:8px;
+        overflow-x:auto;
+        padding:5px 0 13px;
+        margin-bottom:12px;
       }
 
       #s-academy .academy-tab {
-        flex: 0 0 auto;
-        border: 1px solid var(--border,#334155);
-        border-radius: 12px;
-        padding: 10px 14px;
-        background: var(--card,#182334);
-        color: inherit;
-        cursor: pointer;
+        flex:0 0 auto;
+        border:1px solid var(--border,#334155);
+        border-radius:12px;
+        padding:10px 14px;
+        background:var(--card,#182334);
+        color:inherit;
+        cursor:pointer;
       }
 
       #s-academy .academy-tab.active {
-        background: #176b87;
-        color: white;
-        border-color: #176b87;
+        background:#176b87;
+        color:white;
+        border-color:#176b87;
       }
 
       #s-academy .academy-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit,minmax(min(100%,230px),1fr));
-        gap: 13px;
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));
+        gap:13px;
       }
 
       #s-academy .academy-card {
-        background: var(--card,#182334);
-        border: 1px solid var(--border,#334155);
-        border-radius: 15px;
-        padding: 16px;
-        min-width: 0;
+        background:var(--card,#182334);
+        border:1px solid var(--border,#334155);
+        border-radius:15px;
+        padding:16px;
+        min-width:0;
+        overflow-wrap:anywhere;
       }
 
       #s-academy .academy-card h3 {
-        font-size: 17px;
-        margin: 8px 0;
+        font-size:17px;
+        margin:8px 0;
       }
 
       #s-academy .academy-card p {
-        line-height: 1.8;
-        opacity: .8;
+        line-height:1.8;
+        opacity:.85;
       }
 
       #s-academy .academy-icon {
-        font-size: 28px;
+        font-size:28px;
       }
 
       #s-academy .academy-btn {
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 14px;
-        background: #167b9c;
-        color: white;
-        cursor: pointer;
-        margin: 4px 0;
+        border:0;
+        border-radius:10px;
+        padding:10px 14px;
+        background:#167b9c;
+        color:white;
+        cursor:pointer;
+        margin:4px 0;
       }
 
       #s-academy .academy-btn.secondary {
-        background: #455468;
+        background:#455468;
       }
 
       #s-academy .academy-btn.danger {
-        background: #9b3434;
+        background:#9b3434;
       }
 
       #s-academy .academy-input,
       #s-academy .academy-textarea {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 12px;
-        border-radius: 10px;
-        border: 1px solid var(--border,#334155);
-        background: var(--bg,#101827);
-        color: inherit;
-        margin: 7px 0 12px;
-        font: inherit;
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        border-radius:10px;
+        border:1px solid var(--border,#334155);
+        background:var(--bg,#101827);
+        color:inherit;
+        margin:7px 0 12px;
+        font:inherit;
       }
 
       #s-academy .academy-textarea {
-        min-height: 110px;
-        resize: vertical;
+        min-height:110px;
+        resize:vertical;
       }
 
       #s-academy .academy-muted {
-        opacity: .7;
-        font-size: 13px;
+        opacity:.7;
+        font-size:13px;
       }
 
       #s-academy .academy-progress {
-        height: 9px;
-        background: #344256;
-        border-radius: 20px;
-        overflow: hidden;
-        margin: 12px 0;
+        height:9px;
+        background:#344256;
+        border-radius:20px;
+        overflow:hidden;
+        margin:12px 0;
       }
 
       #s-academy .academy-progress > span {
-        display: block;
-        height: 100%;
-        background: #27b58b;
+        display:block;
+        height:100%;
+        background:#27b58b;
       }
 
       #s-academy .academy-empty {
-        text-align: center;
-        padding: 25px 12px;
-        opacity: .7;
+        text-align:center;
+        padding:25px 12px;
+        opacity:.7;
       }
 
       #s-academy .academy-status {
-        padding: 12px;
-        border-radius: 10px;
-        background: var(--card,#182334);
-        margin-bottom: 14px;
+        padding:12px;
+        border-radius:10px;
+        background:var(--card,#182334);
+        margin-bottom:14px;
       }
 
-/* تحسين عرض نتائج البحث على الموبايل */
-#s-academy #academySmartResults {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  overflow-x: auto;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  line-height: 1.8;
-}
+      #s-academy #academySmartResults {
+        width:100%;
+        max-width:100%;
+        min-width:0;
+        box-sizing:border-box;
+        overflow-wrap:anywhere;
+        word-break:break-word;
+        line-height:1.8;
+      }
 
-#s-academy #academySmartResults * {
-  max-width: 100%;
-  box-sizing: border-box;
-}
+      #s-academy #academySmartResults a {
+        overflow-wrap:anywhere;
+        word-break:break-word;
+      }
 
-#s-academy #academySmartResults table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-#s-academy #academySmartResults th,
-#s-academy #academySmartResults td {
-  padding: 9px;
-  border: 1px solid var(--border, #334155);
-  text-align: right;
-  min-width: 90px;
-}
-
-#s-academy #academySmartResults pre {
-  overflow-x: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-#s-academy #academySmartResults a {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-@media(max-width:600px) {
-  #s-academy #academySmartResults {
-    font-size: 14px;
-  }
-
-  #s-academy #academySmartResults table {
-    font-size: 12px;
-  }
-}
       #academyToast {
-        position: fixed;
-        z-index: 99999;
-        bottom: 20px;
-        right: 50%;
-        transform: translate(50%,20px);
-        background: #26384d;
-        color: white;
-        padding: 12px 18px;
-        border-radius: 12px;
-        opacity: 0;
-        pointer-events: none;
-        transition: .2s;
-        max-width: 85%;
-        text-align: center;
+        position:fixed;
+        z-index:99999;
+        bottom:20px;
+        right:50%;
+        transform:translate(50%,20px);
+        background:#26384d;
+        color:white;
+        padding:12px 18px;
+        border-radius:12px;
+        opacity:0;
+        pointer-events:none;
+        transition:.2s;
+        max-width:85%;
+        text-align:center;
       }
 
       #academyToast.show {
-        opacity: 1;
-        transform: translate(50%,0);
+        opacity:1;
+        transform:translate(50%,0);
       }
 
       #academyToast[data-type="error"] {
-        background: #9b3434;
+        background:#9b3434;
       }
 
       #academyToast[data-type="success"] {
-        background: #176b50;
+        background:#176b50;
       }
 
       @media(max-width:600px) {
-        #s-academy { padding: 9px; }
-        #s-academy .academy-header { padding: 17px; }
+        #s-academy { padding:9px; }
+        #s-academy .academy-header { padding:17px; }
       }
     `;
 
@@ -347,15 +280,17 @@
       button.type = "button";
       button.dataset.t = "academy";
       button.innerHTML = "<span>🎓</span> الأكاديمية";
+
       button.addEventListener("click", () => {
         if (typeof window.go === "function") {
           window.go("academy");
         } else {
-          document.querySelectorAll(".sec").forEach(section =>
-            section.classList.toggle("on", section.id === "s-academy")
-          );
+          document.querySelectorAll(".sec").forEach(section => {
+            section.classList.toggle("on", section.id === "s-academy");
+          });
         }
       });
+
       nav.appendChild(button);
     }
 
@@ -375,7 +310,7 @@
         </div>
 
         <div class="academy-tabs">
-        <button class="academy-tab" data-academy-tab="smart-search">🔎 الباحث الذكي</button>
+          <button class="academy-tab" data-academy-tab="smart-search">🔎 الباحث الذكي</button>
           <button class="academy-tab active" data-academy-tab="courses">📚 الكورسات</button>
           <button class="academy-tab" data-academy-tab="notes">📝 ملاحظاتي</button>
           <button class="academy-tab" data-academy-tab="memory">🧠 ذاكرتي</button>
@@ -398,184 +333,156 @@
     if (element) element.textContent = message;
   }
 
-function renderCourses(query = "") {
-  const content = $("academyContent");
-  if (!content) return;
+  function renderCourses(query = "") {
+    const content = $("academyContent");
+    if (!content) return;
 
-  const catalog = window.GEOAcademyContent;
+    const catalog = window.GEOAcademyContent;
 
-  if (!catalog) {
+    if (!catalog) {
+      content.innerHTML = `
+        <div class="academy-empty">
+          تعذر تحميل دليل الكورسات. تأكد من إضافة ملف geo-academy-content.js.
+        </div>
+      `;
+      return;
+    }
+
+    const categories = catalog.getAllCategories();
+    const search = String(query || "").trim().toLowerCase();
+
+    const filtered = categories.filter(category =>
+      category.name.toLowerCase().includes(search) ||
+      category.topics.some(topic => topic.toLowerCase().includes(search))
+    );
+
+    const realCourses = catalog.getCourses();
+
+    const filteredCourses = realCourses.filter(course =>
+      !search ||
+      course.title.toLowerCase().includes(search) ||
+      course.provider.toLowerCase().includes(search) ||
+      course.category.toLowerCase().includes(search)
+    );
+
     content.innerHTML = `
-      <div class="academy-empty">
-        تعذر تحميل دليل الكورسات. تأكد من إضافة ملف geo-academy-content.js.
+      <div class="academy-card">
+        <h3>🌐 مكتبة الكورسات العالمية</h3>
+        <p>ابحث عن الدورات التعليمية في GIS والمساحة والاستشعار عن بعد والبرمجة والتصميم الهندسي.</p>
+
+        <input
+          id="academyCatalogSearch"
+          class="academy-input"
+          placeholder="ابحث عن ArcGIS أو AutoCAD أو Python..."
+          value="${escapeHTML(query)}"
+          oninput="window.GEOAcademyUI.search(this.value)"
+        >
+
+        <div class="academy-muted">${filtered.length} تخصص متاح في الدليل</div>
       </div>
-    `;
-    return;
-  }
 
-  const categories = catalog.getAllCategories();
-  const search = String(query || "").trim().toLowerCase();
+      <div class="academy-card" style="margin-top:15px">
+        <h3>🎓 الكورسات الفعلية</h3>
+        <p class="academy-muted">${filteredCourses.length} كورس متاح حاليًا في الفهرس</p>
 
-  const filtered = categories.filter(category =>
-    category.name.toLowerCase().includes(search) ||
-    category.topics.some(topic => topic.toLowerCase().includes(search))
-  );
-  const realCourses = catalog.getCourses();
-  const filteredCourses = realCourses.filter(course =>
-    !search ||
-    course.title.toLowerCase().includes(search) ||
-    course.provider.toLowerCase().includes(search) ||
-    course.category.toLowerCase().includes(search)
-  );
-  content.innerHTML = `
-    <div class="academy-card">
-      <h3>🌐 مكتبة الكورسات العالمية</h3>
-      <p>
-        ابحث عن الدورات التعليمية في GIS والمساحة والاستشعار عن بعد
-        والبرمجة والتصميم الهندسي.
-      </p>
-
-      <input
-        id="academyCatalogSearch"
-        class="academy-input"
-        placeholder="ابحث عن ArcGIS أو AutoCAD أو Python..."
-        value="${escapeHTML(query)}"
-        oninput="window.GEOAcademyUI.search(this.value)"
-      >
-
-      <div class="academy-muted">
-        ${filtered.length} تخصص متاح في الدليل
+        <div class="academy-grid">
+          ${filteredCourses.length ? filteredCourses.map(course => `
+            <div class="academy-card">
+              <h3>${escapeHTML(course.title)}</h3>
+              <p>🏫 ${escapeHTML(course.provider)}</p>
+              <p class="academy-muted">
+                المستوى: ${escapeHTML(course.level)}
+                <br>اللغة: ${escapeHTML(course.language)}
+                <br>السعر: ${escapeHTML(course.price)}
+              </p>
+              <a class="academy-btn"
+                href="${safeURL(course.url)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="display:inline-block;text-decoration:none">
+                فتح الكورس الأصلي ↗
+              </a>
+            </div>
+          `).join("") : `
+            <div class="academy-empty">لا توجد كورسات مطابقة للبحث.</div>
+          `}
+        </div>
       </div>
-    </div>
-    <div class="academy-card" style="margin-top:15px">
-      <h3>🎓 الكورسات الفعلية</h3>
-      <p class="academy-muted">
-        ${filteredCourses.length} كورس متاح حاليًا في الفهرس
-      </p>
 
       <div class="academy-grid">
-        ${filteredCourses.length ? filteredCourses.map(course => `
-          <div class="academy-card">
-            <h3>${escapeHTML(course.title)}</h3>
-            <p>🏫 ${escapeHTML(course.provider)}</p>
-            <p class="academy-muted">
-              المستوى: ${escapeHTML(course.level)}
-              <br>
-              اللغة: ${escapeHTML(course.language)}
-              <br>
-              السعر: ${escapeHTML(course.price)}
-            </p>
-            <a
-              class="academy-btn"
-              href="${escapeHTML(course.url)}"
-              target="_blank"
-              rel="noopener noreferrer"
-              style="display:inline-block;text-decoration:none"
-            >
-              فتح الكورس الأصلي ↗
-            </a>
-          </div>
-        `).join("") : `
-          <div class="academy-empty">
-            لا توجد كورسات مطابقة للبحث.
-          </div>
+        ${filtered.length ? filtered.map(category => {
+          const sources = catalog.getSources(category.id);
+
+          return `
+            <div class="academy-card">
+              <div class="academy-icon">📚</div>
+              <h3>${escapeHTML(category.name)}</h3>
+              <p class="academy-muted">${category.topics.length} موضوعًا تعليميًا</p>
+              <h4>الموضوعات</h4>
+
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${category.topics.map(topic => `
+                  <a class="academy-btn secondary"
+                    style="text-decoration:none;font-size:11px"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="${safeURL(catalog.searchUrl("youtube", topic))}">
+                    ${escapeHTML(topic)} 🔎
+                  </a>
+                `).join("")}
+              </div>
+
+              <hr style="border-color:var(--border,#334155);margin:15px 0">
+              <h4>المصادر والمنصات</h4>
+
+              ${sources.map(source => `
+                <div style="margin:9px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
+                  <b>${escapeHTML(source.name)}</b>
+                  <div class="academy-muted">
+                    ${escapeHTML(source.platform)}
+                    • ${escapeHTML(source.language || "لغات متعددة")}
+                    ${source.price === "free" ? " • مجاني" : ""}
+                  </div>
+                  <a href="${safeURL(source.url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="academy-btn"
+                    style="display:inline-block;text-decoration:none;margin-top:7px">
+                    زيارة المصدر ↗
+                  </a>
+                </div>
+              `).join("")}
+
+              <h4>ابحث في المنصات التعليمية</h4>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${["youtube","coursera","udemy","edx"].map(platform => `
+                  <a class="academy-btn secondary"
+                    style="text-decoration:none"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="${safeURL(catalog.searchUrl(platform, category.name))}">
+                    ${platform === "youtube" ? "YouTube" :
+                      platform === "coursera" ? "Coursera" :
+                      platform === "udemy" ? "Udemy" : "edX"}
+                  </a>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }).join("") : `
+          <div class="academy-empty">لا توجد تخصصات مطابقة للبحث.</div>
         `}
       </div>
-    </div>
-    
-    <div class="academy-grid">
-      ${filtered.length ? filtered.map(category => {
-        const sources = catalog.getSources(category.id);
 
-        return `
-          <div class="academy-card">
-            <div class="academy-icon">📚</div>
-
-            <h3>${escapeHTML(category.name)}</h3>
-
-            <p class="academy-muted">
-              ${category.topics.length} موضوعًا تعليميًا
-            </p>
-
-            <h4>الموضوعات</h4>
-
-            <div style="display:flex;flex-wrap:wrap;gap:6px">
-              ${category.topics.map(topic => `
-                <a
-                  class="academy-btn secondary"
-                  style="text-decoration:none;font-size:11px"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="${escapeHTML(catalog.searchUrl("youtube", topic))}"
-                >
-                  ${escapeHTML(topic)} 🔎
-                </a>
-              `).join("")}
-            </div>
-
-            <hr style="border-color:var(--border,#334155);margin:15px 0">
-
-            <h4>المصادر والمنصات</h4>
-
-            ${sources.map(source => `
-              <div style="margin:9px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
-                <b>${escapeHTML(source.name)}</b>
-
-                <div class="academy-muted">
-                  ${escapeHTML(source.platform)}
-                  • ${escapeHTML(source.language || "لغات متعددة")}
-                  ${source.price === "free" ? " • مجاني" : ""}
-                </div>
-
-                <a
-                  href="${escapeHTML(source.url)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="academy-btn"
-                  style="display:inline-block;text-decoration:none;margin-top:7px"
-                >
-                  زيارة المصدر ↗
-                </a>
-              </div>
-            `).join("")}
-
-            <h4>ابحث في المنصات التعليمية</h4>
-
-            <div style="display:flex;flex-wrap:wrap;gap:6px">
-              ${["youtube","coursera","udemy","edx"].map(platform => `
-                <a
-                  class="academy-btn secondary"
-                  style="text-decoration:none"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="${escapeHTML(catalog.searchUrl(platform, category.name))}"
-                >
-                  ${platform === "youtube" ? "YouTube" :
-                    platform === "coursera" ? "Coursera" :
-                    platform === "udemy" ? "Udemy" : "edX"}
-                </a>
-              `).join("")}
-            </div>
-          </div>
-        `;
-      }).join("") : `
-        <div class="academy-empty">
-          لا توجد تخصصات مطابقة للبحث.
-        </div>
-      `}
-    </div>
-
-    <div class="academy-card" style="margin-top:15px">
-      <h3>ℹ️ معلومات عن الدليل</h3>
-      <p class="academy-muted">
-        يعرض الدليل روابط المصادر الأصلية ونتائج البحث عن الكورسات.
-        الأسعار والتوافر قد يتغيران حسب المنصة والبلد.
-        سيتم تطوير نظام فهرسة وتحديث تلقائي للدورات في المرحلة التالية.
-      </p>
-    </div>
-  `;
-}
-
+      <div class="academy-card" style="margin-top:15px">
+        <h3>ℹ️ معلومات عن الدليل</h3>
+        <p class="academy-muted">
+          يعرض الدليل روابط المصادر الأصلية ونتائج البحث عن الكورسات.
+          الأسعار والتوافر قد يتغيران حسب المنصة والبلد.
+        </p>
+      </div>
+    `;
+  }
 
   function renderNotes() {
     const content = $("academyContent");
@@ -583,10 +490,8 @@ function renderCourses(query = "") {
     content.innerHTML = `
       <div class="academy-card">
         <h3>📝 إضافة ملاحظة دراسية</h3>
-        <input id="academyNoteTitle" class="academy-input" maxlength="120"
-          placeholder="عنوان الملاحظة">
-        <textarea id="academyNoteContent" class="academy-textarea"
-          maxlength="10000" placeholder="اكتب ملاحظتك هنا..."></textarea>
+        <input id="academyNoteTitle" class="academy-input" maxlength="120" placeholder="عنوان الملاحظة">
+        <textarea id="academyNoteContent" class="academy-textarea" maxlength="10000" placeholder="اكتب ملاحظتك هنا..."></textarea>
         <button class="academy-btn" id="academySaveNote">حفظ الملاحظة</button>
       </div>
 
@@ -596,9 +501,7 @@ function renderCourses(query = "") {
           <div class="academy-card">
             <h3>${escapeHTML(note.title || "ملاحظة بدون عنوان")}</h3>
             <p style="white-space:pre-wrap">${escapeHTML(note.content || "")}</p>
-            <button class="academy-btn danger" data-delete-note="${escapeHTML(note.id)}">
-              حذف
-            </button>
+            <button class="academy-btn danger" data-delete-note="${escapeHTML(note.id)}">حذف</button>
           </div>
         `).join("") : '<div class="academy-empty">لا توجد ملاحظات محفوظة حتى الآن.</div>'}
       </div>
@@ -613,11 +516,8 @@ function renderCourses(query = "") {
     content.innerHTML = `
       <div class="academy-card">
         <h3>🧠 الذاكرة التعليمية الشخصية</h3>
-        <p class="academy-muted">
-          احفظ معلومات أو نقاطًا تريد الرجوع إليها لاحقًا. هذه الذاكرة خاصة بحسابك.
-        </p>
-        <textarea id="academyMemoryContent" class="academy-textarea"
-          maxlength="10000" placeholder="اكتب المعلومة التي تريد حفظها..."></textarea>
+        <p class="academy-muted">احفظ معلومات أو نقاطًا تريد الرجوع إليها لاحقًا. هذه الذاكرة خاصة بحسابك.</p>
+        <textarea id="academyMemoryContent" class="academy-textarea" maxlength="10000" placeholder="اكتب المعلومة التي تريد حفظها..."></textarea>
         <select id="academyMemoryCategory" class="academy-input">
           <option value="general">معلومات عامة</option>
           <option value="gis">GIS</option>
@@ -635,9 +535,7 @@ function renderCourses(query = "") {
           <div class="academy-card">
             <div class="academy-muted">${escapeHTML(item.category || "general")}</div>
             <p style="white-space:pre-wrap">${escapeHTML(item.content || "")}</p>
-            <button class="academy-btn danger" data-delete-memory="${escapeHTML(item.id)}">
-              حذف
-            </button>
+            <button class="academy-btn danger" data-delete-memory="${escapeHTML(item.id)}">حذف</button>
           </div>
         `).join("") : '<div class="academy-empty">ذاكرتك التعليمية فارغة حاليًا.</div>'}
       </div>
@@ -657,7 +555,8 @@ function renderCourses(query = "") {
       <div class="academy-grid">
         ${courses.map(course => {
           const item = progress.find(p => p.id === course.id);
-       const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
+          const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
+
           return `
             <div class="academy-card">
               <h3>${course.icon} ${escapeHTML(course.title)}</h3>
@@ -678,19 +577,15 @@ function renderCourses(query = "") {
       <div class="academy-card">
         <div class="academy-icon">👨‍🏫</div>
         <h3>المدرس الذكي</h3>
-        <p>
-          مساحة مخصصة لشرح الدروس والإجابة عن الأسئلة ومساعدتك في حل التدريبات.
-        </p>
+        <p>مساحة مخصصة لشرح الدروس والإجابة عن الأسئلة ومساعدتك في حل التدريبات.</p>
         <div class="academy-status">
-          سيتم ربط المدرس الذكي بمحرك الذكاء الاصطناعي الحالي في خطوة مستقلة،
-          مع الحفاظ على المحرك وإعداداته كما هي.
+          سيتم ربط المدرس الذكي بمحرك الذكاء الاصطناعي الحالي في خطوة مستقلة.
         </div>
-        <p class="academy-muted">
-          لم يتم تفعيل محادثة مدرس الأكاديمية بعد.
-        </p>
+        <p class="academy-muted">لم يتم تفعيل محادثة مدرس الأكاديمية بعد.</p>
       </div>
     `;
   }
+
   function renderSmartSearch() {
     const content = $("academyContent");
     if (!content) return;
@@ -702,26 +597,22 @@ function renderCourses(query = "") {
           ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.
         </p>
 
-        <textarea
-          id="academySmartQuery"
+        <textarea id="academySmartQuery"
           class="academy-textarea"
           rows="4"
-          placeholder="مثال: ابحث عن أفضل كورسات AutoCAD من الصفر باللغة العربية، المجانية والمدفوعة..."
-        ></textarea>
+          placeholder="مثال: ابحث عن أفضل كورسات AutoCAD من الصفر باللغة العربية، المجانية والمدفوعة..."></textarea>
 
-        <button
-          type="button"
-          class="academy-btn"
+        <button type="button" class="academy-btn"
           id="academySmartSearchBtn"
-          style="margin-top:12px;width:100%;"
-        >
+          style="margin-top:12px;width:100%">
           🔍 ابدأ البحث الذكي
         </button>
 
-        <div id="academySmartResults" style="margin-top:16px;"></div>
+        <div id="academySmartResults" style="margin-top:16px"></div>
       </div>
     `;
   }
+
   function renderTab() {
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
@@ -741,7 +632,7 @@ function renderCourses(query = "") {
     if (activeTab === "memory") renderMemory();
     if (activeTab === "progress") renderProgress();
     if (activeTab === "teacher") renderTeacher();
-        if (activeTab === "smart-search") renderSmartSearch();
+    if (activeTab === "smart-search") renderSmartSearch();
   }
 
   async function refreshData() {
@@ -813,20 +704,20 @@ function renderCourses(query = "") {
       notify("لم يتم حفظ المعلومة: " + (error.message || ""), "error");
     }
   }
-async function completeCourse(courseId) {
-  const course = courses.find(item => item.id === courseId);
-  if (!course) return;
 
-  try {
-    await window.GEOAcademy.saveProgress(courseId, 100);
+  async function completeCourse(courseId) {
+    const course = courses.find(item => item.id === courseId);
+    if (!course) return;
 
-    notify("تم تسجيل إتمام المسار بنجاح.", "success");
-    await refreshData();
-  } catch (error) {
-    console.error(error);
-    notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
+    try {
+      await window.GEOAcademy.saveProgress(courseId, 100);
+      notify("تم تسجيل إتمام المسار بنجاح.", "success");
+      await refreshData();
+    } catch (error) {
+      console.error(error);
+      notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
+    }
   }
-}
 
   async function deleteNote(id) {
     if (!confirm("هل تريد حذف هذه الملاحظة؟")) return;
@@ -854,13 +745,64 @@ async function completeCourse(courseId) {
     }
   }
 
+  function renderSearchResults(data) {
+    const results = Array.isArray(data.results) ? data.results : [];
+
+    const analysis = data.analysis
+      ? `
+        <div class="academy-card" style="margin-bottom:14px">
+          <h3>🤖 تحليل GEO AI</h3>
+          <div style="white-space:pre-wrap;line-height:1.9">${escapeHTML(data.analysis)}</div>
+        </div>
+      `
+      : "";
+
+    const summary = data.answer
+      ? `
+        <div class="academy-card" style="margin-bottom:14px">
+          <h3>📝 ملخص البحث</h3>
+          <p>${escapeHTML(data.answer)}</p>
+        </div>
+      `
+      : "";
+
+    const cards = results.map((item, index) => {
+      const title = escapeHTML(item.title || ("نتيجة البحث " + (index + 1)));
+      const description = escapeHTML(item.content || "لا يوجد وصف متاح.");
+      const url = safeURL(item.url);
+
+      return `
+        <article class="academy-card" style="margin:12px 0">
+          <h3>${index + 1}. ${title}</h3>
+          <p>${description}</p>
+          ${url
+            ? `<a href="${url}" target="_blank" rel="noopener noreferrer"
+                class="academy-btn" style="display:inline-block;text-decoration:none">
+                فتح المصدر الأصلي ↗
+              </a>`
+            : `<span class="academy-muted">الرابط غير متاح</span>`
+          }
+        </article>
+      `;
+    }).join("");
+
+    return `
+      <h3>📚 نتائج البحث (${results.length})</h3>
+      ${analysis}
+      ${summary}
+      <h3>🔗 مصادر البحث</h3>
+      ${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}
+    `;
+  }
+
   function bindEvents() {
-        document.addEventListener("click", async event => {
+    document.addEventListener("click", async event => {
       const tab = event.target.closest("[data-academy-tab]");
+
       if (tab) {
         activeTab = tab.dataset.academyTab;
         renderTab();
-                return;
+        return;
       }
 
       const smartBtn = event.target.closest("#academySmartSearchBtn");
@@ -881,35 +823,15 @@ async function completeCourse(courseId) {
         try {
           const data = await window.GEOAcademyEngines.search(query);
 
-          const markdown = `
-## 📚 نتائج البحث
+          if (!data || data.success === false) {
+            throw new Error(data?.message || "لم يتم إرجاع نتائج البحث.");
+          }
 
-${data.results}
+          output.innerHTML = renderSearchResults(data);
 
----
-
-## 🔗 مصادر البحث
-
-${data.sources}
-`;
-
-const safeHTML = DOMPurify.sanitize(
-  marked.parse(markdown),
-  {
-    ADD_ATTR: ["target", "rel"]
-  }
-);
-
-output.innerHTML = safeHTML;
-
-output.querySelectorAll("a").forEach(link => {
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  link.style.color = "#60a5fa";
-  link.style.textDecoration = "underline";
-});
         } catch (error) {
-          output.textContent = "حدث خطأ: " + error.message;
+          console.error("Academy search error:", error);
+          output.textContent = "حدث خطأ: " + (error.message || "تعذر البحث.");
         } finally {
           smartBtn.disabled = false;
           smartBtn.textContent = "🔍 ابدأ البحث الذكي";
@@ -920,19 +842,20 @@ output.querySelectorAll("a").forEach(link => {
 
       const course = event.target.closest("[data-course]");
 
-
       if (course) {
         completeCourse(course.dataset.course);
         return;
       }
 
       const note = event.target.closest("[data-delete-note]");
+
       if (note) {
         deleteNote(note.dataset.deleteNote);
         return;
       }
 
       const memory = event.target.closest("[data-delete-memory]");
+
       if (memory) {
         deleteMemory(memory.dataset.deleteMemory);
       }
@@ -978,29 +901,32 @@ output.querySelectorAll("a").forEach(link => {
 
     window.GEOAcademyUI.ready = true;
   }
-window.GEOAcademyUI = {
-  init,
-  refresh: refreshData,
 
-  search(query) {
-    const input = $("academyCatalogSearch");
-    const position = input?.selectionStart ?? String(query).length;
+  window.GEOAcademyUI = {
+    init,
+    refresh: refreshData,
 
-    renderCourses(query);
+    search(query) {
+      const input = $("academyCatalogSearch");
+      const position = input?.selectionStart ?? String(query).length;
 
-    const nextInput = $("academyCatalogSearch");
-    if (nextInput) {
-      nextInput.focus();
-      nextInput.setSelectionRange(position, position);
-    }
-  },
+      renderCourses(query);
 
-  ready: false
-};
+      const nextInput = $("academyCatalogSearch");
+
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.setSelectionRange(position, position);
+      }
+    },
+
+    ready: false
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
+
 })();
