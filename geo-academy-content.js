@@ -371,7 +371,14 @@ const realCourses = [
     updatedAt: "2026-11-10",
 
     categories,
-    sources,
+sources,
+realCourses,
+
+getCourses(categoryId) {
+  return realCourses.filter(course =>
+    !categoryId || course.category === categoryId
+  );
+},
 
     getCategory,
     getSources,
