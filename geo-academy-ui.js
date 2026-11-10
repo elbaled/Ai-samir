@@ -419,7 +419,7 @@
               <div class="academy-progress"><span style="width:${percent}%"></span></div>
               <p>${percent}% مكتمل</p>
               <div class="academy-muted">
-                ${item?.progress?.completed ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}
+                ${percent >= 100 ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}
               </div>
             </div>
           `;
