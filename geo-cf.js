@@ -81,7 +81,7 @@ async function refreshProfile(){
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshProfile()});
 
 auth.onAuthStateChanged(async u=>{
-  if(!u){["auth","role","name","email"].forEach(k=>sessionStorage.removeItem("gd_"+k));localStorage.removeItem("gd_users");gate();return}
+  if(!u){["auth","role","name","email"].forEach(k=>sessionStorage.removeItem("gd_"+k));gate();return}
   const email=(u.email||"").toLowerCase(),was=sessionStorage.getItem("gd_auth")==="1";
   sessionStorage.setItem("gd_auth","1");sessionStorage.setItem("gd_role","user");
   sessionStorage.setItem("gd_email",email);sessionStorage.setItem("gd_name",u.displayName||email.split("@")[0]);
