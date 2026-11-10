@@ -719,19 +719,57 @@
     `;
   }
 
-  function renderTeacher() {
-    $("academyContent").innerHTML = `
-      <div class="academy-card">
-        <div class="academy-icon">👨‍🏫</div>
-        <h3>المدرس الذكي</h3>
-        <p>مساحة مخصصة لشرح الدروس والإجابة عن الأسئلة ومساعدتك في حل التدريبات.</p>
-        <div class="academy-status">
-          سيتم ربط المدرس الذكي بمحرك الذكاء الاصطناعي الحالي في خطوة مستقلة.
-        </div>
-        <p class="academy-muted">لم يتم تفعيل محادثة مدرس الأكاديمية بعد.</p>
+
+function renderTeacher() {
+  const content = $("academyContent");
+  if (!content) return;
+
+  content.innerHTML = `
+    <div class="academy-card">
+      <div class="academy-icon">👨‍🏫</div>
+      <h3>المدرس الذكي GEO Teacher</h3>
+      <p>مدرس متخصص في الجغرافيا والجيوماتكس والمساحة والبرمجة.</p>
+
+      <div class="academy-status">
+        🟢 واجهة المدرس جاهزة للربط بالمحرك الذكي
       </div>
-    `;
-  }
+
+      <label for="academyTeacherSubject">المادة أو التخصص</label>
+      <select id="academyTeacherSubject" class="academy-input">
+        <option value="الجغرافيا العامة">الجغرافيا العامة</option>
+        <option value="نظم المعلومات الجغرافية GIS">GIS</option>
+        <option value="المساحة والرفع المساحي">المساحة</option>
+        <option value="الاستشعار عن بعد ERDAS">الاستشعار عن بعد</option>
+        <option value="AutoCAD و Civil 3D">AutoCAD و Civil 3D</option>
+        <option value="Python و GIS Programming">برمجة GIS</option>
+        <option value="الخرائط والكارتوجرافيا">الخرائط والكارتوجرافيا</option>
+        <option value="موضوع عام">موضوع آخر</option>
+      </select>
+
+      <div id="academyTeacherMessages"
+        class="academy-teacher-messages"
+        aria-live="polite">
+        <div class="academy-card">
+          👋 أهلاً بك! أنا مدرسك الذكي.
+          <p>اختر التخصص واسألني عن أي درس، وسأشرح لك خطوة بخطوة.</p>
+        </div>
+      </div>
+
+      <textarea id="academyTeacherQuestion"
+        class="academy-textarea"
+        rows="3"
+        placeholder="اكتب سؤالك أو اسم الدرس الذي تريد شرحه..."></textarea>
+
+      <button type="button"
+        class="academy-btn"
+        id="academyTeacherSend"
+        style="width:100%;margin-top:10px">
+        📩 اسأل المدرس الذكي
+      </button>
+    </div>
+  `;
+}
+
 
 
   function renderSmartSearch() {
