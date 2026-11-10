@@ -409,6 +409,134 @@ let activeTab = "courses";
   }
 }
 
+/* GEO Teacher Chat Design */
+
+#s-academy .academy-teacher {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-width:0;
+}
+
+#s-academy .teacher-header {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:17px;
+  border:1px solid var(--border,#334155);
+  border-radius:17px;
+  background:linear-gradient(135deg,#142b48,#174b68);
+}
+
+#s-academy .teacher-header h3 {
+  margin:0 0 5px;
+  font-size:19px;
+}
+
+#s-academy .teacher-header p {
+  margin:0 0 7px;
+  font-size:13px;
+  opacity:.85;
+}
+
+#s-academy .teacher-avatar {
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#ffffff20;
+  font-size:26px;
+}
+
+#s-academy .teacher-online {
+  color:#7ee7b0;
+  font-size:12px;
+}
+
+#s-academy .teacher-subject {
+  padding:12px;
+  border:1px solid var(--border,#334155);
+  border-radius:13px;
+  background:var(--card,#182334);
+}
+
+#s-academy .teacher-subject label {
+  display:block;
+  font-weight:700;
+}
+
+#s-academy .academy-teacher-messages {
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  min-height:260px;
+  max-height:65vh;
+  overflow-y:auto;
+  padding:14px;
+  border:1px solid var(--border,#334155);
+  border-radius:16px;
+  background:var(--bg,#101827);
+  scroll-behavior:smooth;
+}
+
+#s-academy .teacher-welcome,
+#s-academy .teacher-message {
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-width:0;
+}
+
+#s-academy .teacher-bubble {
+  max-width:88%;
+  padding:13px 15px;
+  border:1px solid var(--border,#334155);
+  border-radius:15px 15px 15px 4px;
+  background:var(--card,#182334);
+  line-height:1.9;
+  overflow-wrap:anywhere;
+}
+
+#s-academy .teacher-bubble p {
+  margin:7px 0 0;
+}
+
+#s-academy .teacher-composer {
+  padding:12px;
+  border:1px solid var(--border,#334155);
+  border-radius:16px;
+  background:var(--card,#182334);
+}
+
+#s-academy .teacher-composer textarea {
+  min-height:85px;
+  margin:0 0 9px;
+}
+
+#s-academy .teacher-composer button {
+  width:100%;
+  min-height:45px;
+  font-weight:700;
+}
+
+@media(max-width:600px) {
+  #s-academy .academy-teacher-messages {
+    padding:9px;
+    max-height:60vh;
+  }
+
+  #s-academy .teacher-bubble {
+    max-width:94%;
+    font-size:14px;
+  }
+
+  #s-academy .teacher-header {
+    padding:13px;
+  }
+}
+
     `;
 
     document.head.appendChild(style);
@@ -1144,7 +1272,8 @@ function renderSearchResults(data) {
         return;
       }
 
-      const teacherBtn = event.target.closest("#academyTeacherSend");
+      
+const teacherBtn = event.target.closest("#academyTeacherSend");
 
 if (teacherBtn) {
   const questionInput = $("academyTeacherQuestion");
@@ -1159,26 +1288,42 @@ if (teacherBtn) {
     return;
   }
 
-  if (!window.GEOAcademyEngines?.teacherChat) {
+  if (!messagesBox || !window.GEOAcademyEngines?.teacherChat) {
     notify("محرك المدرس الذكي غير متصل.", "error");
     return;
   }
 
   teacherBtn.disabled = true;
-  teacherBtn.textContent = "⏳ المدرس يجهز الإجابة...";
+  teacherBtn.textContent = "⏳ جاري إعداد الإجابة...";
 
-  const userMessage = document.createElement("div");
-  userMessage.className = "academy-card";
-  userMessage.style.cssText =
-    "margin:10px 0;padding:12px;background:#e8f3ff;color:#17324d;white-space:pre-wrap;";
-  userMessage.textContent = "👤 أنت:\n" + question;
+  // رسالة الطالب
+  const userRow = document.createElement("div");
+  userRow.className = "teacher-message teacher-user";
 
-  messagesBox.appendChild(userMessage);
+  const userBubble = document.createElement("div");
+  userBubble.className = "teacher-bubble";
+  userBubble.textContent = question;
+
+  userRow.appendChild(userBubble);
+  messagesBox.appendChild(userRow);
 
   teacherMessages.push({
     role: "user",
     content: question
   });
+
+  // مؤشر انتظار المدرس
+  const loading = document.createElement("div");
+  loading.className = "teacher-message teacher-assistant";
+
+  const loadingBubble = document.createElement("div");
+  loadingBubble.className = "teacher-bubble";
+  loadingBubble.textContent = "⏳ المدرس يجهز الشرح...";
+
+  loading.appendChild(loadingBubble);
+  messagesBox.appendChild(loading);
+
+  messagesBox.scrollTop = messagesBox.scrollHeight;
 
   try {
     const answer = await window.GEOAcademyEngines.teacherChat(
@@ -1186,24 +1331,44 @@ if (teacherBtn) {
       subject
     );
 
+    loading.remove();
+
     teacherMessages.push({
       role: "assistant",
       content: answer
     });
 
-    const assistantMessage = document.createElement("div");
-    assistantMessage.className = "academy-card";
-    assistantMessage.style.cssText =
-      "margin:10px 0;padding:12px;white-space:pre-wrap;line-height:1.8;";
+    // إجابة المدرس
+    const assistantRow = document.createElement("div");
+    assistantRow.className = "teacher-message teacher-assistant";
 
-    assistantMessage.textContent = "👨‍🏫 المدرس الذكي:\n" + answer;
+    const avatar = document.createElement("div");
+    avatar.className = "teacher-avatar";
+    avatar.textContent = "👨‍🏫";
 
-    messagesBox.appendChild(assistantMessage);
+    const assistantBubble = document.createElement("div");
+    assistantBubble.className = "teacher-bubble";
+
+    const teacherName = document.createElement("strong");
+    teacherName.textContent = "GEO Teacher";
+
+    const answerContent = document.createElement("div");
+    answerContent.className = "teacher-answer-content";
+    answerContent.innerHTML = renderAnalysisMarkdown(answer);
+
+    assistantBubble.appendChild(teacherName);
+    assistantBubble.appendChild(answerContent);
+
+    assistantRow.appendChild(avatar);
+    assistantRow.appendChild(assistantBubble);
+
+    messagesBox.appendChild(assistantRow);
 
     questionInput.value = "";
     messagesBox.scrollTop = messagesBox.scrollHeight;
 
   } catch (error) {
+    loading.remove();
     teacherMessages.pop();
 
     notify(
@@ -1213,7 +1378,7 @@ if (teacherBtn) {
 
   } finally {
     teacherBtn.disabled = false;
-    teacherBtn.textContent = "📩 اسأل المدرس الذكي";
+    teacherBtn.textContent = "إرسال السؤال ➤";
   }
 
   return;
