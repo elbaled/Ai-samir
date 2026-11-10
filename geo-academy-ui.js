@@ -5,12 +5,55 @@
   if (window.GEOAcademyUI) return;
 
   const courses = [
-    { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "🌍", desc: "تعلم GIS والخرائط والتحليل المكاني." },
-    { id: "surveying", title: "المساحة والرفع المساحي", icon: "📐", desc: "أساسيات المساحة والأجهزة والحسابات." },
-    { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "🛰️", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
-    { id: "civil3d", title: "Civil 3D", icon: "🏗️", desc: "تعلم تصميم الطرق والأعمال المساحية." },
-    { id: "python-gis", title: "Python for GIS", icon: "🐍", desc: "استخدام Python في معالجة البيانات الجغرافية." }
-  ];
+  {
+    id: "gis",
+    title: "نظم المعلومات الجغرافية GIS",
+    icon: "🌍",
+    desc: "تعلم GIS والخرائط والتحليل المكاني."
+  },
+  {
+    id: "surveying",
+    title: "المساحة والرفع المساحي",
+    icon: "📐",
+    desc: "أساسيات المساحة والأجهزة والحسابات."
+  },
+  {
+    id: "remote-sensing",
+    title: "الاستشعار عن بعد",
+    icon: "🛰️",
+    desc: "الأقمار الصناعية والصور الفضائية وتحليلها."
+  },
+  {
+    id: "civil3d",
+    title: "Civil 3D",
+    icon: "🏗️",
+    desc: "تصميم الطرق والأعمال المساحية."
+  },
+  {
+    id: "python-gis",
+    title: "Python for GIS",
+    icon: "🐍",
+    desc: "برمجة وتحليل البيانات الجغرافية."
+  },
+  {
+    id: "gis-programming",
+    title: "GIS Programming",
+    icon: "💻",
+    desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS."
+  },
+  {
+    id: "autocad",
+    title: "AutoCAD",
+    icon: "📏",
+    desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد."
+  },
+  {
+    id: "autocad-ai",
+    title: "AutoCAD + AI",
+    icon: "🤖",
+    desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية."
+  }
+];
 
   let currentUser = null;
   let notes = [];
