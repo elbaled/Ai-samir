@@ -330,6 +330,84 @@
   line-height: 1.9;
 }
 
+/* تحسين عرض البحث والنتائج */
+#s-academy .academy-search-box,
+#s-academy .academy-results-box {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+#s-academy .academy-search-box {
+  overflow: hidden;
+}
+
+#s-academy .academy-results-box {
+  overflow: hidden;
+}
+
+#s-academy .academy-search-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+}
+
+#s-academy .academy-course-result {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+#s-academy .academy-course-result * {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+#s-academy .academy-course-result h4,
+#s-academy .academy-course-result p,
+#s-academy .academy-course-result a {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+#s-academy .academy-analysis {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+#s-academy .academy-analysis table {
+  min-width: 500px;
+  border-collapse: collapse;
+}
+
+@media (max-width: 600px) {
+  #s-academy .academy-search-box {
+    padding: 13px;
+  }
+
+  #s-academy .academy-course-result {
+    padding: 12px;
+  }
+
+  #s-academy .academy-course-result h4 {
+    font-size: 15px;
+  }
+
+  #s-academy .academy-course-platform {
+    flex-wrap: wrap;
+  }
+}
+
     `;
 
     document.head.appendChild(style);
@@ -655,12 +733,13 @@
     `;
   }
 
+
   function renderSmartSearch() {
     const content = $("academyContent");
     if (!content) return;
 
     content.innerHTML = `
-      <div class="academy-card">
+      <div class="academy-card academy-search-box">
         <h3>🔎 الباحث الذكي عن الكورسات</h3>
         <p class="academy-muted">
           ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.
@@ -676,11 +755,15 @@
           style="margin-top:12px;width:100%">
           🔍 ابدأ البحث الذكي
         </button>
+      </div>
 
-        <div id="academySmartResults" style="margin-top:16px"></div>
+      <div id="academySmartResults"
+        class="academy-results-box"
+        style="margin-top:16px;width:100%">
       </div>
     `;
   }
+
 
   function renderTab() {
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
