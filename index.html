@@ -1890,62 +1890,6 @@ function needPro(){if(isPro())return false;showPro("lock");return true}
 function startSession(name,email,role){["auth","role","name","email"].forEach((k,i)=>sessionStorage.setItem("gd_"+k,[1,role,name,email][i]));gate();afterLogin()}
 function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").innerHTML="";addMsg("a",welc())}if(!isAdm())setTimeout(()=>showPro("welcome"),400)}
 
-async function googleLogin() {
-  toast("⏳ جاري الاتصال بجوجل...", "info");
-  if (!GOOGLE_CLIENT_ID) return toast("❌ خطأ: Client ID فارغ", "error");
-  
-  const run = () => {
-    try {
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response) => {
-          try {
-            // فك تشفير بيانات المستخدم
-            const base64Url = response.credential.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            
-            const p = JSON.parse(jsonPayload);
-            const em = p.email.toLowerCase();
-            const a = users();
-            let u = a.find(x => x.email == em);
-            
-            if (!u) {
-              u = {name: p.name || em, email: em, phone: "", pw: "", google: 1, trialEnd: Date.now() + D3, proUntil: 0, usedCodes: []};
-              a.push(u);
-              localStorage.setItem("gd_users", JSON.stringify(a));
-            }
-            startSession(u.name, em, em === ADMIN_EMAIL ? "admin" : "user");
-            toast("✅ تم الدخول بنجاح", "success");
-            
-          } catch(e) {
-            toast("❌ فشل استخراج البيانات: " + e.message, "error");
-          }
-        }
-      });
-      
-      // محاولة فتح النافذة
-      google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          toast("⚠️ المتصفح منع نافذة جوجل. جرب تفتح الموقع من Chrome أو Safari مباشرة.", "warn");
-        }
-      });
-      
-    } catch (e) {
-      toast("❌ خطأ في الإعدادات: " + e.message, "error");
-    }
-  };
-
-  if (window.google && google.accounts) return run();
-  
-  const s = document.createElement("script");
-  s.src = "https://accounts.google.com/gsi/client";
-  s.onload = run;
-  s.onerror = () => toast("❌ فشل تحميل سيرفر جوجل. تأكد من الإنترنت أو أوقف مانع الإعلانات.", "error");
-  document.head.appendChild(s);
-}
 
 
 /* ---------- Subscription codes (single-use per account) ---------- */
