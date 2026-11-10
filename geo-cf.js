@@ -12,7 +12,8 @@ firebase.initializeApp(CFG);
 const auth=firebase.auth();
 
 // تنظيف أي بقايا قديمة (مفاتيح / باسوردات / أكواد محلية)
-["gd_ai_cfg","gd_users","gd_codes","gd_used"].forEach(k=>localStorage.removeItem(k));
+// تم إيقاف الحذف التلقائي للبيانات المحلية.
+// سنحافظ على البيانات القديمة إلى أن نتحقق من ترحيلها بأمان.
 
 const ERR={
  "auth/invalid-credential":"البريد أو كلمة المرور غير صحيحة","auth/wrong-password":"البريد أو كلمة المرور غير صحيحة",
