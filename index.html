@@ -808,87 +808,7 @@ function toggleAuth(isRegister){
   $("regEr").style.display = "none";
 }
 
-function register(){
-  const name = $("regName").value.trim();
-  const email = $("regEmail").value.trim().toLowerCase();
-  const phone = $("regPhone").value.trim();
-  const pw = $("regPw").value.trim();
-
-  if(!name || !email || !phone || !pw){
-    $("regEr").style.display = "block";
-    $("regEr").textContent = "يرجى ملء جميع الحقول";
-    return;
-  }
-
-  // التحقق من حساب الأدمن إنه متسجلش كـ مستخدم عادي
-  if(email === ADMIN_EMAIL){
-    $("regEr").style.display = "block";
-    $("regEr").textContent = "هذا البريد مخصص للأدمن فقط";
-    return;
-  }
-
-  let users = JSON.parse(localStorage.getItem("gd_users") || "[]");
-  
-  if(users.find(u => u.email === email)){
-    $("regEr").style.display = "block";
-    $("regEr").textContent = "هذا البريد مسجل بالفعل";
-    return;
-  }
-
-  // حفظ المستخدم الجديد
-  users.push({ name, email, phone, pw });
-  localStorage.setItem("gd_users", JSON.stringify(users));
-  
-  toast("✅ تم إنشاء الحساب بنجاح", "success");
-  
-  // الدخول تلقائياً بعد التسجيل
-  sessionStorage.setItem("gd_auth", "1");
-  sessionStorage.setItem("gd_role", "user");
-  sessionStorage.setItem("gd_name", name);
-  
-  gate();
-}
-
-function login(){
-  const em = $("em").value.trim().toLowerCase();
-  const pw = $("pw").value.trim();
-
-  // 1. التحقق من حساب الأدمن الأساسي
-  if(em === ADMIN_EMAIL && pw === ADMIN_PASS){
-    sessionStorage.setItem("gd_auth", "1");
-    sessionStorage.setItem("gd_role", "admin");
-    sessionStorage.setItem("gd_name", "م. أحمد سمير");
-    $("er").style.display = "none";
-    $("pw").value = "";
-    gate();
-    toast("أهلاً بك يا هندسة 👑", "success");
-    return;
-  }
-
-  // 2. التحقق من المستخدمين العاديين
-  let users = JSON.parse(localStorage.getItem("gd_users") || "[]");
-  const user = users.find(u => u.email === em && u.pw === pw);
-  
-  if(user){
-    sessionStorage.setItem("gd_auth", "1");
-    sessionStorage.setItem("gd_role", "user");
-    sessionStorage.setItem("gd_name", user.name);
-    $("er").style.display = "none";
-    $("pw").value = "";
-    gate();
-    toast(`أهلاً بك ${user.name} 👋`, "success");
-  } else {
-    $("er").style.display = "block";
-    $("er").textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
-  }
-}
-
-function logout(){
-  sessionStorage.removeItem("gd_auth");
-  sessionStorage.removeItem("gd_role");
-  sessionStorage.removeItem("gd_name");
-  location.reload();
-}
+// التسجيل والدخول والخروج تتم إدارتها عبر Firebase في geo-cf.js.
 
 function go(t){
   document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id=="s-"+t));
@@ -1969,22 +1889,7 @@ function needPro(){if(isPro())return false;showPro("lock");return true}
 
 function startSession(name,email,role){["auth","role","name","email"].forEach((k,i)=>sessionStorage.setItem("gd_"+k,[1,role,name,email][i]));gate();afterLogin()}
 function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").innerHTML="";addMsg("a",welc())}if(!isAdm())setTimeout(()=>showPro("welcome"),400)}
-function register(){
- const name=$("regName").value.trim(),email=$("regEmail").value.trim().toLowerCase(),phone=$("regPhone").value.trim(),pw=$("regPw").value.trim(),er=$("regEr"),bad=t=>{er.style.display="block";er.textContent=t};
- if(!name||!email||!phone||!pw)return bad("يرجى ملء جميع الحقول");
- if(email===ADMIN_EMAIL)return bad("هذا البريد مخصص للأدمن فقط");
- const a=users();if(a.find(u=>u.email===email))return bad("هذا البريد مسجل بالفعل");
- a.push({name,email,phone,pw,trialEnd:Date.now()+D3,proUntil:0,usedCodes:[]});localStorage.setItem("gd_users",JSON.stringify(a));
- startSession(name,email,"user")}
-function login(){
- const em=$("em").value.trim().toLowerCase(),pw=$("pw").value.trim();
- if(em===ADMIN_EMAIL&&pw===ADMIN_PASS){$("pw").value="";return startSession("م. أحمد سمير",em,"admin")}
- const u=users().find(x=>x.email===em&&x.pw&&x.pw===pw);
- if(!u){$("er").style.display="block";$("er").textContent="البريد الإلكتروني أو كلمة المرور غير صحيحة";return}
- if(!u.trialEnd&&!u.proUntil)u.trialEnd=Date.now()+D3,localStorage.setItem("gd_users",JSON.stringify(users().map(x=>x.email==em?u:x)));
- $("pw").value="";startSession(u.name,em,"user")}
-function logout(){sessionStorage.clear();location.reload()}
-  
+
 async function googleLogin() {
   toast("⏳ جاري الاتصال بجوجل...", "info");
   if (!GOOGLE_CLIENT_ID) return toast("❌ خطأ: Client ID فارغ", "error");
