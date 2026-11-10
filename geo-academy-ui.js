@@ -828,9 +828,33 @@ async function completeCourse(courseId) {
         try {
           const data = await window.GEOAcademyEngines.search(query);
 
-          output.textContent =
-            "نتائج البحث:\n\n" + data.results +
-            "\n\nمصادر البحث:\n" + data.sources;
+          const markdown = `
+## 📚 نتائج البحث
+
+${data.results}
+
+---
+
+## 🔗 مصادر البحث
+
+${data.sources}
+`;
+
+const safeHTML = DOMPurify.sanitize(
+  marked.parse(markdown),
+  {
+    ADD_ATTR: ["target", "rel"]
+  }
+);
+
+output.innerHTML = safeHTML;
+
+output.querySelectorAll("a").forEach(link => {
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.style.color = "#60a5fa";
+  link.style.textDecoration = "underline";
+});
         } catch (error) {
           output.textContent = "حدث خطأ: " + error.message;
         } finally {
