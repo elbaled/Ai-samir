@@ -64,4 +64,104 @@ ask=function(p,s){
     if(last&&!last.querySelector('.eng-ft')){
       const diff=window.__req&&window.__used!==window.__req;
       last.insertAdjacentHTML('beforeend',`<div class="mt eng-ft" style="margin-top:8px;direction:ltr;text-align:left;opacity:.8">⚙️ ${esc(ENGS[eng].n)} · ${esc(window.__used)}${diff?' ⚠️ requested '+esc(window.__req):''}</div>`)}})};
+
+   
+/* GEO Academy: Dual AI Engine Bridge */
+window.GEOAcademyEngines = {
+  async search(query) {
+    const user = window.firebase?.auth?.().currentUser;
+
+    if (!user || !user.emailVerified) {
+      throw new Error("سجّل الدخول وفعّل بريدك الإلكتروني أولاً.");
+    }
+
+    if (!window.GEO_API || !window.geoToken) {
+      throw new Error("اتصال محركات الذكاء الاصطناعي غير جاهز.");
+    }
+
+    const token = await window.geoToken();
+
+    async function askModel(model, prompt, effort) {
+      const body = {
+        model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 7000,
+        stream: false
+      };
+
+      if (effort) body.reasoning_effort = effort;
+
+      const response = await fetch(
+        window.GEO_API + "/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify(body)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("تعذر تشغيل المحرك: HTTP " + response.status);
+      }
+
+      const data = await response.json();
+      const result = data.choices?.[0]?.message?.content;
+
+      if (!result) throw new Error("المحرك لم يرجع نتيجة.");
+
+      return result;
+    }
+
+    const searchPrompt = `
+أنت محرك البحث GEO 5.2 ULTRA.
+ابحث على الويب عن كورسات حقيقية مرتبطة بطلب المستخدم.
+اهتم بيوتيوب والمواقع الرسمية والمنصات التعليمية.
+أرجع أسماء الكورسات وروابطها الأصلية ومصادرها.
+لا تخترع روابط أو أسعاراً أو أسماء مدربين.
+إذا لم تستطع التحقق من معلومة، اذكر أنها غير مؤكدة.
+
+طلب البحث:
+${query}
+`;
+
+    const searchResults = await askModel(
+      "groq/compound",
+      searchPrompt
+    );
+
+    const analysisPrompt = `
+أنت GEO 3.8 FLASH، محلل نتائج أكاديمية.
+حلل نتائج البحث التالية ورتب الكورسات حسب مدى مناسبتها لطلب المستخدم.
+اعرض لكل كورس:
+العنوان، المنصة، اللغة، المستوى، السعر إذا كان مؤكداً،
+ملخصاً قصيراً، والرابط الأصلي.
+لا تضف معلومات أو روابط غير موجودة في نتائج البحث.
+ميّز بين المجاني والمدفوع وغير المعروف.
+
+طلب المستخدم:
+${query}
+
+نتائج GEO 5.2:
+${searchResults}
+`;
+
+    const analysis = await askModel(
+      "openai/gpt-oss-120b",
+      analysisPrompt,
+      "medium"
+    );
+
+    return {
+      searchEngine: "groq/compound",
+      analysisEngine: "openai/gpt-oss-120b",
+      sources: searchResults,
+      results: analysis
+    };
+  }
+};
+
 })();
