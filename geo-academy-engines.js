@@ -232,12 +232,91 @@ ${sources}
     };
   }
 
+   
+  /* ---------- GEO Smart Teacher ---------- */
+
+  async function teacherChat(messages, subject) {
+    if (!API_URL) {
+      throw new Error("عنوان محرك الذكاء الاصطناعي غير مضبوط.");
+    }
+
+    const token = await getAuthToken();
+
+    const systemPrompt = `
+أنت GEO Teacher، مدرس أكاديمي متخصص.
+
+التخصص الحالي: ${String(subject || "الجغرافيا")}
+
+مهمتك:
+- شرح الدروس بأسلوب تعليمي واضح ومتدرج.
+- التحدث بالعربية عند سؤال المستخدم بالعربية.
+- الاحتفاظ بالمصطلحات التقنية الإنجليزية.
+- شرح GIS والمساحة والاستشعار عن بعد وERDAS
+  وArcGIS Pro وAutoCAD وCivil 3D والبرمجة.
+- تقديم أمثلة تطبيقية وتمارين عند الحاجة.
+- تقسيم الشرح إلى خطوات وعناوين مناسبة للهاتف.
+- عدم اختلاق معلومات أو مراجع.
+- إذا لم تكن متأكدًا من معلومة، وضّح ذلك.
+- لا تدّعِ إجراء بحث على الإنترنت دون استخدام أداة بحث فعلية.
+`;
+
+    const response = await fetch(
+      API_URL + "/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages.slice(-12)
+          ],
+          temperature: 0.5,
+          max_tokens: 4000,
+          stream: false
+        })
+      }
+    );
+
+    const raw = await response.text();
+    let parsed;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch (_) {
+      throw new Error("تعذر قراءة استجابة المدرس الذكي.");
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        parsed.error?.message ||
+        "حدث خطأ أثناء الاتصال بمحرك المدرس."
+      );
+    }
+
+    const answer =
+      parsed.choices?.[0]?.message?.content ||
+      parsed.output ||
+      "";
+
+    if (!answer.trim()) {
+      throw new Error("المدرس الذكي لم يرجع إجابة نصية.");
+    }
+
+    return answer;
+  }
+
+
   /* ---------- Public API ---------- */
 
   window.GEOAcademyEngines = {
-    search: academySearch,
-    searchWeb: searchWeb,
-    analyzeResults: analyzeResults
-  };
+  search: academySearch,
+  searchWeb: searchWeb,
+  analyzeResults: analyzeResults,
+  teacherChat: teacherChat
+};
 
 })();
