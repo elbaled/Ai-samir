@@ -539,25 +539,20 @@
       notify("لم يتم حفظ المعلومة: " + (error.message || ""), "error");
     }
   }
+async function completeCourse(courseId) {
+  const course = courses.find(item => item.id === courseId);
+  if (!course) return;
 
-  async function completeCourse(courseId) {
-    const course = courses.find(item => item.id === courseId);
-    if (!course) return;
+  try {
+    await window.GEOAcademy.saveProgress(courseId, 100);
 
-    try {
-      await window.GEOAcademy.saveProgress(courseId, {
-        percent: 100,
-        completed: true,
-        completedAt: Date.now()
-      });
-
-      notify("تم تسجيل إتمام المسار بنجاح.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
-    }
+    notify("تم تسجيل إتمام المسار بنجاح.", "success");
+    await refreshData();
+  } catch (error) {
+    console.error(error);
+    notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
   }
+}
 
   async function deleteNote(id) {
     if (!confirm("هل تريد حذف هذه الملاحظة؟")) return;
