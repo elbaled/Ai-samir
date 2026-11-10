@@ -638,7 +638,37 @@ function renderCourses(query = "") {
       </div>
     `;
   }
+  function renderSmartSearch() {
+    const content = $("academyContent");
+    if (!content) return;
 
+    content.innerHTML = `
+      <div class="academy-card">
+        <h3>🔎 الباحث الذكي عن الكورسات</h3>
+        <p class="academy-muted">
+          ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.
+        </p>
+
+        <textarea
+          id="academySmartQuery"
+          class="academy-textarea"
+          rows="4"
+          placeholder="مثال: ابحث عن أفضل كورسات AutoCAD من الصفر باللغة العربية، المجانية والمدفوعة..."
+        ></textarea>
+
+        <button
+          type="button"
+          class="academy-btn"
+          id="academySmartSearchBtn"
+          style="margin-top:12px;width:100%;"
+        >
+          🔍 ابدأ البحث الذكي
+        </button>
+
+        <div id="academySmartResults" style="margin-top:16px;"></div>
+      </div>
+    `;
+  }
   function renderTab() {
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
@@ -658,6 +688,7 @@ function renderCourses(query = "") {
     if (activeTab === "memory") renderMemory();
     if (activeTab === "progress") renderProgress();
     if (activeTab === "teacher") renderTeacher();
+        if (activeTab === "smart-search") renderSmartSearch();
   }
 
   async function refreshData() {
