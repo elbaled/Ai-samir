@@ -162,7 +162,7 @@ if (buffer.trim().startsWith("data:")) {
 }
 
 if (!result.trim()) {
-  throw new Error("لم تصل نتيجة نصية من المحرك. حاول مرة أخرى.");
+  throw new Error("المحرك " + model + " لم يرجع نتيجة نصية.");
 }
 
 return result;
