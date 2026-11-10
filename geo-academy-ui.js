@@ -795,12 +795,25 @@ async function completeCourse(courseId) {
 
     window.GEOAcademyUI.ready = true;
   }
+window.GEOAcademyUI = {
+  init,
+  refresh: refreshData,
 
-  window.GEOAcademyUI = {
-    init,
-    refresh: refreshData,
-    ready: false
-  };
+  search(query) {
+    const input = $("academyCatalogSearch");
+    const position = input?.selectionStart ?? String(query).length;
+
+    renderCourses(query);
+
+    const nextInput = $("academyCatalogSearch");
+    if (nextInput) {
+      nextInput.focus();
+      nextInput.setSelectionRange(position, position);
+    }
+  },
+
+  ready: false
+};
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
