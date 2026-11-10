@@ -393,7 +393,42 @@ function renderCourses(query = "") {
         ${filtered.length} تخصص متاح في الدليل
       </div>
     </div>
+    <div class="academy-card" style="margin-top:15px">
+      <h3>🎓 الكورسات الفعلية</h3>
+      <p class="academy-muted">
+        ${filteredCourses.length} كورس متاح حاليًا في الفهرس
+      </p>
 
+      <div class="academy-grid">
+        ${filteredCourses.length ? filteredCourses.map(course => `
+          <div class="academy-card">
+            <h3>${escapeHTML(course.title)}</h3>
+            <p>🏫 ${escapeHTML(course.provider)}</p>
+            <p class="academy-muted">
+              المستوى: ${escapeHTML(course.level)}
+              <br>
+              اللغة: ${escapeHTML(course.language)}
+              <br>
+              السعر: ${escapeHTML(course.price)}
+            </p>
+            <a
+              class="academy-btn"
+              href="${escapeHTML(course.url)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              style="display:inline-block;text-decoration:none"
+            >
+              فتح الكورس الأصلي ↗
+            </a>
+          </div>
+        `).join("") : `
+          <div class="academy-empty">
+            لا توجد كورسات مطابقة للبحث.
+          </div>
+        `}
+      </div>
+    </div>
+    
     <div class="academy-grid">
       ${filtered.length ? filtered.map(category => {
         const sources = catalog.getSources(category.id);
