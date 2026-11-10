@@ -108,13 +108,43 @@ window.GEOAcademyEngines = {
         throw new Error("تعذر تشغيل المحرك: HTTP " + response.status);
       }
 
-      const data = await response.json();
-      const result = data.choices?.[0]?.message?.content;
+      const raw = await response.text();
+let result = "";
 
-      if (!result) throw new Error("المحرك لم يرجع نتيجة.");
+try {
+  const data = JSON.parse(raw);
+  result = data.choices?.[0]?.message?.content || "";
+} catch (error) {
+  const lines = raw.split("\n");
 
-      return result;
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed.startsWith("data:")) continue;
+
+    const payload = trimmed.slice(5).trim();
+
+    if (!payload || payload === "[DONE]") continue;
+
+    try {
+      const chunk = JSON.parse(payload);
+      const choice = chunk.choices?.[0];
+
+      result +=
+        choice?.delta?.content ||
+        choice?.message?.content ||
+        "";
+    } catch (e) {
+      continue;
     }
+  }
+}
+
+if (!result.trim()) {
+  throw new Error("لم تصل نتيجة نصية من المحرك. حاول مرة أخرى.");
+}
+
+return result;
 
     const searchPrompt = `
 أنت محرك البحث GEO 5.2 ULTRA.
