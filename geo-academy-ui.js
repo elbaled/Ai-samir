@@ -309,8 +309,7 @@
       <div class="academy-grid">
         ${courses.map(course => {
           const item = progress.find(p => p.id === course.id);
-          const percent = Math.max(0, Math.min(100, Number(item?.progress?.percent ?? 0)));
-
+          const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
           return `
             <div class="academy-card">
               <div class="academy-icon">${course.icon}</div>
@@ -413,8 +412,7 @@
       <div class="academy-grid">
         ${courses.map(course => {
           const item = progress.find(p => p.id === course.id);
-          const percent = Math.max(0, Math.min(100, Number(item?.progress?.percent ?? 0)));
-
+       const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
           return `
             <div class="academy-card">
               <h3>${course.icon} ${escapeHTML(course.title)}</h3>
