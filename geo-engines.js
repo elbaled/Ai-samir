@@ -108,14 +108,21 @@ window.GEOAcademyEngines = {
         throw new Error("تعذر تشغيل المحرك: HTTP " + response.status);
       }
 
-      const raw = await response.text();
+      const reader = response.body.getReader();
+const decoder = new TextDecoder();
+
+let buffer = "";
 let result = "";
 
-try {
-  const data = JSON.parse(raw);
-  result = data.choices?.[0]?.message?.content || "";
-} catch (error) {
-  const lines = raw.split("\n");
+while (true) {
+  const { value, done } = await reader.read();
+
+  if (done) break;
+
+  buffer += decoder.decode(value, { stream: true });
+
+  const lines = buffer.split("\n");
+  buffer = lines.pop() || "";
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -134,9 +141,23 @@ try {
         choice?.delta?.content ||
         choice?.message?.content ||
         "";
-    } catch (e) {
+    } catch (error) {
       continue;
     }
+  }
+}
+
+if (buffer.trim().startsWith("data:")) {
+  const payload = buffer.trim().slice(5).trim();
+
+  if (payload && payload !== "[DONE]") {
+    try {
+      const chunk = JSON.parse(payload);
+      result +=
+        chunk.choices?.[0]?.delta?.content ||
+        chunk.choices?.[0]?.message?.content ||
+        "";
+    } catch (error) {}
   }
 }
 
