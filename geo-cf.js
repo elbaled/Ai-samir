@@ -54,8 +54,11 @@ window.forgot=async function(){
   const e=$("em").value.trim();if(!e)return toast("اكتب بريدك أولاً","warn");
   try{await auth.sendPasswordResetEmail(e);toast("📧 تم إرسال رابط إعادة التعيين","success")}catch(x){toast("❌ "+em2(x.code),"error")}
 };
-window.logout=async function(){await auth.signOut();sessionStorage.clear();localStorage.removeItem("gd_users");location.reload()};
-
+window.logout=async function(){
+  await auth.signOut();
+  sessionStorage.clear();
+  location.reload();
+};
 /* ---------- بيانات الخطة من الـ Worker ---------- */
 async function token(force){
   let u=auth.currentUser;if(!u)throw new Error("سجّل الدخول أولاً");
