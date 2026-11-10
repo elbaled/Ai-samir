@@ -1,174 +1,243 @@
 
-/* GEO Academy - Independent Dual AI Engine */
+/* =========================================================
+   GEO Academy Engines
+   Tavily Real Web Search + Groq AI Analysis
+   ========================================================= */
 
 (function () {
   "use strict";
 
-  async function askModel(model, prompt, effort) {
+  const API_URL = window.GEO_API;
+
+  /* ---------- Firebase Authentication ---------- */
+
+  async function getAuthToken() {
     const user = window.firebase?.auth?.().currentUser;
 
     if (!user || !user.emailVerified) {
-      throw new Error("سجّل الدخول وفعّل بريدك الإلكتروني أولاً.");
+      throw new Error(
+        "سجّل الدخول وفعّل بريدك الإلكتروني أولاً."
+      );
     }
 
-    if (!window.GEO_API || typeof window.geoToken !== "function") {
-      throw new Error("اتصال محركات الذكاء الاصطناعي غير جاهز.");
+    if (typeof window.geoToken !== "function") {
+      throw new Error(
+        "اتصال الحساب غير جاهز. حدّث الصفحة وحاول مرة أخرى."
+      );
     }
 
-    const token = await window.geoToken();
+    return await window.geoToken();
+  }
 
-    const body = {
-      model,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 7000,
-      stream: true
-    };
+  /* ---------- Tavily Web Search ---------- */
 
-    if (effort) body.reasoning_effort = effort;
+  async function searchWeb(query) {
+    if (!API_URL) {
+      throw new Error("عنوان Cloudflare Worker غير مضبوط.");
+    }
+
+    const token = await getAuthToken();
 
     const response = await fetch(
-      window.GEO_API + "/chat/completions",
+      API_URL + "/search",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + token
+          "Authorization": "Bearer " + token
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          query: query
+        })
       }
     );
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      throw new Error("خطأ المحرك: HTTP " + response.status);
+      const errors = {
+        unauthorized: "انتهت جلسة الدخول. سجّل الدخول مرة أخرى.",
+        verify_email: "فعّل بريدك الإلكتروني أولاً.",
+        search_quota: "وصلت إلى الحد اليومي للبحث.",
+        search_not_configured: "محرك البحث غير مضبوط في Cloudflare.",
+        bad_query: "عبارة البحث غير صحيحة.",
+        server_error: "حدث خطأ في خادم البحث."
+      };
+
+      throw new Error(
+        errors[data.error] ||
+        data.message ||
+        "تعذر البحث. رمز الخطأ: " + response.status
+      );
     }
 
+    if (!Array.isArray(data.results)) {
+      throw new Error("تنسيق نتائج البحث غير صحيح.");
+    }
+
+    return data;
+  }
+
+  /* ---------- Prepare Search Sources ---------- */
+
+  function formatSources(data) {
+    return data.results.map((item, index) => {
+      return [
+        "المصدر رقم " + (index + 1),
+        "العنوان: " + (item.title || ""),
+        "الرابط: " + (item.url || ""),
+        "المحتوى: " + (item.content || "")
+      ].join("\n");
+    }).join("\n\n-------------------\n\n");
+  }
+
+  /* ---------- Groq AI Analysis ---------- */
+
+  async function analyzeResults(query, data) {
+    const token = await getAuthToken();
+
+    const sources = formatSources(data);
+
+    const prompt = `
+أنت مساعد أكاديمي متخصص في الجغرافيا والجيوماتكس والمساحة والبرمجة.
+
+طلب المستخدم:
+${query}
+
+ملخص محرك البحث:
+${data.answer || "لا يوجد ملخص."}
+
+نتائج البحث:
+${sources}
+
+المطلوب:
+
+1. حلل نتائج البحث الحقيقية فقط.
+2. أجب باللغة العربية إذا كان السؤال بالعربية.
+3. احتفظ بالمصطلحات التقنية بالإنجليزية.
+4. لا تخترع كورسات أو مواقع أو روابط.
+5. لا تدّع أن الكورس مجاني إلا إذا كان المصدر يؤكد ذلك.
+6. وضّح نوع كل نتيجة: كورس، مقال، مرجع، فيديو، أو موقع.
+7. اعرض اسم الموقع والرابط الأصلي.
+8. اذكر المعلومات غير المتوفرة بوضوح.
+9. رتّب النتائج حسب ارتباطها بطلب المستخدم.
+10. لا تنسب معلومات إلى مصدر لم يذكرها.
+
+اعرض إجابة منظمة وسهلة القراءة على الهاتف.
+`;
+
+    const response = await fetch(
+      API_URL + "/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-20b",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 5000,
+          stream: false
+        })
+      }
+    );
+
     const raw = await response.text();
-    let result = "";
+
+    if (!response.ok) {
+      let error = {};
+
+      try {
+        error = JSON.parse(raw);
+      } catch (_) {}
+
+      throw new Error(
+        error.error === "quota"
+          ? "وصلت إلى الحد اليومي لرسائل الذكاء الاصطناعي."
+          : "تعذر تحليل نتائج البحث."
+      );
+    }
+
+    let result;
 
     try {
-      const data = JSON.parse(raw);
-      result = data.choices?.[0]?.message?.content || "";
-    } catch (e) {
-      for (const line of raw.split(/\r?\n/)) {
-        const trimmed = line.trim();
+      const parsed = JSON.parse(raw);
 
-        if (!trimmed.startsWith("data:")) continue;
-
-        const payload = trimmed.slice(5).trim();
-
-        if (!payload || payload === "[DONE]") continue;
-
-        try {
-          const chunk = JSON.parse(payload);
-          const choice = chunk.choices?.[0];
-
-          result +=
-            choice?.delta?.content ||
-            choice?.message?.content ||
-            "";
-        } catch (_) {}
-      }
+      result =
+        parsed.choices?.[0]?.message?.content ||
+        parsed.output ||
+        "";
+    } catch (_) {
+      throw new Error(
+        "لم يتمكن محرك الذكاء الاصطناعي من قراءة النتيجة."
+      );
     }
 
     if (!result.trim()) {
-      throw new Error("المحرك لم يرجع نتيجة نصية.");
+      throw new Error("محرك التحليل لم يرجع نتيجة نصية.");
     }
 
     return result;
   }
 
-  window.GEOAcademyEngines = {
-    async search(query) {
-      if (!query || !query.trim()) {
-        throw new Error("اكتب موضوع البحث أولاً.");
-      }
+  /* ---------- Main Academy Search ---------- */
 
-      const searchPrompt = `
-أنت محرك بحث أكاديمي محترف تستخدم البحث الفعلي على الويب.
+  async function academySearch(query) {
+    query = String(query || "").trim();
 
-مهمتك العثور على كورسات حقيقية موجودة بالفعل.
-
-قواعد إلزامية:
-1. لا تنشئ أسماء قنوات أو كورسات من عندك.
-2. لا تخمن أي رابط.
-3. لا تكتب رابط قناة عامة باعتباره رابط كورس.
-4. ابحث عن صفحة الكورس أو قائمة التشغيل الأصلية مباشرة.
-5. أعط الأولوية لنتائج YouTube وقوائم التشغيل الفعلية والمواقع الرسمية.
-6. لا تذكر سعراً إلا إذا كان موضحاً في المصدر.
-7. لا تذكر أن الكورس مجاني إلا إذا أكد المصدر ذلك.
-8. لا تستخدم روابط بحث عامة بدلاً من رابط الكورس.
-9. لا تعرض أي نتيجة لا تستطيع تحديد مصدرها.
-10. إذا لم تجد نتائج موثوقة، قل ذلك بوضوح.
-
-لكل نتيجة اكتب:
-- اسم الكورس الحقيقي.
-- اسم الجهة أو القناة.
-- رابط صفحة الكورس الأصلية.
-- اللغة.
-- المستوى.
-- حالة السعر إذا كانت معلومة.
-- دليل مختصر من المصدر.
-
-أخرج الروابط كما ظهرت في نتائج البحث الفعلية دون تعديلها.
-
-طلب المستخدم:
-${query}
-`;
-
-      const sources = await askModel(
-        "groq/compound",
-        searchPrompt
-      );
-
-      const analysisPrompt = `
-أنت GEO 3.8 FLASH، محلل نتائج بحث أكاديمية.
-
-مهمتك تنظيم نتائج البحث التي جمعها GEO 5.2 ULTRA فقط.
-
-قواعد صارمة:
-1. استخدم المعلومات الموجودة في نتائج البحث فقط.
-2. ممنوع اختراع كورسات أو قنوات أو منصات.
-3. ممنوع إنشاء أو تخمين أو تعديل أي رابط.
-4. انقل الرابط الأصلي حرفياً كما ورد في نتائج البحث.
-5. لا تحول رابط قناة إلى رابط كورس.
-6. لا تحول رابط صفحة بحث إلى رابط كورس.
-7. لا تكرر النتيجة إذا لم يكن لها مصدر واضح.
-8. لا تصف الكورس بأنه مجاني دون دليل.
-9. إذا لم يوجد رابط مباشر موثوق، استبعد النتيجة.
-10. إذا لم تتوفر نتائج موثوقة، صرّح بذلك.
-
-اعرض النتائج في قائمة منظمة مناسبة للموبايل، وليس جدولاً عريضاً.
-
-لكل نتيجة:
-- اسم الكورس
-- المنصة
-- اللغة
-- المستوى
-- السعر
-- ملخص قصير
-- الرابط الأصلي كما ورد حرفياً
-
-طلب المستخدم:
-${query}
-
-نتائج البحث الأصلية من GEO 5.2 ULTRA:
-${sources}
-`;
-
-      const results = await askModel(
-        "openai/gpt-oss-120b",
-        analysisPrompt,
-        "medium"
-      );
-
-      return {
-        searchEngine: "groq/compound",
-        analysisEngine: "openai/gpt-oss-120b",
-        sources,
-        results
-      };
+    if (!query) {
+      throw new Error("اكتب موضوع البحث أولاً.");
     }
+
+    if (query.length > 500) {
+      throw new Error("عبارة البحث طويلة جدًا.");
+    }
+
+    // 1. البحث الحقيقي في الويب
+    const webData = await searchWeb(query);
+
+    // 2. تحليل النتائج بالذكاء الاصطناعي
+    const analysis = await analyzeResults(
+      query,
+      webData
+    );
+
+    // 3. إرجاع النتائج للواجهة
+    return {
+      success: true,
+
+      query: query,
+
+      engine: "Tavily",
+
+      analysis: analysis,
+
+      answer: webData.answer || "",
+
+      results: webData.results.map(item => ({
+        title: item.title || "",
+        url: item.url || "",
+        content: item.content || "",
+        score: item.score || 0
+      })),
+
+      usage: webData.usage || null
+    };
+  }
+
+  /* ---------- Public API ---------- */
+
+  window.GEOAcademyEngines = {
+    search: academySearch,
+    searchWeb: searchWeb,
+    analyzeResults: analyzeResults
   };
 
 })();
