@@ -24,10 +24,17 @@ callAI=async function(prompt,o={}){
   const imgs=(o.images&&o.images.length&&typeof o.images[0]==='string')?o.images:(window.__vi||[]);
   const c=o.cfgOverride||getCfg();
   if(!imgs.length||c.provider==='claude')return _call(prompt,o);
-  if(!c.key)throw new Error('تحليل الصور يحتاج API Key في إعدادات AI');
-  const base=(c.base||PROVIDERS[c.provider].base).replace(/\/$/,''),model=vcfg().model||VMODEL[c.provider]||c.model;
+  let base,key;
+  if(window.GEO_API&&window.geoToken){
+    if(!firebase.auth().currentUser?.emailVerified)throw new Error('فعّل بريدك الإلكتروني أولاً (راجع رسالة التحقق)');
+    base=window.GEO_API;key=await window.geoToken();
+  }else{
+    if(!c.key)throw new Error('تحليل الصور يحتاج API Key في إعدادات AI');
+    base=(c.base||PROVIDERS[c.provider].base).replace(/\/$/,'');key=c.key;
+  }
+  const model=vcfg().model||VMODEL[c.provider]||c.model;
   const content=[{type:'text',text:prompt},...imgs.map(u=>({type:'image_url',image_url:{url:u}}))];
-  const res=await fetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.key},body:JSON.stringify({model,messages:[{role:'user',content}],stream:true,temperature:.4,max_tokens:parseInt(localStorage.getItem('gd_max_tokens')||'8000')}),signal:o.signal});
+  const res=await fetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model,messages:[{role:'user',content}],stream:true,temperature:.4,max_tokens:parseInt(localStorage.getItem('gd_max_tokens')||'8000')}),signal:o.signal});
   if(res.status===429)throw Object.assign(new Error('rate_limited'),{code:'rate_limited'});
   if(res.status===401)throw new Error('مفتاح مرفوض (401)');
   if(!res.ok){let m='';try{m=(await res.json()).error?.message||''}catch(e){}throw new Error('HTTP '+res.status+(m?' — '+m.slice(0,140):'')+' (موديل الرؤية: '+model+')')}
