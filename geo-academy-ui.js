@@ -322,6 +322,7 @@
         </div>
 
         <div class="academy-tabs">
+        <button class="academy-tab" data-academy-tab="smart-search">🔎 الباحث الذكي</button>
           <button class="academy-tab active" data-academy-tab="courses">📚 الكورسات</button>
           <button class="academy-tab" data-academy-tab="notes">📝 ملاحظاتي</button>
           <button class="academy-tab" data-academy-tab="memory">🧠 ذاكرتي</button>
