@@ -241,6 +241,59 @@
         margin-bottom: 14px;
       }
 
+/* تحسين عرض نتائج البحث على الموبايل */
+#s-academy #academySmartResults {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.8;
+}
+
+#s-academy #academySmartResults * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#s-academy #academySmartResults table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#s-academy #academySmartResults th,
+#s-academy #academySmartResults td {
+  padding: 9px;
+  border: 1px solid var(--border, #334155);
+  text-align: right;
+  min-width: 90px;
+}
+
+#s-academy #academySmartResults pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#s-academy #academySmartResults a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media(max-width:600px) {
+  #s-academy #academySmartResults {
+    font-size: 14px;
+  }
+
+  #s-academy #academySmartResults table {
+    font-size: 12px;
+  }
+}
       #academyToast {
         position: fixed;
         z-index: 99999;
