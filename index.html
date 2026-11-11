@@ -2082,8 +2082,8 @@ html.light{color-scheme:light;--bg:#f1f5f9;--cd:#fff;--ln:#cbd5e1;--tx:#0f172a;-
 </style>
 <script id="gd-v3-js">
 /* ===== GeoDev v3.0 patch — يُحمَّل بعد كل السكربتات ===== */
-const PRO_FOR_ALL=true;   // true = كل المستخدمين المسجلين عندهم PRO مفعّل. غيّرها false لإرجاع نظام التجربة والأكواد.
-const VER='3.0';
+const PRO_FOR_ALL=false;   // true = كل المستخدمين المسجلين عندهم PRO مفعّل. غيّرها false لإرجاع نظام التجربة والأكواد.
+const VER='3.1';
 const W=(n,f)=>{try{const o=window[n];if(typeof o=='function')window[n]=function(...a){return f(o,...a)}}catch(e){}};
 const g$=id=>parseFloat($(id).value)||0;
 const RS=(id,h)=>{const e=$(id);e.style.display='block';e.innerHTML=h};
@@ -2185,7 +2185,7 @@ window.exportDXF=()=>{const a=PT();if(!a)return;let d='0\nSECTION\n2\nENTITIES\n
 
 /* ---------- 6) ما الجديد / الخصوصية / الوضع الفاتح ---------- */
 window.showInfo=(t,h)=>{$('gdInfo')?.remove();document.body.insertAdjacentHTML('beforeend',`<div id="gdInfo" class="tool-modal on" style="z-index:120" onclick="if(event.target===this)this.remove()"><div class="tool-content"><div class="tool-header"><h3>${t}</h3><button class="close-btn" aria-label="إغلاق" onclick="$('gdInfo').remove()">✕</button></div><div class="tool-body" style="line-height:1.9;font-size:13px">${h}</div></div></div>`)};
-window.showWhats=()=>showInfo('🆕 ما الجديد في '+VER,'<ul class="pl"><li>⭐ كل أدوات ومحركات PRO مفتوحة لكل المستخدمين</li><li>📋🔄👍 أزرار تحت كل إجابة: نسخ، إعادة، أعجبني، قراءة، مشاركة، تحميل</li><li>🌍 كرة أرضية متحركة في خلفية الشات أثناء الإجابة</li><li>⛏️ أدوات جديدة: الكميات والحفر، المناسيب، المنحنيات الأفقية، تصحيح المضلع</li><li>🧭 تحويل إحداثيات إلى Blue Belt و Purple Belt</li><li>🗺️ تصدير الرفع المساحي: KML و CSV و DXF</li><li>🌗 وضع فاتح/داكن</li></ul>');
+window.showWhats=()=>showInfo('🆕 ما الجديد في '+VER,'<ul class="pl"><li>⭐ تحكم كامل من الأدمن في الأدوات (مجاني / PRO / مقفول)، عداد انتهاء الاشتراك، وصفحة الملف الشخصي</li><li>📋🔄👍 أزرار تحت كل إجابة: نسخ، إعادة، أعجبني، قراءة، مشاركة، تحميل</li><li>🌍 كرة أرضية متحركة في خلفية الشات أثناء الإجابة</li><li>⛏️ أدوات جديدة: الكميات والحفر، المناسيب، المنحنيات الأفقية، تصحيح المضلع</li><li>🧭 تحويل إحداثيات إلى Blue Belt و Purple Belt</li><li>🗺️ تصدير الرفع المساحي: KML و CSV و DXF</li><li>🌗 وضع فاتح/داكن</li></ul>');
 window.showPrivacy=()=>showInfo('🔒 الخصوصية والشروط','<p>• الحساب يُدار عبر Firebase. المحادثات والمشاريع والإعدادات تُحفظ في متصفحك على جهازك.</p><p>• أسئلتك تُرسل لمزوّد الذكاء الاصطناعي لتوليد الرد. لا ترسل بيانات سرية أو شخصية حساسة.</p><p>• الموقع (GPS) والبوصلة والميكروفون لا تُستخدم إلا عند ضغطك على الزر المخصص.</p><p>• نتائج الأدوات الهندسية استرشادية، وتُراجع قبل أي استخدام تنفيذي أو قانوني.</p>');
 window.toggleLight=()=>{const r=document.documentElement,on=!r.classList.contains('light');r.classList.toggle('light',on);localStorage.setItem('gd_light',on?'1':'0');
   if(on)['bg','cd','ln','tx','mt'].forEach(k=>r.style.removeProperty('--'+k));else try{loadTheme()}catch(e){}};
@@ -2195,6 +2195,81 @@ W('afterLogin',o=>{o();syncAdmin();setTimeout(()=>{if(localStorage.getItem('gd_s
 const vp=document.querySelector('#modal-dev p.mt');if(vp)vp.textContent='الإصدار '+VER;
 document.querySelectorAll('button[title]').forEach(b=>{if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',b.title)});
 try{renderSurveyGrid();refreshUI()}catch(e){console.warn(e)}
+</script>
+
+<style id="gd-v31">
+#proFeaturesPanel{display:none}
+.pf-av{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--bl);background:var(--bg);display:block;margin:0 auto 8px}
+.av img{width:38px;height:38px;border-radius:50%;object-fit:cover;display:block}
+#drw .du{cursor:pointer}
+.gd-cd{font-family:'Fira Code',monospace;direction:ltr;font-size:10px;color:var(--am);font-weight:700}
+.ctl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ctl-row label{flex:1;font-size:13px}.ctl-row select{width:auto;margin:0;padding:6px 8px;font-size:13px}
+</style>
+<script id="gd-v31-js">
+/* ===== GeoDev v3.1 — تحكم كامل + عداد اشتراك + ملف شخصي ===== */
+const ALLOW_TRIAL=false;   // false = PRO للمشتركين بكود فقط (بدون تجربة مجانية)
+const REG=[
+['أدوات المساحة',[['t:shapes','📐 حاسبة الأشكال'],['t:triangle','🔺 المثلثات'],['t:convert','🔄 تحويل الوحدات'],['t:calc','🧮 جمع وطرح'],['t:map','🗺️ الخريطة والرفع'],['t:coord','🧭 تحويل الإحداثيات'],['t:compass','🧭 البوصلة'],['t:qibla','🕋 القبلة'],['t:vol','⛏️ الكميات والحفر'],['t:lvl','📏 المناسيب'],['t:crv','↪️ المنحنيات'],['t:trv','🔁 تصحيح المضلع']]],
+['الأقسام',[['s:studio','💻 البرمجة'],['s:survey','📐 المساحة'],['s:gis','🌍 الجيوماتكس'],['s:py','🧪 المختبر']]],
+['ميزات',[['f:gis_cards','كروت الجيوماتكس'],['f:gis_chat','شات الجيوماتكس'],['f:lab','مختبر الأكواد'],['f:studio','توليد المواقع']]],
+['محركات AI',[['e:g38','GEO 3.8 FLASH'],['e:g52','GEO 5.2 ULTRA']]]];
+const DEF_PRO=['t:triangle','t:map','t:coord','t:compass','t:qibla','f:gis_cards','f:gis_chat','f:lab','f:studio','e:g38','e:g52'];
+let CFG={};try{CFG=JSON.parse(localStorage.getItem('gd_ctl')||'{}')||{}}catch(e){}
+const st=id=>CFG[id]||(DEF_PRO.includes(id)?'pro':'free');
+const off=id=>!isAdm()&&st(id)=='off';
+const fsDoc=()=>{try{return firebase.apps.length?firebase.firestore().collection('config').doc('tools'):null}catch(e){return null}};
+function applyCfg(){
+  const ids=REG.flatMap(g=>g[1].map(x=>x[0])),pk=p=>ids.filter(i=>i.startsWith(p)&&st(i)=='pro').map(i=>i.slice(2));
+  proConfig={tools:pk('t:'),engines:pk('e:'),features:pk('f:')};localStorage.setItem('gd_pro_config',JSON.stringify(proConfig));
+  document.querySelectorAll('[data-ctl]').forEach(s=>s.value=st(s.dataset.ctl));
+  document.querySelectorAll('nav button[data-t]').forEach(b=>{if(b.dataset.t!='admin')b.style.display=off('s:'+b.dataset.t)?'none':''});
+  ['renderSurveyGrid','renderGisCards','renderEng'].forEach(f=>{try{window[f]()}catch(e){}})}
+async function pullCfg(){const d=fsDoc();if(!d)return;try{const s=await d.get();if(s.exists&&s.data().cfg){CFG=s.data().cfg;localStorage.setItem('gd_ctl',JSON.stringify(CFG));applyCfg()}}catch(e){}}
+const closed=()=>toast('🚧 هذه الأداة مغلقة حالياً','warn');
+W('renderSurveyGrid',o=>{o();document.querySelectorAll('#surveyGrid .dash-card').forEach(c=>{const id=((c.getAttribute('onclick')||'').match(/'(\w+)'/)||[])[1],s=st('t:'+id);
+  if(s=='off'){isAdm()?(c.style.opacity='.45',c.insertAdjacentHTML('afterbegin','<span class="pro-b" style="background:#991b1b">🚫 مقفول</span>')):c.remove()}
+  else if(s=='pro'&&!c.querySelector('.pro-b'))c.insertAdjacentHTML('afterbegin','<span class="pro-b">PRO</span>')})});
+W('openTool',(o,id)=>{if(off('t:'+id))return closed();if(st('t:'+id)=='pro'&&needPro())return;o(id)});
+W('go',(o,t)=>{if(off('s:'+t))return closed();if(!isAdm()&&st('s:'+t)=='pro'&&needPro())return;o(t);if(t=='profile')pfLoad()});
+W('renderGisCards',o=>{o();const g=$('gisCards');if(g)g.style.display=off('f:gis_cards')?'none':''});
+W('pickEng',(o,k)=>off('e:'+k)?closed():o(k));
+W('renderEng',o=>{o();document.querySelectorAll('#engBar .eng').forEach(b=>{const m=(b.getAttribute('onclick')||'').match(/pickEng\('(\w+)'\)/);if(m&&off('e:'+m[1]))b.style.display='none'})});
+Object.entries({gisSend:'gis_chat',askGis:'gis_chat',runPy:'lab',buildSite:'studio'}).forEach(([n,f])=>W(n,(o,...a)=>off('f:'+f)?closed():o(...a)));
+/* PRO للمشتركين بكود فقط (بدون تجربة) */
+W('proLeft',o=>{if(isAdm())return 1e12;if(ALLOW_TRIAL)return o();const m=typeof me=='function'?me():null;return m?(m.proUntil||0)-Date.now():o()});
+/* لوحة تحكم الأدمن */
+$('adminPanel').insertAdjacentHTML('afterbegin',`<div class="card" id="gdCtl"><h3>🎛️ التحكم الكامل في الأدوات</h3><p class="mt">لكل أداة: 🟢 مجاني للكل • ⭐ PRO للمشتركين بكود • 🚫 مقفول (مخفي عن المستخدمين).</p>${REG.map(([g,l])=>`<b>${g}</b>`+l.map(([i,n])=>`<div class="ctl-row"><label>${n}</label><select data-ctl="${i}">${[['free','🟢 مجاني'],['pro','⭐ PRO'],['off','🚫 مقفول']].map(([v,t])=>`<option value="${v}" ${st(i)==v?'selected':''}>${t}</option>`).join('')}</select></div>`).join('')).join('')}<button class="g" style="width:100%;margin-top:8px" onclick="saveCtl()">💾 حفظ ونشر لكل المستخدمين</button><div id="ctlMsg" class="mt" style="margin-top:6px"></div></div>`);
+window.saveCtl=async()=>{const n={};document.querySelectorAll('[data-ctl]').forEach(s=>{if(s.value!=(DEF_PRO.includes(s.dataset.ctl)?'pro':'free'))n[s.dataset.ctl]=s.value});CFG=n;localStorage.setItem('gd_ctl',JSON.stringify(n));applyCfg();
+  let m='✅ تم الحفظ على هذا الجهاز فقط (Firestore غير متصل)';const d=fsDoc();
+  if(d)try{await d.set({cfg:n,at:Date.now()});m='✅ تم الحفظ والنشر لكل المستخدمين'}catch(e){m='⚠️ اتحفظ محلياً فقط — اسمح للأدمن بالكتابة في قواعد Firestore ('+(e.code||e.message)+')'}
+  $('ctlMsg').textContent=m;toast(m,'success')};
+
+/* ---------- عداد انتهاء الاشتراك ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const cdText=ms=>{const s=Math.max(0,ms/1000|0);return(s>=86400?(s/86400|0)+'ي ':'')+pad(s%86400/3600|0)+':'+pad(s%3600/60|0)+':'+pad(s%60)};
+const proEnd=()=>{const m=typeof me=='function'?me():null;return m&&m.proUntil>Date.now()?m.proUntil:0};
+function tick(){const e=proEnd();['gdCd','dCd','pfCd'].forEach(i=>{const x=$(i);if(x)x.textContent=e?'⏱️ '+cdText(e-Date.now()):''});
+  const pe=$('pfEnd');if(pe)pe.textContent=e?'ينتهي في: '+new Date(e).toLocaleString('ar-EG'):(isAdm()?'👑 حساب الأدمن — بدون انتهاء':'لا يوجد اشتراك فعّال — فعّل كود للحصول على PRO');
+  if(window._hp&&!e&&!isAdm()){window._hp=0;toast('⏳ انتهى اشتراك PRO','warn');refreshUI()}if(e)window._hp=1}
+const pb=$('planBadge');if(pb)pb.insertAdjacentHTML('afterend','<span id="gdCd" class="gd-cd"></span>');
+const dp=$('dPlan');if(dp)dp.insertAdjacentHTML('afterend','<div id="dCd" class="gd-cd" style="font-size:12px;margin-top:4px"></div>');
+setInterval(tick,1000);
+
+/* ---------- الملف الشخصي ---------- */
+const AVA='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="#1e293b"/><circle cx="48" cy="36" r="17" fill="#64748b"/><path d="M14 96c2-22 18-32 34-32s32 10 34 32z" fill="#64748b"/></svg>');
+const prof=()=>{try{return JSON.parse(localStorage.getItem('gd_prof_'+uemail())||'{}')}catch(e){return{}}};
+const savP=p=>{localStorage.setItem('gd_prof_'+uemail(),JSON.stringify(p));try{firebase.apps.length&&firebase.firestore().collection('profiles').doc(uemail()).set(p,{merge:true}).catch(()=>{})}catch(e){}};
+function applyAv(){const p=prof();document.querySelectorAll('#drw .av').forEach(a=>a.innerHTML=p.photo?`<img src="${p.photo}" alt="">`:'👤')}
+document.querySelector('main').insertAdjacentHTML('beforeend',`<section id="s-profile" class="sec"><div class="card"><h3>👤 الملف الشخصي</h3><img id="pfImg" class="pf-av" alt="صورة المستخدم" src="${AVA}"><div class="row" style="justify-content:center;margin-bottom:10px"><button class="k" onclick="$('pfFile').click()">📷 تغيير الصورة</button><button class="r" onclick="pfDel()">حذف</button></div><input id="pfFile" type="file" accept="image/*" hidden onchange="pfPhoto(this.files[0]);this.value=''"><label class="mt">الاسم</label><input id="pfName" maxlength="60"><label class="mt">البريد الإلكتروني</label><input id="pfMail" class="c" readonly><label class="mt">رقم الهاتف</label><input id="pfPhone" type="tel" class="c" maxlength="20"><button class="g" style="width:100%" onclick="pfSave()">💾 حفظ البيانات</button></div><div class="card"><h3>⭐ الاشتراك</h3><div>الباقة: <span id="pfPlan" class="plan-b">FREE</span></div><div id="pfCd" class="gd-cd" style="font-size:22px;margin:8px 0"></div><div id="pfEnd" class="mt" style="margin-bottom:8px"></div><input id="pfCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('pfCode')">تفعيل كود اشتراك</button></div></section>`);
+window.pfLoad=()=>{const p=prof();$('pfName').value=p.name||uname();$('pfMail').value=uemail();$('pfPhone').value=p.phone||'';$('pfImg').src=p.photo||AVA;$('pfPlan').textContent=($('dPlan')||{}).textContent||'FREE';tick()};
+window.pfSave=()=>{const p=prof();p.name=$('pfName').value.trim()||uname();p.phone=$('pfPhone').value.trim();savP(p);sessionStorage.setItem('gd_name',p.name);try{upMe(u=>{u.name=p.name;u.phone=p.phone})}catch(e){}try{personalize()}catch(e){}refreshUI();toast('✅ تم حفظ بياناتك','success')};
+window.pfPhoto=f=>{if(!f||!f.type.startsWith('image/'))return toast('اختر صورة صالحة','warn');const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),s=Math.min(im.width,im.height);c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const p=prof();p.photo=c.toDataURL('image/jpeg',.82);savP(p);$('pfImg').src=p.photo;applyAv();toast('✅ تم تحديث الصورة','success');URL.revokeObjectURL(im.src)};im.onerror=()=>toast('تعذر قراءة الصورة','error');im.src=URL.createObjectURL(f)};
+window.pfDel=()=>{const p=prof();delete p.photo;savP(p);$('pfImg').src=AVA;applyAv()};
+W('refreshUI',o=>{o();applyAv();tick();if($('s-profile').classList.contains('on'))$('pfPlan').textContent=($('dPlan')||{}).textContent||'FREE'});
+const dm2=document.querySelector('#drw .dm');if(dm2)dm2.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();go(\'profile\')">👤 الملف الشخصي</button>');
+const du=document.querySelector('#drw .du');if(du)du.onclick=()=>{toggleDrawer();go('profile')};
+W('afterLogin',o=>{o();pullCfg();applyAv()});
+applyCfg();if(sessionStorage.getItem('gd_auth')=='1')pullCfg();applyAv();tick();
 </script>
 
 </body>
