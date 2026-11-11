@@ -2289,6 +2289,14 @@ const dm2=document.querySelector('#drw .dm');if(dm2)dm2.insertAdjacentHTML('afte
 const du=document.querySelector('#drw .du');if(du)du.onclick=()=>{toggleDrawer();go('profile')};
 W('afterLogin',o=>{o();pullCfg();applyAv()});
 applyCfg();if(sessionStorage.getItem('gd_auth')=='1')pullCfg();applyAv();tick();
+// Initialize professional Lucide icons
+if (window.lucide && typeof window.lucide.createIcons === 'function') {
+  window.lucide.createIcons({
+    attrs: {
+      'stroke-width': 1.8
+    }
+  });
+}
 </script>
 
 </body>
