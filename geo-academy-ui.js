@@ -590,7 +590,24 @@ function refreshAcademyIcons(root = document) {
     padding:13px;
   }
 }
+#s-academy .academy-tab {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
 
+#s-academy .academy-tab svg {
+  width:17px;
+  height:17px;
+  flex-shrink:0;
+  stroke-width:1.8;
+}
+
+#s-academy .academy-tab.active svg {
+  color:#fff;
+}
     `;
 
     document.head.appendChild(style);
@@ -640,13 +657,24 @@ function refreshAcademyIcons(root = document) {
         </div>
 
         <div class="academy-tabs">
-          <button class="academy-tab" data-academy-tab="smart-search">🔎 الباحث الذكي</button>
-          <button class="academy-tab active" data-academy-tab="courses">📚 الكورسات</button>
-          <button class="academy-tab" data-academy-tab="notes">📝 ملاحظاتي</button>
-          <button class="academy-tab" data-academy-tab="memory">🧠 ذاكرتي</button>
-          <button class="academy-tab" data-academy-tab="progress">📊 تقدمي</button>
-          <button class="academy-tab" data-academy-tab="teacher">👨‍🏫 المدرس الذكي</button>
-        </div>
+          <button class="academy-tab" data-academy-tab="smart-search">
+  <i data-lucide="search"></i> الباحث الذكي
+</button>
+<button class="academy-tab active" data-academy-tab="courses">
+  <i data-lucide="graduation-cap"></i> الكورسات
+</button>
+<button class="academy-tab" data-academy-tab="notes">
+  <i data-lucide="notebook-pen"></i> ملاحظاتي
+</button>
+<button class="academy-tab" data-academy-tab="memory">
+  <i data-lucide="brain"></i> ذاكرتي
+</button>
+<button class="academy-tab" data-academy-tab="progress">
+  <i data-lucide="chart-no-axes-column-increasing"></i> تقدمي
+</button>
+<button class="academy-tab" data-academy-tab="teacher">
+  <i data-lucide="bot"></i> المدرس الذكي
+</button></div>
 
         <div id="academyContent"></div>
       `;
