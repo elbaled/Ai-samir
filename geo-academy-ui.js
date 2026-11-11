@@ -1117,7 +1117,6 @@ function getPlatformInfo(rawUrl) {
 }
 
 
-
 function renderAnalysisMarkdown(markdown) {
   const source = String(markdown || "");
   if (!source) return "";
@@ -1128,42 +1127,16 @@ function renderAnalysisMarkdown(markdown) {
     window.DOMPurify &&
     typeof window.DOMPurify.sanitize === "function"
   ) {
-    const parsed = window.marked.parse(source, {
-      gfm: true,
-      breaks: true
-    });
-
-    return window.DOMPurify.sanitize(parsed, {
-      ADD_ATTR: ["target", "rel"]
-    }).replace(
-      /<a\b(?![^>]*\btarget=)/gi,
-      '<a target="_blank" rel="noopener noreferrer"'
+    return window.DOMPurify.sanitize(
+      window.marked.parse(source)
     );
   }
 
-  let safeText = escapeHTML(source);
-
-  // تحويل روابط Markdown إلى روابط قابلة للضغط
-  safeText = safeText.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-  );
-
-  // تحويل الروابط المباشرة إلى روابط قابلة للضغط
-  safeText = safeText.replace(
-    /(https?:\/\/[^\s<]+)/g,
-    function(url) {
-      const cleanUrl = url.replace(/[.,،؛!?؟)\]]+$/, "");
-      const ending = url.slice(cleanUrl.length);
-
-      return '<a href="' + cleanUrl +
-        '" target="_blank" rel="noopener noreferrer">' +
-        cleanUrl + '</a>' + ending;
-    }
-  );
-
-  return "<p>" + safeText.replace(/\n/g, "<br>") + "</p>";
+  return `<p>${escapeHTML(source)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>")}</p>`;
 }
+
 
   
 
