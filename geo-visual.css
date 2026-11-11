@@ -358,3 +358,30 @@ iframe {
     transition-duration: .01ms !important;
   }
 }
+/* Professional Lucide Navigation Icons */
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  margin-inline-end: 7px;
+  vertical-align: middle;
+  color: var(--mt);
+  transition: color .25s ease, transform .25s ease;
+}
+
+.nav-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.8;
+}
+
+nav button:hover .nav-icon {
+  color: var(--bl);
+  transform: translateY(-2px);
+}
+
+nav button.on .nav-icon {
+  color: var(--bl);
+}
