@@ -1165,10 +1165,7 @@ function renderAnalysisMarkdown(markdown) {
   return "<p>" + safeText.replace(/\n/g, "<br>") + "</p>";
 }
 
-  return `<p>${escapeHTML(source)
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>")}</p>`;
-}
+  
 
 
 
