@@ -13,6 +13,7 @@
 <meta property="og:description" content="أدوات مساحة وجيوماتكس ومساعد ذكي في مكان واحد.">
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Fira+Code&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
@@ -210,6 +211,129 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
   .chip,.chips label{min-height:32px}
   a.leaflet-control-zoom-in, a.leaflet-control-zoom-out{width:42px !important;height:42px !important;line-height:42px !important;font-size:22px !important}
 }
+
+/* Professional Survey Tools */
+.tool-section {
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(148,163,184,.18);
+  border-radius: 14px;
+  padding: 15px;
+  margin: 12px 0;
+}
+
+.tool-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  color: var(--am);
+}
+
+.tool-section h4 svg,
+.tool-header h3 svg {
+  width: 21px;
+  height: 21px;
+  vertical-align: middle;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+
+.tool-section label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.tool-section .c {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.result-box {
+  display: block;
+  overflow-x: auto;
+  margin-top: 14px;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(56,189,248,.25);
+  background: rgba(14,165,233,.07);
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
+.result-box:empty {
+  display: none;
+}
+
+.result-box h4 {
+  color: var(--am);
+  margin-top: 0;
+}
+
+.result-box .pt {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 380px;
+  margin-top: 10px;
+}
+
+.result-box .pt th,
+.result-box .pt td {
+  padding: 9px;
+  border: 1px solid rgba(148,163,184,.2);
+  text-align: center;
+}
+
+.result-box .pt th {
+  background: rgba(148,163,184,.12);
+}
+
+.tool-section textarea {
+  resize: vertical;
+  line-height: 1.8;
+  direction: ltr;
+  text-align: left;
+  font-family: monospace;
+}
+
+.tool-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dash-icon svg {
+  width: 25px;
+  height: 25px;
+  stroke-width: 1.8;
+}
+
+.dash-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media(max-width:480px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-section {
+    padding: 11px;
+  }
+
+  .result-box {
+    font-size: 13px;
+  }
+}
+
 </style>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="geo-visual.css">
@@ -2172,28 +2296,598 @@ wrapBox('chat');wrapBox('gisChatBox');decorate('chat');
 /* ---------- 5) أدوات مساحة جديدة ---------- */
 proj4.defs('EPSG:22991','+proj=tmerc +lat_0=30 +lon_0=35 +k=1 +x_0=300000 +y_0=1100000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs');
 proj4.defs('EPSG:22993','+proj=tmerc +lat_0=30 +lon_0=27 +k=1 +x_0=700000 +y_0=200000 +ellps=helmert +towgs84=-130,110,-13,0,0,0,0 +units=m +no_defs');
-const NT=[
-{id:'vol',icon:'pickaxe',title:'الكميات والحفر',desc:'حفر، انتفاش، مقاطع',body:`...`},
-{id:'lvl',icon:'ruler',title:'المناسيب (Leveling)',desc:'BS / IS / FS وقفل الميزانية',body:`...`},
-{id:'crv',icon:'corner-up-right',title:'المنحنيات الأفقية',desc:'T, L, E, PC, PT',body:`...`},
-{id:'trv',icon:'repeat',title:'تصحيح المضلع (Bowditch)',desc:'مضلع مقفول وخطأ القفل',body:`...`}
+
+/* =====================================================
+   أدوات المساحة الاحترافية - GeoDev Studio Pro
+   Volume / Leveling / Curves / Traverse
+===================================================== */
+
+const NT = [
+  {
+    id: 'vol',
+    icon: 'pickaxe',
+    title: 'الكميات والحفر',
+    desc: 'حساب الحفر والردم والانتفاش والمقاطع',
+    body: `
+      <div class="tool-section">
+        <h4><i data-lucide="box"></i> حساب حجم الحفر المنتظم</h4>
+        <div class="form-grid">
+          <label>الطول (متر)
+            <input id="vL" class="c" type="number" step="any" placeholder="مثال: 20">
+          </label>
+          <label>العرض (متر)
+            <input id="vW" class="c" type="number" step="any" placeholder="مثال: 10">
+          </label>
+          <label>العمق (متر)
+            <input id="vD" class="c" type="number" step="any" placeholder="مثال: 2">
+          </label>
+          <label>نسبة الانتفاش (%)
+            <input id="vS" class="c" type="number" step="any" value="20">
+          </label>
+        </div>
+        <button class="a" onclick="volCalc()">
+          <i data-lucide="calculator"></i> احسب الحجم
+        </button>
+        <div id="vR" class="result-box"></div>
+      </div>
+
+      <div class="tool-section">
+        <h4><i data-lucide="layers"></i> حساب الكميات بطريقة متوسط مساحتي النهايتين</h4>
+        <p class="muted">أدخل كل مقطع في سطر: المسافة ثم المساحة، وبينهما مسافة أو فاصلة.</p>
+        <textarea id="vT" class="c" rows="6"
+          placeholder="0  12&#10;10  18&#10;20  15&#10;30  22"></textarea>
+        <button class="g" onclick="endArea()">
+          <i data-lucide="calculator"></i> احسب كمية المقاطع
+        </button>
+        <div id="vR2" class="result-box"></div>
+      </div>
+    `
+  },
+  {
+    id: 'lvl',
+    icon: 'ruler',
+    title: 'المناسيب Leveling',
+    desc: 'حساب HI وRL وقراءات BS / IS / FS',
+    body: `
+      <div class="tool-section">
+        <h4><i data-lucide="ruler"></i> دفتر ميزانية المناسيب</h4>
+        <label>منسوب نقطة البداية RL (متر)
+          <input id="lRL" class="c" type="number" step="any" value="100">
+        </label>
+        <label>المنسوب المعلوم لنقطة النهاية (اختياري)
+          <input id="lEnd" class="c" type="number" step="any" placeholder="اتركه فارغاً إذا لم يكن معلوماً">
+        </label>
+        <p class="muted">أدخل نوع القراءة ثم قيمتها. مثال: BS 1.250</p>
+        <textarea id="lT" class="c" rows="8"
+          placeholder="BS 1.250&#10;IS 1.450&#10;IS 1.620&#10;FS 1.800&#10;BS 1.100&#10;IS 1.300&#10;FS 1.500"></textarea>
+        <button class="a" onclick="lvlCalc()">
+          <i data-lucide="calculator"></i> حساب المناسيب
+        </button>
+        <div id="lR" class="result-box"></div>
+      </div>
+    `
+  },
+  {
+    id: 'crv',
+    icon: 'corner-up-right',
+    title: 'المنحنيات الأفقية',
+    desc: 'حساب عناصر المنحنى الدائري البسيط',
+    body: `
+      <div class="tool-section">
+        <h4><i data-lucide="route"></i> Simple Circular Curve</h4>
+        <label>نصف قطر المنحنى R (متر)
+          <input id="cR" class="c" type="number" step="any" placeholder="مثال: 250">
+        </label>
+        <label>زاوية التقاطع Δ (درجة)
+          <input id="cD" class="c" type="number" step="any" placeholder="مثال: 45">
+        </label>
+        <label>Chainage نقطة التقاطع PI (اختياري)
+          <input id="cPI" class="c" type="number" step="any" placeholder="مثال: 1250">
+        </label>
+        <button class="a" onclick="crvCalc()">
+          <i data-lucide="calculator"></i> حساب عناصر المنحنى
+        </button>
+        <div id="cRes" class="result-box"></div>
+      </div>
+    `
+  },
+  {
+    id: 'trv',
+    icon: 'repeat',
+    title: 'تصحيح المضلع Traverse',
+    desc: 'حساب الإحداثيات وتصحيح Bowditch',
+    body: `
+      <div class="tool-section">
+        <h4><i data-lucide="workflow"></i> تصحيح المضلع بطريقة Bowditch</h4>
+        <div class="form-grid">
+          <label>إحداثي البداية E
+            <input id="tE" class="c" type="number" step="any" value="500000">
+          </label>
+          <label>إحداثي البداية N
+            <input id="tN" class="c" type="number" step="any" value="3000000">
+          </label>
+        </div>
+        <p class="muted">أدخل طول كل ضلع بالمتر ثم السمت بالدرجات من الشمال مع عقارب الساعة.</p>
+        <textarea id="tT" class="c" rows="7"
+          placeholder="100  45&#10;120  135&#10;100  225&#10;120  315"></textarea>
+        <button class="a" onclick="trvCalc()">
+          <i data-lucide="calculator"></i> حساب وتصحيح المضلع
+        </button>
+        <div id="tR" class="result-box"></div>
+      </div>
+    `
+  }
 ];
-document.body.insertAdjacentHTML('beforeend',NT.map(t=>`<div id="modal-${t.id}" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>${t.icon} ${t.title}</h3><button class="close-btn" aria-label="إغلاق" onclick="closeTool('${t.id}')">✕</button></div><div class="tool-body">${t.body}</div></div></div>`).join(''));
-W('renderSurveyGrid',o=>{o();$('surveyGrid').insertAdjacentHTML('beforeend',NT.map(t=>`<div class="dash-card" onclick="openTool('${t.id}')"><div class="dash-icon">${t.icon}</div><div class="dash-text"><b>${t.title}</b><span>${t.desc}</span></div><div class="dash-arrow">❮</div></div>`).join(''))});
-window.volCalc=()=>{const v=g$('vL')*g$('vW')*g$('vD'),s=g$('vS');RS('vR',`<b>الحجم الطبيعي:</b> ${v.toFixed(3)} م³<br><b>بعد الانتفاش:</b> ${(v*(1+s/100)).toFixed(3)} م³`)};
-window.endArea=()=>{const rw=$('vT').value.trim().split(/\n/).map(l=>l.trim().split(/[\s,;]+/).map(Number)).filter(r=>r.length>=2&&!isNaN(r[0])&&!isNaN(r[1]));if(rw.length<2)return toast('أدخل مقطعين على الأقل','warn');let v=0;for(let i=1;i<rw.length;i++)v+=(rw[i][1]+rw[i-1][1])/2*(rw[i][0]-rw[i-1][0]);RS('vR2',`<b>عدد المقاطع:</b> ${rw.length}<br><b>الحجم الكلي:</b> ${v.toFixed(3)} م³`)};
-window.lvlCalc=()=>{const r0=g$('lRL'),en=$('lEnd').value;let hi=null,last=r0,sb=0,sf=0,rows='';
-  $('lT').value.trim().split(/\n/).forEach(l=>{const m=l.trim().match(/^(BS|IS|FS)\s+(-?[\d.]+)/i);if(!m)return;const t=m[1].toUpperCase(),v=parseFloat(m[2]);let rl='';
-    if(t=='BS'){hi=(hi===null?r0:last)+v;sb+=v}else if(hi!==null){rl=hi-v;last=rl;if(t=='FS')sf+=v}
-    rows+=`<tr><td>${t}</td><td>${v}</td><td>${hi===null?'':hi.toFixed(3)}</td><td>${rl===''?'':rl.toFixed(3)}</td></tr>`});
-  const ck=sb-sf,df=last-r0;let h=`<table class="pt"><tr><th>نوع</th><th>قراءة</th><th>HI</th><th>RL</th></tr>${rows}</table><b>ΣBS−ΣFS =</b> ${ck.toFixed(3)} | <b>فرق المنسوب =</b> ${df.toFixed(3)} ${Math.abs(ck-df)<.0005?'✅':'⚠️'}`;
-  if(en!=='')h+=`<br><b>خطأ القفل:</b> ${(last-parseFloat(en)).toFixed(3)} م`;RS('lR',h)};
-window.crvCalc=()=>{const R=g$('cR'),D=g$('cD'),pi=g$('cPI');if(!R||!D)return toast('أدخل R و Δ','warn');const d=D*Math.PI/180,T=R*Math.tan(d/2),L=R*d,LC=2*R*Math.sin(d/2),E=R*(1/Math.cos(d/2)-1),M=R*(1-Math.cos(d/2)),pc=pi-T,pt=pc+L,f=s=>Math.floor(s/1000)+'+'+(s%1000).toFixed(2).padStart(6,'0');
-  RS('cRes',`T = ${T.toFixed(3)} | L = ${L.toFixed(3)}<br>LC = ${LC.toFixed(3)}<br>E = ${E.toFixed(3)} | M = ${M.toFixed(3)}${pi?`<br>PC = ${f(pc)}<br>PT = ${f(pt)}`:''}`)};
-window.trvCalc=()=>{let e=g$('tE'),n=g$('tN');const Ls=$('tT').value.trim().split(/\n/).map(l=>l.trim().split(/[\s,;]+/).map(Number)).filter(r=>r.length>=2&&!r.some(isNaN));if(Ls.length<3)return toast('أدخل 3 أضلاع على الأقل','warn');
-  let sE=0,sN=0,P=0;const dl2=Ls.map(([d,a])=>{const r=a*Math.PI/180,dE=d*Math.sin(r),dN=d*Math.cos(r);sE+=dE;sN+=dN;P+=d;return[d,dE,dN]}),f=Math.hypot(sE,sN);
-  let rows=`<tr><td>0</td><td>${e.toFixed(3)}</td><td>${n.toFixed(3)}</td></tr>`;dl2.forEach(([d,dE,dN],i)=>{e+=dE-sE*d/P;n+=dN-sN*d/P;rows+=`<tr><td>${i+1}</td><td>${e.toFixed(3)}</td><td>${n.toFixed(3)}</td></tr>`});
-  RS('tR',`<b>ΣΔE:</b> ${sE.toFixed(4)} | <b>ΣΔN:</b> ${sN.toFixed(4)}<br><b>خطأ القفل:</b> ${f.toFixed(4)} م | <b>الدقة:</b> ${f?'1:'+Math.round(P/f):'∞'}<br><b>المحيط:</b> ${P.toFixed(3)} م<table class="pt"><tr><th>نقطة</th><th>E</th><th>N</th></tr>${rows}</table>`)};
+
+/* إنشاء نوافذ أدوات المساحة */
+document.body.insertAdjacentHTML(
+  'beforeend',
+  NT.map(t => `
+    <div id="modal-${t.id}" class="tool-modal">
+      <div class="tool-content">
+        <div class="tool-header">
+          <h3>
+            <i data-lucide="${t.icon}"></i>
+            ${t.title}
+          </h3>
+          <button class="close-btn"
+            aria-label="إغلاق"
+            onclick="closeTool('${t.id}')">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="tool-body">${t.body}</div>
+      </div>
+    </div>
+  `).join('')
+);
+
+/* إضافة الأدوات إلى شبكة المساحة مع الأيقونات */
+W('renderSurveyGrid', original => {
+  original();
+
+  const grid = $('surveyGrid');
+  if (!grid) return;
+
+  grid.insertAdjacentHTML(
+    'beforeend',
+    NT.map(t => `
+      <div class="dash-card" onclick="openTool('${t.id}')">
+        <div class="dash-icon">
+          <i data-lucide="${t.icon}"></i>
+        </div>
+        <div class="dash-text">
+          <b>${t.title}</b>
+          <span>${t.desc}</span>
+        </div>
+        <div class="dash-arrow">
+          <i data-lucide="chevron-left"></i>
+        </div>
+      </div>
+    `).join('')
+  );
+
+  if (window.lucide) {
+    window.lucide.createIcons({
+      attrs: { 'stroke-width': 1.8 }
+    });
+  }
+});
+
+/* أدوات مساعدة للتحقق من المدخلات */
+function surveyNumber(id) {
+  const el = $(id);
+  if (!el) return NaN;
+  return Number(el.value);
+}
+
+function surveyResult(id, html) {
+  const el = $(id);
+  if (!el) return;
+  el.innerHTML = html;
+  el.style.display = 'block';
+
+  if (window.lucide) {
+    window.lucide.createIcons({
+      attrs: { 'stroke-width': 1.8 }
+    });
+  }
+}
+
+/* =====================================================
+   1 - حساب الحفر والكميات
+===================================================== */
+
+window.volCalc = function () {
+  const L = surveyNumber('vL');
+  const Wd = surveyNumber('vW');
+  const D = surveyNumber('vD');
+  const swell = surveyNumber('vS');
+
+  if (![L, Wd, D, swell].every(Number.isFinite) ||
+      L <= 0 || Wd <= 0 || D <= 0 || swell < 0) {
+    return toast('راجع الأبعاد ونسبة الانتفاش', 'warn');
+  }
+
+  const volume = L * Wd * D;
+  const loose = volume * (1 + swell / 100);
+
+  surveyResult('vR', `
+    <h4>نتائج حساب الكميات</h4>
+    <p>الحجم الطبيعي: <b>${volume.toFixed(3)} م³</b></p>
+    <p>الحجم بعد الانتفاش: <b>${loose.toFixed(3)} م³</b></p>
+    <p>كمية الزيادة: <b>${(loose - volume).toFixed(3)} م³</b></p>
+  `);
+};
+
+window.endArea = function () {
+  const field = $('vT');
+  if (!field) return;
+
+  const rows = field.value.trim()
+    .split(/\n/)
+    .map(line => line.trim().split(/[\s,;]+/).map(Number))
+    .filter(row =>
+      row.length >= 2 &&
+      Number.isFinite(row[0]) &&
+      Number.isFinite(row[1])
+    );
+
+  if (rows.length < 2) {
+    return toast('أدخل مقطعين على الأقل', 'warn');
+  }
+
+  let volume = 0;
+
+  for (let i = 1; i < rows.length; i++) {
+    const distance = rows[i][0] - rows[i - 1][0];
+    const area1 = rows[i - 1][1];
+    const area2 = rows[i][1];
+
+    if (distance <= 0 || area1 < 0 || area2 < 0) {
+      return toast('تأكد من ترتيب المسافات وصحة المساحات', 'warn');
+    }
+
+    volume += ((area1 + area2) / 2) * distance;
+  }
+
+  surveyResult('vR2', `
+    <h4>نتيجة حساب المقاطع</h4>
+    <p>عدد المقاطع: <b>${rows.length}</b></p>
+    <p>الحجم الكلي: <b>${volume.toFixed(3)} م³</b></p>
+    <p>طريقة الحساب: متوسط مساحتي النهايتين</p>
+  `);
+};
+
+/* =====================================================
+   2 - حساب المناسيب بطريقة HI
+===================================================== */
+
+window.lvlCalc = function () {
+  const startRL = surveyNumber('lRL');
+  const endValue = $('lEnd') ? $('lEnd').value.trim() : '';
+  const input = $('lT');
+
+  if (!Number.isFinite(startRL) || !input) {
+    return toast('أدخل منسوب البداية بصورة صحيحة', 'warn');
+  }
+
+  const lines = input.value.trim().split(/\n/);
+  let HI = null;
+  let currentRL = startRL;
+  let sumBS = 0;
+  let sumFS = 0;
+  let rows = '';
+  let count = 0;
+
+  lines.forEach((line, index) => {
+    if (!line.trim()) return;
+
+    const match = line.trim().match(
+      /^(BS|IS|FS)\s+(-?\d+(?:\.\d+)?)$/i
+    );
+
+    if (!match) {
+      rows += `
+        <tr>
+          <td>${index + 1}</td>
+          <td colspan="4">قراءة غير صحيحة: ${line}</td>
+        </tr>
+      `;
+      return;
+    }
+
+    const type = match[1].toUpperCase();
+    const reading = Number(match[2]);
+    let RL = '';
+
+    if (reading < 0) return;
+
+    if (type === 'BS') {
+      HI = currentRL + reading;
+      sumBS += reading;
+    } else {
+      if (HI === null) {
+        rows += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${type}</td>
+            <td>${reading.toFixed(3)}</td>
+            <td colspan="2">يلزم إدخال BS أولاً</td>
+          </tr>
+        `;
+        return;
+      }
+
+      RL = HI - reading;
+      currentRL = RL;
+
+      if (type === 'FS') {
+        sumFS += reading;
+      }
+    }
+
+    count++;
+
+    rows += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${type}</td>
+        <td>${reading.toFixed(3)}</td>
+        <td>${HI === null ? '-' : HI.toFixed(3)}</td>
+        <td>${RL === '' ? '-' : RL.toFixed(3)}</td>
+      </tr>
+    `;
+  });
+
+  if (!count) {
+    return toast('لم يتم إدخال قراءات صحيحة', 'warn');
+  }
+
+  const check = sumBS - sumFS;
+  const difference = currentRL - startRL;
+
+  let closing = '';
+
+  if (endValue !== '') {
+    const knownEnd = Number(endValue);
+
+    if (!Number.isFinite(knownEnd)) {
+      return toast('منسوب النهاية غير صحيح', 'warn');
+    }
+
+    const error = currentRL - knownEnd;
+
+    closing = `
+      <p>منسوب النهاية المحسوب:
+        <b>${currentRL.toFixed(4)} م</b>
+      </p>
+      <p>منسوب النهاية المعلوم:
+        <b>${knownEnd.toFixed(4)} م</b>
+      </p>
+      <p>خطأ القفل:
+        <b>${error.toFixed(4)} م</b>
+      </p>
+    `;
+  }
+
+  surveyResult('lR', `
+    <h4>دفتر حساب المناسيب</h4>
+    <div style="overflow-x:auto">
+      <table class="pt">
+        <thead>
+          <tr>
+            <th>م</th>
+            <th>النوع</th>
+            <th>القراءة</th>
+            <th>HI</th>
+            <th>RL</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <hr>
+    <p>مجموع BS: <b>${sumBS.toFixed(4)}</b></p>
+    <p>مجموع FS: <b>${sumFS.toFixed(4)}</b></p>
+    <p>ΣBS - ΣFS: <b>${check.toFixed(4)} م</b></p>
+    <p>فرق المناسيب: <b>${difference.toFixed(4)} م</b></p>
+    <p>فحص الحساب:
+      <b>${Math.abs(check - difference) < 0.0005
+        ? 'متوافق'
+        : 'يوجد اختلاف - راجع القراءات'}</b>
+    </p>
+    ${closing}
+  `);
+};
+
+/* =====================================================
+   3 - عناصر المنحنى الأفقي الدائري البسيط
+===================================================== */
+
+window.crvCalc = function () {
+  const R = surveyNumber('cR');
+  const D = surveyNumber('cD');
+  const PI = surveyNumber('cPI');
+
+  if (!Number.isFinite(R) ||
+      !Number.isFinite(D) ||
+      R <= 0 || D <= 0 || D >= 180) {
+    return toast('أدخل نصف قطر موجب وزاوية بين 0 و180', 'warn');
+  }
+
+  const delta = D * Math.PI / 180;
+
+  const T = R * Math.tan(delta / 2);
+  const L = R * delta;
+  const LC = 2 * R * Math.sin(delta / 2);
+  const E = R * (1 / Math.cos(delta / 2) - 1);
+  const M = R * (1 - Math.cos(delta / 2));
+
+  let chainage = '';
+
+  if (Number.isFinite(PI)) {
+    const PC = PI - T;
+    const PT = PC + L;
+
+    const formatChainage = value => {
+      const km = Math.floor(value / 1000);
+      const rest = value - km * 1000;
+      return `${km}+${rest.toFixed(2).padStart(6, '0')}`;
+    };
+
+    chainage = `
+      <p>Chainage PC: <b>${formatChainage(PC)}</b></p>
+      <p>Chainage PT: <b>${formatChainage(PT)}</b></p>
+    `;
+  }
+
+  surveyResult('cRes', `
+    <h4>نتائج عناصر المنحنى</h4>
+    <p>المماس T: <b>${T.toFixed(3)} م</b></p>
+    <p>طول المنحنى L: <b>${L.toFixed(3)} م</b></p>
+    <p>الوتر الطويل LC: <b>${LC.toFixed(3)} م</b></p>
+    <p>الإزاحة الخارجية E: <b>${E.toFixed(3)} م</b></p>
+    <p>الإزاحة الوسطى M: <b>${M.toFixed(3)} م</b></p>
+    ${chainage}
+  `);
+};
+
+/* =====================================================
+   4 - حساب المضلع وتصحيحه بطريقة Bowditch
+===================================================== */
+
+window.trvCalc = function () {
+  let E = surveyNumber('tE');
+  let N = surveyNumber('tN');
+
+  const field = $('tT');
+
+  if (!Number.isFinite(E) ||
+      !Number.isFinite(N) ||
+      !field) {
+    return toast('أدخل إحداثيات نقطة البداية', 'warn');
+  }
+
+  const lines = field.value.trim().split(/\n/);
+
+  const sides = [];
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+
+    const values = line.trim().split(/[\s,;]+/).map(Number);
+
+    if (values.length < 2 ||
+        !Number.isFinite(values[0]) ||
+        !Number.isFinite(values[1]) ||
+        values[0] <= 0) {
+      return toast('راجع أطوال الأضلاع والسموت', 'warn');
+    }
+
+    sides.push({
+      distance: values[0],
+      azimuth: values[1]
+    });
+  }
+
+  if (sides.length < 3) {
+    return toast('أدخل ثلاثة أضلاع على الأقل', 'warn');
+  }
+
+  let sumE = 0;
+  let sumN = 0;
+  let perimeter = 0;
+
+  const components = sides.map(side => {
+    const angle = side.azimuth * Math.PI / 180;
+
+    const dE = side.distance * Math.sin(angle);
+    const dN = side.distance * Math.cos(angle);
+
+    sumE += dE;
+    sumN += dN;
+    perimeter += side.distance;
+
+    return {
+      distance: side.distance,
+      dE,
+      dN
+    };
+  });
+
+  const closingError = Math.hypot(sumE, sumN);
+
+  if (perimeter <= 0) {
+    return toast('محيط المضلع غير صحيح', 'warn');
+  }
+
+  const precision = closingError > 0
+    ? `1 : ${Math.round(perimeter / closingError)}`
+    : 'إغلاق تام حسابياً';
+
+  let rows = `
+    <tr>
+      <td>0</td>
+      <td>-</td>
+      <td>${E.toFixed(3)}</td>
+      <td>${N.toFixed(3)}</td>
+    </tr>
+  `;
+
+  components.forEach((side, index) => {
+    const correctionE = -sumE * side.distance / perimeter;
+    const correctionN = -sumN * side.distance / perimeter;
+
+    const adjustedE = side.dE + correctionE;
+    const adjustedN = side.dN + correctionN;
+
+    E += adjustedE;
+    N += adjustedN;
+
+    rows += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${side.distance.toFixed(3)}</td>
+        <td>${E.toFixed(3)}</td>
+        <td>${N.toFixed(3)}</td>
+      </tr>
+    `;
+  });
+
+  surveyResult('tR', `
+    <h4>نتائج تصحيح المضلع - Bowditch</h4>
+    <p>مجموع ΔE قبل التصحيح:
+      <b>${sumE.toFixed(4)} م</b>
+    </p>
+    <p>مجموع ΔN قبل التصحيح:
+      <b>${sumN.toFixed(4)} م</b>
+    </p>
+    <p>خطأ القفل:
+      <b>${closingError.toFixed(4)} م</b>
+    </p>
+    <p>محيط المضلع:
+      <b>${perimeter.toFixed(3)} م</b>
+    </p>
+    <p>نسبة الدقة:
+      <b>${precision}</b>
+    </p>
+    <div style="overflow-x:auto">
+      <table class="pt">
+        <thead>
+          <tr>
+            <th>النقطة</th>
+            <th>الضلع</th>
+            <th>E المصحح</th>
+            <th>N المصحح</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `);
+};
+
 
 /* أحزمة مصر + تصدير الرفع المساحي */
 const ce=$('etm');if(ce)ce.insertAdjacentHTML('afterend','<div style="color:var(--am);margin-top:6px">Blue Belt (EPSG:22991)</div><div id="etb"></div><div style="color:var(--am);margin-top:6px">Purple Belt (EPSG:22993)</div><div id="etp"></div>');
