@@ -1,18 +1,20 @@
-{"name": "GeoDev Studio Pro",
+
+{
+  "id": "/Ai-samir/",
+  "name": "GeoDev Studio Pro",
   "short_name": "GeoDev",
-  "start_url": "./",
-  "scope": "./",
+  "description": "منصة GeoDev Studio Pro الذكية المتخصصة في الجغرافيا والجيوماتكس والمساحة والاستشعار عن بعد، مع أدوات عملية للتعلم والبرمجة والتحليل المكاني والمساعدة بالذكاء الاصطناعي.",
+  "start_url": "/Ai-samir/",
+  "scope": "/Ai-samir/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#090d16",
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "/Ai-samir/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
-  ],
-  "id": "Ai samir"
+  ]
 }
