@@ -1220,7 +1220,11 @@ function renderSurveyGrid(){
  {id:'qibla',icon:'navigation',title:'اتجاه القبلة',desc:'زاوية الكعبة'},
  {id:'dev',icon:'info',title:'عن التطبيق',desc:'المطور والتقييم'}
 ];
-  $("surveyGrid").innerHTML=tools.map(t=>`<div class="dash-card" onclick="openTool('${t.id}')"><div class="dash-icon">${t.icon}</div><div class="dash-text"><b>${t.title}</b><span>${t.desc}</span></div><div class="dash-arrow">❮</div></div>`).join("");
+  $("surveyGrid").innerHTML=tools.map(t=>`<div class="dash-card" onclick="openTool('${t.id}')"><div class="dash-icon"><i data-lucide="${t.icon}"></i></div><div class="dash-text"><b>${t.title}</b><span>${t.desc}</span></div><div class="dash-arrow">❮</div></div>`).join("");
+
+if(window.lucide && typeof window.lucide.createIcons === 'function'){
+  window.lucide.createIcons({attrs:{'stroke-width':1.8}});
+  }
 }
 function openTool(id){ 
   $(`modal-${id}`).classList.add("on"); 
