@@ -3,17 +3,16 @@
   "use strict";
 
   if (window.GEOAcademyUI) return;
-
-  const courses = [
-    { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "🌍", desc: "تعلم GIS والخرائط والتحليل المكاني." },
-    { id: "surveying", title: "المساحة والرفع المساحي", icon: "📐", desc: "أساسيات المساحة والأجهزة والحسابات." },
-    { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "🛰️", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
-    { id: "civil3d", title: "Civil 3D", icon: "🏗️", desc: "تصميم الطرق والأعمال المساحية." },
-    { id: "python-gis", title: "Python for GIS", icon: "🐍", desc: "برمجة وتحليل البيانات الجغرافية." },
-    { id: "gis-programming", title: "GIS Programming", icon: "💻", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
-    { id: "autocad", title: "AutoCAD", icon: "📏", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
-    { id: "autocad-ai", title: "AutoCAD + AI", icon: "🤖", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
-  ];
+const courses = [
+  { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "globe", desc: "تعلم GIS والخرائط والتحليل المكاني." },
+  { id: "surveying", title: "المساحة والرفع المساحي", icon: "ruler", desc: "أساسيات المساحة والأجهزة والحسابات." },
+  { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "satellite", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
+  { id: "civil3d", title: "Civil 3D", icon: "drafting-compass", desc: "تصميم الطرق والأعمال المساحية." },
+  { id: "python-gis", title: "Python for GIS", icon: "code", desc: "برمجة وتحليل البيانات الجغرافية." },
+  { id: "gis-programming", title: "GIS Programming", icon: "terminal", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
+  { id: "autocad", title: "AutoCAD", icon: "pencil-ruler", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
+  { id: "autocad-ai", title: "AutoCAD + AI", icon: "bot", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
+];
 
  let currentUser = null;
 let notes = [];
@@ -23,7 +22,19 @@ let teacherMessages = [];
 let activeTab = "courses";
 
   const $ = id => document.getElementById(id);
+  
+function refreshAcademyIcons(root = document) {
+  if (!window.lucide || typeof window.lucide.createIcons !== "function") {
+    return;
+  }
 
+  window.lucide.createIcons({
+    root,
+    attrs: {
+      "stroke-width": 1.8
+    }
+  });
+}
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
@@ -140,9 +151,52 @@ let activeTab = "courses";
         line-height:1.8;
         opacity:.85;
       }
+#s-academy .academy-icon {
+  width:52px;
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:15px;
+  color:#38bdf8;
+  background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.2);
+  margin-bottom:12px;
+}
 
-      #s-academy .academy-icon {
-        font-size:28px;
+#s-academy .academy-icon svg {
+  width:27px;
+  height:27px;
+  stroke-width:1.8;
+}
+
+#s-academy .academy-tab,
+#s-academy .academy-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+#s-academy .academy-tab svg,
+#s-academy .academy-btn svg {
+  width:16px;
+  height:16px;
+  flex-shrink:0;
+}
+
+#s-academy .academy-header h2 {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#s-academy .academy-header h2 svg {
+  width:27px;
+  height:27px;
+  color:#7dd3fc;
+  flex-shrink:0;
+}
       }
 
       #s-academy .academy-btn {
@@ -950,6 +1004,8 @@ function renderTeacher() {
   function renderTab() {
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
+      refreshAcademyIcons($("s-academy"));
+  
     });
 
     if (!currentUser) {
@@ -967,6 +1023,7 @@ function renderTeacher() {
     if (activeTab === "progress") renderProgress();
     if (activeTab === "teacher") renderTeacher();
     if (activeTab === "smart-search") renderSmartSearch();
+    refreshAcademyIcons($("s-academy"));
   }
 
   async function refreshData() {
