@@ -1,0 +1,360 @@
+
+/* =========================================
+   GeoDev Studio Pro — Visual UI
+   Illustrated Geometric Design v1
+   ========================================= */
+
+:root {
+  --visual-radius: 20px;
+  --visual-shadow: 0 12px 35px rgba(0,0,0,.10);
+  --visual-ease: cubic-bezier(.22,.8,.25,1);
+}
+
+/* خلفية هندسية */
+body {
+  background:
+    radial-gradient(ellipse at 8% 12%, color-mix(in srgb,var(--bl) 10%,transparent), transparent 34%),
+    radial-gradient(ellipse at 92% 75%, color-mix(in srgb,var(--gr) 8%,transparent), transparent 35%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .16;
+  background-image:
+    linear-gradient(color-mix(in srgb,var(--mt) 15%,transparent) 1px,transparent 1px),
+    linear-gradient(90deg,color-mix(in srgb,var(--mt) 15%,transparent) 1px,transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom,black,transparent 85%);
+}
+
+/* الهيدر */
+header {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: color-mix(in srgb,var(--cd) 90%,transparent);
+  border-bottom: 1px solid color-mix(in srgb,var(--bl) 20%,var(--ln));
+  box-shadow: 0 5px 25px rgba(0,0,0,.06);
+}
+
+header h1 {
+  letter-spacing: -.4px;
+}
+
+/* المحتوى */
+main {
+  padding-top: 22px;
+  padding-bottom: 35px;
+}
+
+.sec.on {
+  animation: visualPageIn .42s var(--visual-ease) both;
+}
+
+@keyframes visualPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* البطاقات */
+.card,
+.dash-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--visual-radius);
+  border: 1px solid color-mix(in srgb,var(--ln) 85%,var(--bl));
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb,var(--cd) 97%,var(--bl)),
+      var(--cd));
+  box-shadow: var(--visual-shadow);
+  transition:
+    transform .28s var(--visual-ease),
+    border-color .28s ease,
+    box-shadow .28s ease;
+}
+
+.card::before,
+.dash-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 18px;
+  width: 52px;
+  height: 3px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(90deg,var(--bl),var(--gr));
+  opacity: .8;
+}
+
+.card h3 {
+  letter-spacing: -.2px;
+}
+
+/* لمسة رسومية للبطاقات */
+.dash-card {
+  min-height: 100px;
+  padding: 18px;
+  gap: 16px;
+}
+
+.dash-card::after {
+  content: "";
+  position: absolute;
+  width: 95px;
+  height: 95px;
+  left: -32px;
+  bottom: -45px;
+  border: 1px solid color-mix(in srgb,var(--bl) 24%,transparent);
+  border-radius: 35% 65% 55% 45%;
+  transform: rotate(35deg);
+  pointer-events: none;
+}
+
+.dash-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb,var(--bl) 22%,var(--ln));
+  background: color-mix(in srgb,var(--bl) 13%,var(--cd));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  transition: transform .3s var(--visual-ease);
+}
+
+.dash-card:hover .dash-icon {
+  transform: rotate(-7deg) scale(1.08);
+}
+
+.dash-text b {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.dash-text span {
+  line-height: 1.7;
+}
+
+/* الأزرار */
+button {
+  border-radius: 12px;
+  transition:
+    transform .2s var(--visual-ease),
+    filter .2s ease,
+    box-shadow .2s ease;
+}
+
+button:hover {
+  filter: brightness(1.07);
+}
+
+button:active {
+  transform: scale(.96);
+}
+
+button:not(.k):not(.r) {
+  box-shadow: 0 4px 12px color-mix(in srgb,var(--bl) 15%,transparent);
+}
+
+/* أزرار التنقل */
+nav {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: color-mix(in srgb,var(--cd) 94%,transparent);
+  border-color: color-mix(in srgb,var(--bl) 20%,var(--ln));
+}
+
+nav button {
+  position: relative;
+  border-radius: 13px;
+  transition: all .25s var(--visual-ease);
+}
+
+nav button span {
+  font-size: 19px;
+  transition: transform .25s var(--visual-ease);
+}
+
+nav button:hover span {
+  transform: translateY(-2px);
+}
+
+nav button.on {
+  background: color-mix(in srgb,var(--bl) 14%,var(--cd));
+  color: var(--bl);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--bl) 20%,transparent);
+}
+
+nav button.on::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 22%;
+  height: 56%;
+  width: 3px;
+  border-radius: 5px;
+  background: var(--bl);
+}
+
+/* حقول الإدخال */
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),
+select,
+textarea {
+  border-radius: 13px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--bl) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb,var(--bl) 17%,transparent);
+}
+
+/* نوافذ الأدوات */
+.tool-content {
+  border-radius: 22px;
+  box-shadow: 0 25px 80px rgba(0,0,0,.28);
+  animation: visualModalIn .3s var(--visual-ease) both;
+}
+
+@keyframes visualModalIn {
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tool-header {
+  backdrop-filter: blur(12px);
+}
+
+/* صناديق النتائج والمحادثات */
+.res,
+#chat,
+#gisChatBox {
+  border-radius: 16px;
+}
+
+.m {
+  border-radius: 17px;
+  animation: visualMessageIn .25s ease both;
+}
+
+@keyframes visualMessageIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* الأكاديمية */
+.academy-card {
+  border-radius: 18px;
+  transition: transform .25s ease, border-color .25s ease;
+}
+
+.academy-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--bl);
+}
+
+.academy-analysis {
+  line-height: 1.9;
+}
+
+/* الرسوم والخرائط */
+#map,
+#triSvg,
+iframe {
+  border-radius: 16px;
+}
+
+#map {
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,.10);
+}
+
+/* شريط التمرير */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bl) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb,var(--bl) 55%,var(--ln));
+  border-radius: 10px;
+}
+
+/* الموبايل */
+@media (max-width: 768px) {
+  main {
+    padding: 12px 10px 25px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 17px;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dash-card {
+    min-height: 88px;
+    padding: 14px;
+  }
+
+  nav {
+    padding: 7px 3px calc(7px + env(safe-area-inset-bottom));
+  }
+
+  nav button {
+    min-width: 0;
+    flex: 1;
+    padding: 7px 2px;
+    font-size: 9px;
+  }
+
+  nav button span {
+    font-size: 18px;
+  }
+
+  nav button.on::before {
+    top: 0;
+    right: 25%;
+    width: 50%;
+    height: 2px;
+  }
+
+  .tool-content {
+    border-radius: 18px;
+    max-height: 92vh;
+  }
+}
+
+/* تقليل الحركة لمن يفضّل ذلك */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
