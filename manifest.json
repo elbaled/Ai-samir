@@ -1,5 +1,4 @@
-{
-  "name": "GeoDev Studio Pro",
+{"name": "GeoDev Studio Pro",
   "short_name": "GeoDev",
   "start_url": "./",
   "scope": "./",
@@ -14,5 +13,6 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "Ai samir"
 }
