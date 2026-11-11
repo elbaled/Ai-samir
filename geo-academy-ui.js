@@ -585,7 +585,23 @@ function refreshAcademyIcons(root = document) {
     max-width:94%;
     font-size:14px;
   }
+#s-academy .academy-card h3 {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
+#s-academy .academy-card h3 svg {
+  width:21px;
+  height:21px;
+  flex-shrink:0;
+  color:#38bdf8;
+  stroke-width:1.8;
+}
+
+#s-academy .academy-course-title {
+  flex-wrap:wrap;
+}
   #s-academy .teacher-header {
     padding:13px;
   }
@@ -773,7 +789,9 @@ function refreshAcademyIcons(root = document) {
 
           return `
             <div class="academy-card">
-              <div class="academy-icon">📚</div>
+              <div class="academy-icon">
+  <i data-lucide="book-open"></i>
+</div>v>
               <h3>${escapeHTML(category.name)}</h3>
               <p class="academy-muted">${category.topics.length} موضوعًا تعليميًا</p>
               <h4>الموضوعات</h4>
@@ -839,7 +857,11 @@ function refreshAcademyIcons(root = document) {
           الأسعار والتوافر قد يتغيران حسب المنصة والبلد.
         </p>
       </div>
-    `;
+  
+    
+        `;
+
+    refreshAcademyIcons(content);
   }
 
   function renderNotes() {
@@ -917,7 +939,10 @@ function refreshAcademyIcons(root = document) {
 
           return `
             <div class="academy-card">
-              <h3>${course.icon} ${escapeHTML(course.title)}</h3>
+             <h3>
+  <i data-lucide="${course.icon}"></i>
+  ${escapeHTML(course.title)}
+</h3>
               <div class="academy-progress"><span style="width:${percent}%"></span></div>
               <p>${percent}% مكتمل</p>
               <div class="academy-muted">
@@ -928,6 +953,7 @@ function refreshAcademyIcons(root = document) {
         }).join("")}
       </div>
     `;
+    refreshAcademyIcons(content);
   }
 
 
