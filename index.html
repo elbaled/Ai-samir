@@ -1210,16 +1210,16 @@ function makePWA(){
 /* ===== NEW: Survey Grid Logic ===== */
 function renderSurveyGrid(){
   const tools=[
-    {id:'shapes',icon:'📐',title:'حاسبة الأشكال',desc:'مربع، مستطيل، دائرة'},
-    {id:'triangle',icon:'🔺',title:'حاسبة المثلثات',desc:'SSS, SAS, قائم'},
-    {id:'convert',icon:'🔄',title:'تحويل الوحدات',desc:'فدان، قيراط، سهم'},
-    {id:'calc',icon:'🧮',title:'جمع وطرح',desc:'فدان ومتر'},
-    {id:'map',icon:'🗺️',title:'الخريطة والرفع',desc:'إحداثيات ومساحات'},
-    {id:'coord',icon:'🧭',title:'تحويل الإحداثيات',desc:'UTM, Red Belt'},
-    {id:'compass',icon:'🧭',title:'البوصلة',desc:'تحديد الاتجاهات'},
-    {id:'qibla',icon:'🕋',title:'اتجاه القبلة',desc:'زاوية الكعبة'},
-    {id:'dev',icon:'👨‍💻',title:'عن التطبيق',desc:'المطور والتقييم'}
-  ];
+ {id:'shapes',icon:'shapes',title:'حاسبة الأشكال',desc:'مربع، مستطيل، دائرة'},
+ {id:'triangle',icon:'triangle',title:'حاسبة المثلثات',desc:'SSS, SAS, قائم'},
+ {id:'convert',icon:'arrow-left-right',title:'تحويل الوحدات',desc:'فدان، قيراط، سهم'},
+ {id:'calc',icon:'calculator',title:'جمع وطرح',desc:'فدان ومتر'},
+ {id:'map',icon:'map',title:'الخريطة والرفع',desc:'إحداثيات ومساحات'},
+ {id:'coord',icon:'globe',title:'تحويل الإحداثيات',desc:'UTM, Red Belt'},
+ {id:'compass',icon:'compass',title:'البوصلة',desc:'تحديد الاتجاهات'},
+ {id:'qibla',icon:'navigation',title:'اتجاه القبلة',desc:'زاوية الكعبة'},
+ {id:'dev',icon:'info',title:'عن التطبيق',desc:'المطور والتقييم'}
+];
   $("surveyGrid").innerHTML=tools.map(t=>`<div class="dash-card" onclick="openTool('${t.id}')"><div class="dash-icon">${t.icon}</div><div class="dash-text"><b>${t.title}</b><span>${t.desc}</span></div><div class="dash-arrow">❮</div></div>`).join("");
 }
 function openTool(id){ 
