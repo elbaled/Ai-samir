@@ -2135,7 +2135,6 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
   <script src="geo-theme.js"></script>
 <script src="geo-engines.js"></script>
   <script src="geo-academy-engines.js"></script>
-  <script src="geo-academy-extras.js"></script>
 
 
   <script>
@@ -2351,127 +2350,6 @@ const NT = [
           <i data-lucide="calculator"></i> حساب وتصحيح المضلع
         </button>
         <div id="tR" class="result-box"></div>
-      </div>
-    `
-  },
-  {
-    id: 'inv',
-    icon: 'move-diagonal',
-    title: 'المسافة والاتجاه',
-    desc: 'مسافة وسمت بين نقطتين، ونقطة من سمت ومسافة',
-    body: `
-      <div class="tool-section">
-        <h4><i data-lucide="move-diagonal"></i> المسافة والسمت بين نقطتين (Inverse)</h4>
-        <div class="form-grid">
-          <label>E النقطة 1<input id="ivE1" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>N النقطة 1<input id="ivN1" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>E النقطة 2<input id="ivE2" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>N النقطة 2<input id="ivN2" class="c" type="number" step="any" inputmode="decimal"></label>
-        </div>
-        <button class="a" onclick="invCalc()"><i data-lucide="calculator"></i> احسب المسافة والسمت</button>
-        <div id="ivR" class="result-box"></div>
-      </div>
-      <div class="tool-section">
-        <h4><i data-lucide="locate-fixed"></i> نقطة جديدة من سمت ومسافة (Forward)</h4>
-        <div class="form-grid">
-          <label>E نقطة البداية<input id="fwE" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>N نقطة البداية<input id="fwN" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>السمت (درجة عشرية)<input id="fwA" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 45.5"></label>
-          <label>المسافة (متر)<input id="fwD" class="c" type="number" step="any" inputmode="decimal"></label>
-        </div>
-        <button class="g" onclick="fwdCalc()"><i data-lucide="calculator"></i> احسب الإحداثيات</button>
-        <div id="fwR" class="result-box"></div>
-      </div>
-    `
-  },
-  {
-    id: 'area',
-    icon: 'land-plot',
-    title: 'المساحة من الإحداثيات',
-    desc: 'مساحة ومحيط ومركز قطعة أرض بالفدان والمتر',
-    body: `
-      <div class="tool-section">
-        <h4><i data-lucide="land-plot"></i> حساب المساحة بطريقة الإحداثيات</h4>
-        <p class="muted">أدخل كل نقطة في سطر (E ثم N) بترتيب دوران حول القطعة، وبينهما مسافة أو فاصلة.</p>
-        <textarea id="arT" class="c" rows="7" placeholder="1000 2000&#10;1050 2000&#10;1050 2040&#10;1000 2040"></textarea>
-        <button class="a" onclick="areaCalc()"><i data-lucide="calculator"></i> احسب المساحة</button>
-        <div id="arR" class="result-box"></div>
-      </div>
-    `
-  },
-  {
-    id: 'slope',
-    icon: 'trending-up',
-    title: 'الميل والانحدار',
-    desc: 'نسبة مئوية ودرجات ونسبة 1:n',
-    body: `
-      <div class="tool-section">
-        <h4><i data-lucide="trending-up"></i> الميل من المسافة وفرق المنسوب</h4>
-        <div class="form-grid">
-          <label>المسافة الأفقية (متر)<input id="slH" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>فرق المنسوب (متر)<input id="slZ" class="c" type="number" step="any" inputmode="decimal" placeholder="سالب للهبوط"></label>
-        </div>
-        <button class="a" onclick="slopeCalc()"><i data-lucide="calculator"></i> احسب الميل</button>
-        <div id="slR" class="result-box"></div>
-      </div>
-      <div class="tool-section">
-        <h4><i data-lucide="arrow-down-right"></i> فرق المنسوب من نسبة الميل</h4>
-        <div class="form-grid">
-          <label>نسبة الميل (%)<input id="slP" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>المسافة الأفقية (متر)<input id="slD" class="c" type="number" step="any" inputmode="decimal"></label>
-        </div>
-        <button class="g" onclick="slopeFromPct()"><i data-lucide="calculator"></i> احسب فرق المنسوب</button>
-        <div id="slR2" class="result-box"></div>
-      </div>
-    `
-  },
-  {
-    id: 'tach',
-    icon: 'radar',
-    title: 'الرصد بالمحطة الشاملة',
-    desc: 'مسافة أفقية ومنسوب وإحداثيات من رصدة',
-    body: `
-      <div class="tool-section">
-        <h4><i data-lucide="radar"></i> حساب رصدة محطة شاملة</h4>
-        <div class="form-grid">
-          <label>المسافة المائلة (متر)<input id="tcSD" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>الزاوية الرأسية (درجة عشرية)<input id="tcA" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 88.5"></label>
-          <label>نوع الزاوية
-            <select id="tcM" class="c"><option value="z">زاوية سمتية Zenith</option><option value="v">زاوية ارتفاع Vertical</option></select>
-          </label>
-          <label>تصحيح الانحناء والانكسار
-            <select id="tcCR" class="c"><option value="0">بدون</option><option value="1">تطبيق التصحيح</option></select>
-          </label>
-          <label>ارتفاع الجهاز (متر)<input id="tcHi" class="c" type="number" step="any" inputmode="decimal" value="1.5"></label>
-          <label>ارتفاع الهدف (متر)<input id="tcHt" class="c" type="number" step="any" inputmode="decimal" value="1.5"></label>
-          <label>منسوب المحطة (اختياري)<input id="tcZ0" class="c" type="number" step="any" inputmode="decimal" value="0"></label>
-          <label>السمت إلى الهدف (اختياري)<input id="tcAz" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>E المحطة (اختياري)<input id="tcE0" class="c" type="number" step="any" inputmode="decimal"></label>
-          <label>N المحطة (اختياري)<input id="tcN0" class="c" type="number" step="any" inputmode="decimal"></label>
-        </div>
-        <button class="a" onclick="tachCalc()"><i data-lucide="calculator"></i> احسب الرصدة</button>
-        <div id="tcR" class="result-box"></div>
-      </div>
-    `
-  },
-  {
-    id: 'vcrv',
-    icon: 'spline',
-    title: 'المنحنيات الرأسية',
-    desc: 'قطع مكافئ: مناسيب ونقطة القمة والقاع',
-    body: `
-      <div class="tool-section">
-        <h4><i data-lucide="spline"></i> منحنى رأسي مكافئ</h4>
-        <div class="form-grid">
-          <label>محطة نقطة التقاطع PVI (متر)<input id="vcS" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 1000"></label>
-          <label>منسوب PVI (متر)<input id="vcZ" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 50"></label>
-          <label>الميل الداخل g1 (%)<input id="vcG1" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 2"></label>
-          <label>الميل الخارج g2 (%)<input id="vcG2" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: -3"></label>
-          <label>طول المنحنى L (متر)<input id="vcL" class="c" type="number" step="any" inputmode="decimal" placeholder="مثال: 200"></label>
-          <label>الفاصل في الجدول (متر)<input id="vcI" class="c" type="number" step="any" inputmode="decimal" value="20"></label>
-        </div>
-        <button class="a" onclick="vcrvCalc()"><i data-lucide="calculator"></i> احسب المنحنى</button>
-        <div id="vcR" class="result-box"></div>
       </div>
     `
   }
@@ -2947,174 +2825,6 @@ window.trvCalc = function () {
 };
 
 
-/* =====================================================
-   أدوات إضافية: المسافة والاتجاه / المساحة من الإحداثيات /
-   الميل / الرصد بالمحطة الشاملة / المنحنيات الرأسية
-===================================================== */
-const SV = {
-  rad: d => d * Math.PI / 180,
-  deg: r => r * 180 / Math.PI,
-  n: id => {
-    const v = ($(id) && $(id).value || '').trim();
-    return v === '' ? NaN : Number(v);
-  },
-  dms: d => {
-    d = ((d % 360) + 360) % 360;
-    let g = Math.floor(d), m = Math.floor((d - g) * 60);
-    let s = ((d - g) * 60 - m) * 60;
-    if (s >= 59.995) { s = 0; m++; }
-    if (m >= 60) { m = 0; g++; }
-    return `${g}° ${m}′ ${s.toFixed(2)}″`;
-  },
-  fed: a => {
-    const F = 4200.83, Q = F / 24;
-    const f = Math.floor(a / F), r = a - f * F;
-    const q = Math.floor(r / Q), s = (r - q * Q) / (Q / 24);
-    return `${f} فدان و ${q} قيراط و ${s.toFixed(2)} سهم`;
-  },
-  pts: id => (($(id) && $(id).value) || '').trim().split(/\n/)
-    .map(l => l.trim().split(/[\s,;]+/).map(Number))
-    .filter(r => r.length >= 2 && r.every(Number.isFinite))
-};
-
-window.invCalc = function () {
-  const [e1, n1, e2, n2] = ['ivE1', 'ivN1', 'ivE2', 'ivN2'].map(SV.n);
-  if (![e1, n1, e2, n2].every(Number.isFinite)) return toast('أدخل إحداثيات النقطتين', 'warn');
-  const dE = e2 - e1, dN = n2 - n1, d = Math.hypot(dE, dN);
-  if (d === 0) return toast('النقطتان متطابقتان', 'warn');
-  const az = (SV.deg(Math.atan2(dE, dN)) + 360) % 360, back = (az + 180) % 360;
-  surveyResult('ivR', `
-    <h4>نتائج المسافة والاتجاه</h4>
-    <p>المسافة الأفقية: <b>${d.toFixed(3)} م</b></p>
-    <p>السمت: <b>${az.toFixed(5)}°</b> (${SV.dms(az)})</p>
-    <p>السمت العكسي: <b>${back.toFixed(5)}°</b> (${SV.dms(back)})</p>
-    <p>ΔE: <b>${dE.toFixed(3)} م</b> &nbsp;|&nbsp; ΔN: <b>${dN.toFixed(3)} م</b></p>
-  `);
-};
-
-window.fwdCalc = function () {
-  const [e, n, a, d] = ['fwE', 'fwN', 'fwA', 'fwD'].map(SV.n);
-  if (![e, n, a, d].every(Number.isFinite) || d < 0) return toast('راجع المدخلات', 'warn');
-  const r = SV.rad(a);
-  surveyResult('fwR', `
-    <h4>إحداثيات النقطة الجديدة</h4>
-    <p>E: <b>${(e + d * Math.sin(r)).toFixed(3)}</b></p>
-    <p>N: <b>${(n + d * Math.cos(r)).toFixed(3)}</b></p>
-  `);
-};
-
-window.areaCalc = function () {
-  const p = SV.pts('arT');
-  if (p.length > 1 && p[0][0] === p[p.length - 1][0] && p[0][1] === p[p.length - 1][1]) p.pop();
-  if (p.length < 3) return toast('أدخل ثلاث نقاط على الأقل (E N في كل سطر)', 'warn');
-  let a2 = 0, per = 0, cx = 0, cy = 0;
-  p.forEach((q, i) => {
-    const r = p[(i + 1) % p.length], c = q[0] * r[1] - r[0] * q[1];
-    a2 += c;
-    per += Math.hypot(r[0] - q[0], r[1] - q[1]);
-    cx += (q[0] + r[0]) * c;
-    cy += (q[1] + r[1]) * c;
-  });
-  const A = Math.abs(a2) / 2;
-  if (!A) return toast('النقاط على استقامة واحدة', 'warn');
-  surveyResult('arR', `
-    <h4>نتائج المساحة (${p.length} نقطة)</h4>
-    <p>المساحة: <b>${A.toFixed(3)} م²</b></p>
-    <p>بالفدان: <b>${SV.fed(A)}</b></p>
-    <p>فدان عشري: <b>${(A / 4200.83).toFixed(4)}</b> &nbsp;|&nbsp; هكتار: <b>${(A / 10000).toFixed(4)}</b></p>
-    <p>المحيط: <b>${per.toFixed(3)} م</b></p>
-    <p>مركز القطعة: E <b>${(cx / (3 * a2)).toFixed(3)}</b> ، N <b>${(cy / (3 * a2)).toFixed(3)}</b></p>
-  `);
-};
-
-window.slopeCalc = function () {
-  const h = SV.n('slH'), z = SV.n('slZ');
-  if (!Number.isFinite(h) || !Number.isFinite(z) || h <= 0) return toast('أدخل المسافة الأفقية وفرق المنسوب', 'warn');
-  const pct = z / h * 100, ang = SV.deg(Math.atan(z / h));
-  surveyResult('slR', `
-    <h4>نتائج الميل</h4>
-    <p>نسبة الميل: <b>${pct.toFixed(3)} %</b> ${z < 0 ? '(هبوط)' : z > 0 ? '(صعود)' : ''}</p>
-    <p>زاوية الميل: <b>${ang.toFixed(4)}°</b> (${SV.dms(Math.abs(ang))})</p>
-    <p>النسبة: <b>${z === 0 ? 'أفقي' : '1 : ' + (h / Math.abs(z)).toFixed(2)}</b></p>
-    <p>المسافة المائلة: <b>${Math.hypot(h, z).toFixed(3)} م</b></p>
-  `);
-};
-
-window.slopeFromPct = function () {
-  const p = SV.n('slP'), d = SV.n('slD');
-  if (!Number.isFinite(p) || !Number.isFinite(d) || d <= 0) return toast('أدخل نسبة الميل والمسافة', 'warn');
-  surveyResult('slR2', `
-    <h4>النتيجة</h4>
-    <p>فرق المنسوب: <b>${(p / 100 * d).toFixed(3)} م</b></p>
-    <p>زاوية الميل: <b>${SV.deg(Math.atan(p / 100)).toFixed(4)}°</b></p>
-  `);
-};
-
-window.tachCalc = function () {
-  const sd = SV.n('tcSD'), ang = SV.n('tcA');
-  const hi = SV.n('tcHi') || 0, ht = SV.n('tcHt') || 0, z0 = SV.n('tcZ0') || 0;
-  if (!Number.isFinite(sd) || !Number.isFinite(ang) || sd <= 0) return toast('أدخل المسافة المائلة والزاوية الرأسية', 'warn');
-  const zen = $('tcM').value === 'z' ? ang : 90 - ang;
-  if (zen < 0 || zen > 180) return toast('الزاوية الرأسية خارج المدى المسموح', 'warn');
-  const hd = sd * Math.sin(SV.rad(zen));
-  let dz = sd * Math.cos(SV.rad(zen)) + hi - ht;
-  let cr = 0;
-  if ($('tcCR').value === '1') { cr = 0.0675 * Math.pow(hd / 1000, 2); dz += cr; }
-  const az = SV.n('tcAz'), e0 = SV.n('tcE0'), n0 = SV.n('tcN0');
-  const xy = [az, e0, n0].every(Number.isFinite)
-    ? `<p>إحداثيات الهدف: E <b>${(e0 + hd * Math.sin(SV.rad(az))).toFixed(3)}</b> ، N <b>${(n0 + hd * Math.cos(SV.rad(az))).toFixed(3)}</b></p>`
-    : '';
-  surveyResult('tcR', `
-    <h4>نتائج الرصدة</h4>
-    <p>المسافة الأفقية: <b>${hd.toFixed(3)} م</b></p>
-    <p>فرق المنسوب: <b>${dz.toFixed(3)} م</b></p>
-    <p>منسوب الهدف: <b>${(z0 + dz).toFixed(3)} م</b></p>
-    ${cr ? `<p>تصحيح الانحناء والانكسار: <b>${cr.toFixed(4)} م</b></p>` : ''}
-    ${xy}
-  `);
-};
-
-window.vcrvCalc = function () {
-  const S = SV.n('vcS'), Z = SV.n('vcZ'), g1 = SV.n('vcG1'), g2 = SV.n('vcG2'), L = SV.n('vcL');
-  let step = SV.n('vcI');
-  if (![S, Z, g1, g2, L].every(Number.isFinite) || L <= 0) return toast('راجع بيانات المنحنى الرأسي', 'warn');
-  if (g1 === g2) return toast('الميلان متساويان: لا يوجد منحنى', 'warn');
-  if (!Number.isFinite(step) || step <= 0) step = 20;
-  step = Math.max(step, L / 60);
-  const A = g2 - g1, K = L / Math.abs(A);
-  const bvc = S - L / 2, evc = S + L / 2;
-  const zb = Z - g1 / 100 * L / 2, ze = Z + g2 / 100 * L / 2;
-  const y = x => zb + g1 / 100 * x + (g2 - g1) / (200 * L) * x * x;
-  const mid = Math.abs(A) * L / 800;
-  let turn = '';
-  if (g1 * g2 < 0) {
-    const x = -g1 * L / (g2 - g1);
-    if (x > 0 && x < L) {
-      turn = `<p>${A < 0 ? 'أعلى نقطة' : 'أدنى نقطة'}: محطة <b>${(bvc + x).toFixed(2)}</b> ، منسوب <b>${y(x).toFixed(3)} م</b></p>`;
-    }
-  }
-  let rows = '';
-  for (let x = 0; x < L; x += step) {
-    rows += `<tr><td>${(bvc + x).toFixed(2)}</td><td>${y(x).toFixed(3)}</td></tr>`;
-  }
-  rows += `<tr><td>${evc.toFixed(2)}</td><td>${ze.toFixed(3)}</td></tr>`;
-  surveyResult('vcR', `
-    <h4>نتائج المنحنى الرأسي (${A < 0 ? 'قمة Crest' : 'قاع Sag'})</h4>
-    <p>الفرق الجبري A: <b>${A.toFixed(3)} %</b> &nbsp;|&nbsp; معامل K: <b>${K.toFixed(2)}</b></p>
-    <p>بداية المنحنى BVC: محطة <b>${bvc.toFixed(2)}</b> ، منسوب <b>${zb.toFixed(3)} م</b></p>
-    <p>نهاية المنحنى EVC: محطة <b>${evc.toFixed(2)}</b> ، منسوب <b>${ze.toFixed(3)} م</b></p>
-    <p>السهم عند المنتصف: <b>${mid.toFixed(3)} م</b></p>
-    ${turn}
-    <div style="overflow-x:auto">
-      <table class="pt">
-        <thead><tr><th>المحطة</th><th>المنسوب</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `);
-};
-
-
 /* أحزمة مصر + تصدير الرفع المساحي */
 const ce=$('etm');if(ce)ce.insertAdjacentHTML('afterend','<div style="color:var(--am);margin-top:6px">Blue Belt (EPSG:22991)</div><div id="etb"></div><div style="color:var(--am);margin-top:6px">Purple Belt (EPSG:22993)</div><div id="etp"></div>');
 W('conv',o=>{o();const la=parseFloat($('lat').value),ln=parseFloat($('lng').value);if(isNaN(la)||isNaN(ln))return;[['etb','EPSG:22991'],['etp','EPSG:22993']].forEach(([i,c])=>{try{const[e,n]=proj4('WGS84',c,[ln,la]);$(i).innerHTML=`E: ${e.toFixed(3)}<br>N: ${n.toFixed(3)}`}catch(x){$(i).textContent='خطأ'}})});
@@ -3133,8 +2843,8 @@ window.showPrivacy=()=>showInfo('الخصوصية والشروط','<p>• الح
 window.toggleLight=()=>{const r=document.documentElement,on=!r.classList.contains('light');r.classList.toggle('light',on);localStorage.setItem('gd_light',on?'1':'0');
   if(on)['bg','cd','ln','tx','mt'].forEach(k=>r.style.removeProperty('--'+k));else try{loadTheme()}catch(e){}};
 if(localStorage.getItem('gd_light')=='1')document.documentElement.classList.add('light');
-const dm=document.querySelector('#drw .dm');if(dm)dm.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();showWhats()">ما الجديد</button><button onclick="toggleLight();toggleDrawer()">الوضع الفاتح / الداكن</button><button onclick="toggleDrawer();showPrivacy()">الخصوصية والشروط</button>');
-W('afterLogin',o=>{o();syncAdmin();setTimeout(()=>{if(localStorage.getItem('gd_seen')!=VER){localStorage.setItem('gd_seen',VER);showWhats()}},1500)});
+const dm=document.querySelector('#drw .dm');if(dm)dm.insertAdjacentHTML('afterbegin','<button onclick="toggleLight();toggleDrawer()">الوضع الفاتح / الداكن</button><button onclick="toggleDrawer();showPrivacy()">الخصوصية والشروط</button>');
+W('afterLogin',o=>{o();syncAdmin();});
 const vp=document.querySelector('#modal-dev p.mt');if(vp)vp.textContent='الإصدار '+VER;
 document.querySelectorAll('button[title]').forEach(b=>{if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',b.title)});
 try{renderSurveyGrid();refreshUI()}catch(e){console.warn(e)}
@@ -3152,9 +2862,9 @@ try{renderSurveyGrid();refreshUI()}catch(e){console.warn(e)}
 /* ===== GeoDev v3.1 — تحكم كامل + عداد اشتراك + ملف شخصي ===== */
 const ALLOW_TRIAL=false;   // false = PRO للمشتركين بكود فقط (بدون تجربة مجانية)
 const REG=[
-['أدوات المساحة',[['t:shapes','حاسبة الأشكال'],['t:triangle','المثلثات'],['t:convert','تحويل الوحدات'],['t:calc','جمع وطرح'],['t:map','الخريطة والرفع'],['t:coord','تحويل الإحداثيات'],['t:compass','البوصلة'],['t:qibla','القبلة'],['t:vol','الكميات والحفر'],['t:lvl','المناسيب'],['t:crv','المنحنيات'],['t:trv','تصحيح المضلع'],['t:inv','المسافة والاتجاه'],['t:area','المساحة من الإحداثيات'],['t:slope','الميل والانحدار'],['t:tach','الرصد بالمحطة الشاملة'],['t:vcrv','المنحنيات الرأسية']]],
+['أدوات المساحة',[['t:shapes','حاسبة الأشكال'],['t:triangle','المثلثات'],['t:convert','تحويل الوحدات'],['t:calc','جمع وطرح'],['t:map','الخريطة والرفع'],['t:coord','تحويل الإحداثيات'],['t:compass','البوصلة'],['t:qibla','القبلة'],['t:vol','الكميات والحفر'],['t:lvl','المناسيب'],['t:crv','المنحنيات'],['t:trv','تصحيح المضلع']]],
 ['الأقسام',[['s:studio','البرمجة'],['s:survey','المساحة'],['s:gis','الجيوماتكس'],['s:py','المختبر']]],
-['ميزات',[['f:gis_cards','كروت الجيوماتكس'],['f:gis_chat','شات الجيوماتكس'],['f:lab','مختبر الأكواد'],['f:studio','توليد المواقع'],['f:teacher','المدرس الذكي']]],
+['ميزات',[['f:gis_cards','كروت الجيوماتكس'],['f:gis_chat','شات الجيوماتكس'],['f:lab','مختبر الأكواد'],['f:studio','توليد المواقع']]],
 ['محركات AI',[['e:g38','GEO 3.8 FLASH'],['e:g52','GEO 5.2 ULTRA']]]];
 const DEF_PRO=['t:triangle','t:map','t:coord','t:compass','t:qibla','f:gis_cards','f:gis_chat','f:lab','f:studio','e:g38','e:g52'];
 let CFG={};try{CFG=JSON.parse(localStorage.getItem('gd_ctl')||'{}')||{}}catch(e){}
@@ -3166,9 +2876,7 @@ function applyCfg(){
   proConfig={tools:pk('t:'),engines:pk('e:'),features:pk('f:')};localStorage.setItem('gd_pro_config',JSON.stringify(proConfig));
   document.querySelectorAll('[data-ctl]').forEach(s=>s.value=st(s.dataset.ctl));
   document.querySelectorAll('nav button[data-t]').forEach(b=>{if(b.dataset.t!='admin')b.style.display=off('s:'+b.dataset.t)?'none':''});
-  ['renderSurveyGrid','renderGisCards','renderEng'].forEach(f=>{try{window[f]()}catch(e){}});
-  document.dispatchEvent(new Event('geo:cfg'))}
-window.geoFeatureState=id=>off('f:'+id)?'off':st('f:'+id);
+  ['renderSurveyGrid','renderGisCards','renderEng'].forEach(f=>{try{window[f]()}catch(e){}})}
 async function pullCfg(){try{const r=await fetch((window.GEO_API||'')+'/config');if(!r.ok)return;const j=await r.json();
   if(j&&j.at){CFG=j.cfg||{};localStorage.setItem('gd_ctl',JSON.stringify(CFG));applyCfg();return}
   /* لم تُحفظ إعدادات على الخادم بعد: نقرأ النسخة القديمة من Firestore مرة واحدة */
@@ -3193,7 +2901,7 @@ window.saveCtl=async()=>{const n={};document.querySelectorAll('[data-ctl]').forE
 
 /* ---------- عداد انتهاء الاشتراك ---------- */
 const pad=n=>String(n).padStart(2,'0');
-const cdText=ms=>{const s=Math.max(0,ms/1000|0);return(s>=86400?(s/86400|0)+'ي ':'')+pad(s%86400/3600|0)+':'+pad(s%3600/60|0)+':'+pad(s%60)};
+const cdText=ms=>{const s=Math.max(0,ms/1000|0),d=s/86400|0,h=s%86400/3600|0,m=s%3600/60|0;return d>0?d+'d '+h+'h '+m+'m':h>0?h+'h '+m+'m '+(s%60)+'s':m+'m '+(s%60)+'s'};
 const proEnd=()=>{const m=typeof me=='function'?me():null;return m&&m.proUntil>Date.now()?m.proUntil:0};
 function tick(){const e=proEnd();['gdCd','dCd','pfCd'].forEach(i=>{const x=$(i);if(x)x.textContent=e?''+cdText(e-Date.now()):''});
   const pe=$('pfEnd');if(pe)pe.textContent=e?'ينتهي في: '+new Date(e).toLocaleString('ar-EG'):(isAdm()?'حساب الأدمن — بدون انتهاء':'لا يوجد اشتراك فعّال — فعّل كود للحصول على PRO');
@@ -3301,6 +3009,110 @@ window.usRevoke=async i=>{
   try{await api('/admin/setPro',{method:'POST',body:{uid:u.uid,mode:'revoke'}});toast('تم إلغاء الاشتراك','success');usLoad();dashLoad()}
   catch(e){toast(hint(e),'error')}};
 W('adminLoad',o=>{o();dashLoad();usLoad()});
+})();
+</script>
+<script id="gd-v33-js">
+(function(){
+const el=id=>document.getElementById(id);
+const api=(p,o)=>window.geoApi?window.geoApi(p,o):Promise.reject(new Error('unavailable'));
+const hm=ms=>new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const myUid=()=>{try{return firebase.auth().currentUser.uid}catch(e){return''}};
+const authed=()=>sessionStorage.getItem('gd_auth')==='1';
+
+/* ===== الدردشة الجماعية ومحادثة الإدارة ===== */
+let mode='group',thread=null,last=0,timer=null,busy=false,un={group:0,dm:0};
+const sk=k=>'gd_seen_'+k+'_'+uemail();
+const seenGet=k=>+localStorage.getItem(sk(k))||0;
+const seenSet=(k,v)=>{if(v>seenGet(k))localStorage.setItem(sk(k),v)};
+function dot(){const g=un.group>seenGet('group'),d=un.dm>seenGet('dm');
+  document.querySelectorAll('.gc-dot1').forEach(x=>x.style.display=g?'inline-block':'none');
+  document.querySelectorAll('.gc-dot2').forEach(x=>x.style.display=d?'inline-block':'none')}
+async function poll(){if(document.hidden||!authed())return;
+  try{const r=await api('/chat/unread');if(localStorage.getItem(sk('group'))===null)seenSet('group',r.group);un=r;dot()}catch(e){}}
+document.body.insertAdjacentHTML('beforeend',`<div id="gcPanel" class="gc" style="display:none">
+ <div class="gc-h"><button class="k" id="gcBack" onclick="gcBack()" style="display:none">رجوع</button><b id="gcTitle"></b><button class="k" onclick="gcClose()">إغلاق</button></div>
+ <div class="gc-tabs"><button id="gcT1" onclick="gcOpen('group')">الدردشة الجماعية</button><button id="gcT2" onclick="gcOpen('dm')"></button></div>
+ <div id="gcList" class="gc-list"></div>
+ <div class="gc-in" id="gcIn"><textarea id="gcTxt" rows="1" maxlength="600" placeholder="اكتب رسالتك" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();gcSend()}"></textarea><button class="g" onclick="gcSend()">إرسال</button></div>
+</div>`);
+const dmLabel=()=>isAdm()?'رسائل المستخدمين':'محادثة الإدارة';
+function paint(){
+  el('gcT1').classList.toggle('on',mode==='group');el('gcT2').classList.toggle('on',mode==='dm');el('gcT2').textContent=dmLabel();
+  el('gcTitle').textContent=mode==='group'?'الدردشة الجماعية لمهندسي المنصة':(isAdm()?(thread?thread.email:'رسائل المستخدمين'):'محادثة الإدارة');
+  el('gcBack').style.display=(mode==='dm'&&isAdm()&&thread)?'':'none';
+  el('gcIn').style.display=(mode==='dm'&&isAdm()&&!thread)?'none':'flex'}
+function bub(m){
+  const g=mode==='group',adm=g?m.admin:m.from_admin,mine=g?m.uid===myUid():(isAdm()?!!m.from_admin:!m.from_admin);
+  const name=g?m.name:(m.from_admin?'الإدارة':'المستخدم');
+  const del=(g&&isAdm())?`<button class="gc-x" onclick="gcDel(${m.id},this)">حذف</button>`:'';
+  return `<div class="gc-m${mine?' me':''}${adm?' adm':''}"><div class="gc-n"><b>${esc(name)}</b><span>${hm(m.at)}</span></div><div class="gc-t">${esc(m.text)}</div>${del}</div>`}
+async function load(first){
+  if(busy)return;busy=true;const box=el('gcList');
+  try{
+    if(mode==='dm'&&isAdm()&&!thread){
+      const r=await api('/admin/dms');window._gcT=r.threads;
+      box.innerHTML=r.threads.length?r.threads.map((t,i)=>`<div class="gc-th" onclick="gcThread(${i})"><b dir="ltr">${esc(t.email||'-')}</b><span class="mt">${t.from_admin?'الإدارة: ':''}${esc((t.text||'').slice(0,70))}</span></div>`).join(''):'<div class="mt gc-empty">لا توجد رسائل بعد.</div>';
+      try{const u=await api('/chat/unread');seenSet('dm',u.dm)}catch(e){}
+      return}
+    let url=mode==='group'?'/chat/group':'/chat/dm';const q=[];
+    if(mode==='dm'&&isAdm())q.push('uid='+encodeURIComponent(thread.uid));
+    if(last)q.push('after='+last);
+    const r=await api(url+(q.length?'?'+q.join('&'):''));
+    if(first)box.innerHTML='';
+    if(r.msgs.length){const e0=box.querySelector('.gc-empty');if(e0)e0.remove()}
+    r.msgs.forEach(m=>{box.insertAdjacentHTML('beforeend',bub(m));last=Math.max(last,m.id)});
+    if(first&&!r.msgs.length)box.innerHTML='<div class="mt gc-empty">لا توجد رسائل بعد، ابدأ المحادثة.</div>';
+    if(r.msgs.length)box.scrollTop=box.scrollHeight;
+    if(mode==='group')seenSet('group',last);else if(!isAdm())seenSet('dm',last);
+    else{try{const u=await api('/chat/unread');seenSet('dm',u.dm)}catch(e){}}
+    dot();
+  }catch(e){if(first)box.innerHTML='<div class="mt gc-empty">تعذّر تحميل الرسائل. حاول مرة أخرى.</div>'}
+  finally{busy=false}}
+window.gcOpen=m=>{
+  if(!authed())return toast('سجّل الدخول أولًا','warn');
+  mode=m;thread=null;last=0;busy=false;el('gcPanel').style.display='flex';
+  el('gcList').innerHTML='<div class="mt gc-empty">جارٍ التحميل...</div>';paint();load(true);
+  clearInterval(timer);timer=setInterval(()=>load(false),4000)};
+window.gcClose=()=>{el('gcPanel').style.display='none';clearInterval(timer);timer=null;poll()};
+window.gcBack=()=>{thread=null;last=0;busy=false;paint();load(true)};
+window.gcThread=i=>{thread=(window._gcT||[])[i];if(!thread)return;last=0;busy=false;paint();el('gcList').innerHTML='';load(true)};
+window.gcSend=async()=>{
+  const t=el('gcTxt'),v=t.value.trim();if(!v)return;
+  try{const body={text:v};if(mode==='dm'&&isAdm())body.uid=thread.uid;
+    t.value='';await api(mode==='group'?'/chat/group':'/chat/dm',{method:'POST',body});busy=false;load(false)}
+  catch(e){t.value=v;toast(e.message==='slow_down'?'يرجى الانتظار قليلًا قبل إرسال رسالة أخرى':'تعذّر إرسال الرسالة','warn')}};
+window.gcDel=async(id,b)=>{
+  if(!confirm('حذف هذه الرسالة؟'))return;
+  try{await api('/admin/chatDelete',{method:'POST',body:{id}});b.closest('.gc-m').remove()}catch(e){toast('تعذّر الحذف','error')}};
+(function(){
+  const html='<button onclick="toggleDrawer();gcOpen(\'group\')">الدردشة الجماعية<i class="gc-dot gc-dot1"></i></button><button id="gcDmBtn" onclick="toggleDrawer();gcOpen(\'dm\')"><span>محادثة الإدارة</span><i class="gc-dot gc-dot2"></i></button>';
+  const mb=el('modeBtn'),dm=document.querySelector('#drw .dm');
+  if(mb)mb.insertAdjacentHTML('afterend',html);else if(dm)dm.insertAdjacentHTML('afterbegin',html)})();
+W('toggleDrawer',o=>{o();const s=document.querySelector('#gcDmBtn span');if(s)s.textContent=dmLabel();poll()});
+setInterval(poll,45000);setTimeout(poll,4000);
+
+/* ===== دعوة الانضمام لقناة المنصة (تظهر مرة واحدة بعد كل دخول، وتتوقف بعد الانضمام) ===== */
+const CH_URL='https://whatsapp.com/channel/0029Vb9Z8H58KMqpqJfFJA0s';
+function chShow(n){
+  if(localStorage.getItem('gd_ch_joined')||sessionStorage.getItem('gd_ch_shown')||!authed()||isAdm())return;
+  if(el('proM')&&n<15)return setTimeout(()=>chShow(n+1),4000);
+  sessionStorage.setItem('gd_ch_shown','1');
+  document.body.insertAdjacentHTML('beforeend',`<div id="chM" class="tool-modal on" style="z-index:130" onclick="if(event.target===this)this.remove()"><div class="tool-content" style="padding:22px;text-align:center;max-width:380px"><h3 style="margin:0 0 8px">تابع قناة المنصة</h3><p class="mt" style="line-height:1.9">انضم إلى قناة المنصة على واتساب لمتابعة أحدث التعديلات والتحديثات.</p><div class="row" style="margin-top:14px"><button class="g" style="flex:1" onclick="chJoin()">الانضمام إلى القناة</button><button class="k" style="flex:1" onclick="document.getElementById('chM').remove()">لاحقًا</button></div></div></div>`)}
+window.chJoin=()=>{localStorage.setItem('gd_ch_joined','1');window.open(CH_URL,'_blank','noopener');const m=el('chM');if(m)m.remove()};
+W('afterLogin',o=>{o();setTimeout(()=>chShow(0),6000);setTimeout(poll,3000)});
+setTimeout(()=>chShow(0),6000);
+
+/* ===== تثبيت المنصة (PWA) ===== */
+let dfp=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function instBar(ios){
+  if(standalone()||el('gdInst'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div id="gdInst" class="gd-inst" role="dialog" aria-label="تثبيت المنصة"><div><b>تثبيت المنصة على جهازك</b><span>${ios?'اضغط زر المشاركة في المتصفح ثم اختر إضافة إلى الشاشة الرئيسية.':'وصول أسرع وتجربة أقرب إلى التطبيق.'}</span></div><div class="gd-inst-a">${ios?'':'<button class="g" onclick="gdInstall()">تثبيت</button>'}<button class="k" onclick="gdInstHide()">${ios?'حسنًا':'لاحقًا'}</button></div></div>`)}
+window.gdInstHide=()=>{const b=el('gdInst');if(b)b.remove()};
+window.gdInstall=async()=>{if(!dfp)return gdInstHide();dfp.prompt();try{await dfp.userChoice}catch(e){}dfp=null;gdInstHide()};
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dfp=e;instBar(false)});
+window.addEventListener('appinstalled',()=>{dfp=null;gdInstHide()});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone()&&!sessionStorage.getItem('gd_ios_hint')){sessionStorage.setItem('gd_ios_hint','1');setTimeout(()=>instBar(true),2500)}
 })();
 </script>
 
