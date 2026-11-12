@@ -834,7 +834,7 @@ Smooth scroll`;
 
 const SYS_GIS = `أنت خبير جغرافيا وجيوماتكس (GIS) من الطراز الأول. 
 مهمتك الوحيدة هي الإجابة عن الأسئلة المتعلقة بـ:
-1. الجغرافيا الطبيعية والبشرية والاقتصادية.
+1.  الجغرافيا الطبيعية والبشرية والاقتصادية وكل ما يتعلق بالجغرافيا في العالم .
 2. نظم المعلومات الجغرافية (ArcGIS, QGIS, PostGIS, Spatial Analysis).
 3. الاستشعار عن بعد (Remote Sensing, GEE, NDVI).
 4. الخرائط والإسقاطات ونظم الإحداثيات.
@@ -970,6 +970,12 @@ function go(t){
   if(t=="admin"&&adminAuthed)adminLoad();
 }
 function addMsg(r,h,target="chat"){const d=document.createElement("div");d.className="m "+r;d.innerHTML=h;$(target).appendChild(d);$(target).scrollTop=1e9;return d}
+  function scrollToReplyStart(el,box){
+ requestAnimationFrame(()=>{
+  const y=el.getBoundingClientRect().top-box.getBoundingClientRect().top+box.scrollTop;
+  box.scrollTop=Math.max(0,y-8);
+ });
+                                  }
 function md(t){
   const div=document.createElement("div");
   div.innerHTML=DOMPurify.sanitize(marked.parse(t));
@@ -1055,8 +1061,7 @@ async function testAI(){
     out.innerHTML='<b style="color:var(--gr)">نجح!</b> '+esc((r.text||'').slice(0,80));
   }catch(e){out.innerHTML='<b style="color:#f87171">فشل:</b> '+esc(e.message||e)}finally{btn.disabled=false}
 }
-
-async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={}){
+async function callAI(prompt,{signal,onText,onChunk,tier,images,cfgOverride,sysPrompt}={}){
   const c=cfgOverride||getCfg(),prov=c.provider||'groq';
   if(prov==='claude'){if(!window.claude)throw new Error('window.claude غير متاح');const s=await window.claude.use('sample');if(!s)throw new Error('Claude غير متاح');const base={cache:false,modelTier:tier||'default',...(images&&images.length?{images}:{})};let r;try{r=await s(prompt,{...base,onText})}catch(e){if(e&&(e.name==='DataCloneError'||/cloned/i.test(e.message||''))){r=await s(prompt,base);onText&&onText({text:r.text})}else throw e}return{text:r.text,truncated:r.truncated}}
   if(!c.key)throw new Error('لا يوجد API Key');
@@ -1085,7 +1090,11 @@ async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={
         const j=JSON.parse(d);
         const choice=j.choices?.[0];
         const t=choice?.delta?.content;
-        if(t){full+=t;onText&&onText({text:full})}
+        if(t){
+  full+=t;
+  onChunk&&onChunk({text:t,fullText:full});
+  onText&&onText({text:full});
+  }
         if(choice?.finish_reason==='length')truncated=true;
       }catch(e){}
     }
@@ -1100,7 +1109,8 @@ async function callAIWithRetry(prompt,opts,onStatus){
 
 async function ask(prompt,shown){
  addMsg("u",esc(shown||prompt));
- const el=addMsg("a","جارٍ التنفيذ...");
+const el=addMsg("a","جارٍ التنفيذ...");
+scrollToReplyStart(el,$("chat"));
  $("st").textContent="...";$("stop").style.display="inline-block";
  const imgs=AT.filter(a=>a.img).map(a=>a.img);
  if(AT.length){prompt+="\n\nالملفات:\n"+AT.filter(a=>a.t).map(a=>"### "+a.n+"\n```\n"+a.t+"\n```").join("\n")+(imgs.length?"\n("+imgs.length+" صورة)":"");AT=[];ats()}
@@ -1110,9 +1120,16 @@ async function ask(prompt,shown){
   const conv=hist.slice(-6).map(slim).map(m=>(m.role=="user"?"المهندس: ":"المساعد: ")+m.content).join("\n\n");
   const isCodeRequest=/(?:اكتب\s*كود|كود|برمج|صمم|تصميم|موقع|صفحة|واجهة|تطبيق|لعبة|dashboard|landing|portfolio|html|css|javascript|js\b|php|python|react|vue|tailwind|api|دالة|function|class\b|script|sql|civil|autolisp|web\s*app|كود\s*كامل)/i.test(shown||prompt);
   const fullPrompt=(isCodeRequest?SYS+DES:SYS)+"\n\nالمحادثة:\n"+conv+"\n\nرد الآن.";
-  const callOpts={signal:(ctl=new AbortController()).signal,onText:({text})=>{el.innerHTML=md(text);$("chat").scrollTop=1e9},tier:$("tier").value};
+  let allText="", iteration=0, liveNode=null;
 
-  let allText="", iteration=0;
+const callOpts={
+ signal:(ctl=new AbortController()).signal,
+ onChunk:({text})=>{
+  if(liveNode)liveNode.appendData(text);
+  $("st").textContent="يكتب...";
+ },
+ tier:$("tier").value
+};
   const MAX_ITER=4;
   let lastResult=null;
 
@@ -1126,9 +1143,14 @@ async function ask(prompt,shown){
         `أكمل من آخر حرف توقفت عنده تمامًا، دون مقدمات، ودون إعادة أي كود سابق، بدون كتابة "أكمل".\n\n`+
         `آخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
       $("st").textContent=`استكمال ${iteration}/${MAX_ITER-1}...`;
-      el.innerHTML=md(allText)+`<div class="mt" style="text-align:center;padding:8px">جاري الاستكمال...</div>`;
+;
     }
-    const r=await callAIWithRetry(currentPrompt,callOpts,msg=>{el.innerHTML=md(allText+(iteration>0?"\n\n":"")+msg);$("st").textContent=msg});
+    el.textContent=allText;
+liveNode=document.createTextNode("");
+el.appendChild(liveNode);
+    const r=await callAIWithRetry(currentPrompt,callOpts,msg=>{
+ $("st").textContent=msg;
+});
     allText+=r.text;lastResult=r;iteration++;
     if(!r.truncated)break;
   }
@@ -1139,7 +1161,8 @@ async function ask(prompt,shown){
   {const c=cur();if(c.t=="محادثة")c.t=(shown||prompt).slice(0,40);sv();hl()}
   $("stop").style.display="none";el.innerHTML=md(t);
   if(stillTruncated)el.innerHTML+=`<button class="g" style="width:100%;margin-top:8px" onclick="continueLast()">أكمل</button>`;
-  $("chat").scrollTop=1e9;$("st").textContent=stillTruncated?"اضغط للاستكمال":"تم";
+  scrollToReplyStart(el,$("chat"));
+$("st").textContent=stillTruncated?"اضغط للاستكمال":"تم";
   handleCode(t);
  }catch(e){$("stop").style.display="none";hist.pop();const m=e.code=="rate_limited"?"حد مؤقت":(e.message||"خطأ");
   el.innerHTML=`خطأ: ${esc(m)} <button class="k" style="margin-right:8px" onclick="ask(${JSON.stringify(prompt)},${JSON.stringify(shown||prompt)})">إعادة</button>`;
@@ -3113,6 +3136,69 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dfp=e;instB
 window.addEventListener('appinstalled',()=>{dfp=null;gdInstHide()});
 if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone()&&!sessionStorage.getItem('gd_ios_hint')){sessionStorage.setItem('gd_ios_hint','1');setTimeout(()=>instBar(true),2500)}
 })();
+
+  
+/* ===== Android Back Button: Close Open Tool First ===== */
+(function () {
+  let geoBackEntry = false;
+  let geoHandlingPop = false;
+
+  function getOpenModals() {
+    return [...document.querySelectorAll('.tool-modal.on')];
+  }
+
+  function syncBackState() {
+    const open = getOpenModals();
+
+    if (open.length && !geoBackEntry && !geoHandlingPop) {
+      history.pushState(
+        { geodevModal: true },
+        '',
+        location.href
+      );
+      geoBackEntry = true;
+    }
+
+    if (!open.length && geoBackEntry && !geoHandlingPop) {
+      geoBackEntry = false;
+      history.back();
+    }
+  }
+
+  window.addEventListener('popstate', function () {
+    if (!geoBackEntry) return;
+
+    geoBackEntry = false;
+    geoHandlingPop = true;
+
+    const open = getOpenModals();
+
+    if (open.length) {
+      open.sort((a, b) => {
+        const za = parseInt(getComputedStyle(a).zIndex) || 0;
+        const zb = parseInt(getComputedStyle(b).zIndex) || 0;
+        return zb - za;
+      });
+
+      open[0].classList.remove('on');
+    }
+
+    setTimeout(() => {
+      geoHandlingPop = false;
+      syncBackState();
+    }, 0);
+  });
+
+  const observer = new MutationObserver(syncBackState);
+
+  observer.observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['class']
+  });
+})();
+
 </script>
 
 </body>
