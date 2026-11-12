@@ -642,7 +642,23 @@ function refreshAcademyIcons(root = document) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.t = "academy";
-      button.innerHTML = "<span>🎓</span> الأكاديمية";
+      button.innerHTML = `
+  <span class="nav-icon">
+    <svg viewBox="0 0 24 24"
+         width="22" height="22"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.7"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+      <path d="M12 3a8 8 0 0 0-4 14.9V21h8v-3.1A8 8 0 0 0 12 3Z"/>
+      <path d="M9 8.5c1.2-1.5 2.8-1.5 3.5-.2 1.2-1.1 2.8-.4 2.8 1"/>
+      <path d="M12 8v7"/>
+      <path d="m17 16 4-4 1.5 1.5-4 4-2 .5.5-2Z"/>
+    </svg>
+  </span>
+  الأكاديمية
+`;
 
       button.addEventListener("click", () => {
         if (typeof window.go === "function") {
