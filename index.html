@@ -19,7 +19,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- مكتبة تحويل الـ PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -345,7 +344,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <div id="gate"><div class="card gt">
   <!-- شاشة تسجيل الدخول -->
   <div id="loginForm">
-    <div style="font-size:34px">🛡️</div><h2 style="margin:6px 0">GeoDev Studio Pro</h2>
+    <h2 style="margin:6px 0">GeoDev Studio Pro</h2>
     <p class="mt">بوابة الدخول — سجل دخولك أو أنشئ حساباً جديداً</p>
     <input id="em" type="email" class="c" placeholder="البريد الإلكتروني">
     <input id="pw" type="password" class="c" placeholder="كلمة المرور" onkeydown="if(event.key=='Enter')login()">
@@ -356,7 +355,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 
   <!-- شاشة إنشاء الحساب (مخفية افتراضياً) -->
   <div id="registerForm" style="display:none">
-    <div style="font-size:34px">📝</div><h2 style="margin:6px 0">إنشاء حساب جديد</h2>
+    <h2 style="margin:6px 0">إنشاء حساب جديد</h2>
     <p class="mt">انضم لمنصة GeoDev</p>
     <input id="regName" type="text" class="c" placeholder="الاسم بالكامل">
     <input id="regEmail" type="email" class="c" placeholder="البريد الإلكتروني">
@@ -371,10 +370,10 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <header>
 <div><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div>
 <div class="row">
-<button class="k" onclick="saveProjects()" title="حفظ المشروع (Ctrl+S)">💾</button>
-<button class="k" onclick="loadProjects()" title="فتح مشروع محفوظ">📂</button>
-<select id="tier" title="مستوى الذكاء الاصطناعي" style="width:auto;margin:0;padding:6px 8px;font-size:12px"><option value="quick">⚡ سريع</option><option value="default" selected>⚖️ متوازن</option><option value="complex">🧠 الأقوى</option></select>
-<button class="k" onclick="aiSettings()" title="إعدادات AI">⚙️</button>
+<button class="k" onclick="saveProjects()" title="حفظ المشروع (Ctrl+S)">حفظ</button>
+<button class="k" onclick="loadProjects()" title="فتح مشروع محفوظ">فتح</button>
+<select id="tier" title="مستوى الذكاء الاصطناعي" style="width:auto;margin:0;padding:6px 8px;font-size:12px"><option value="quick">سريع</option><option value="default" selected>متوازن</option><option value="complex">الأقوى</option></select>
+<button class="k" onclick="aiSettings()" title="إعدادات AI">إعدادات</button>
 <button class="r" onclick="logout()">خروج</button>
 </div>
 </header>
@@ -401,7 +400,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 </button>
 
 <button data-t="admin" onclick="go('admin')">
-<span class="nav-icon"><i data-lucide="settings"></i></span>الأدمن
+<span class="nav-icon"><i data-lucide="settings"></i></span>الإدارة
 </button>
 </nav>
 
@@ -410,20 +409,20 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <!-- ===== 1: المساعد ===== -->
 <section id="s-agent" class="sec on">
 <div class="row" style="flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px">
-<button class="k" onclick="qp('صمم موقع شركة مساحة وخرائط متكامل بكود كامل جاهز للمعاينة')">🌐 تصميم موقع</button>
-<button class="k" onclick="qp('قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم والظواهر الجغرافية')">🗺️ تحليل خريطة</button>
-<button class="k" onclick="qp('اكتب كود لبرنامج Civil 3D لتعديل النقاط المساحية')">🏗️ Civil 3D</button>
-<button class="k" onclick="qp('اشرح لي التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود')">🌍 جغرافيا</button>
+<button class="k" onclick="qp('صمم موقع شركة مساحة وخرائط متكامل بكود كامل جاهز للمعاينة')">تصميم موقع</button>
+<button class="k" onclick="qp('قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم والظواهر الجغرافية')">تحليل خريطة</button>
+<button class="k" onclick="qp('اكتب كود لبرنامج Civil 3D لتعديل النقاط المساحية')">Civil 3D</button>
+<button class="k" onclick="qp('اشرح لي التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود')">جغرافيا</button>
 </div>
 <div class="card">
-<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>🤖 المساعد الذكي (عام — موسوعة شاملة)</b><span class="row"><button class="k" onclick="hp()">🕘 السجل</button><button class="k" onclick="newChat()">+ محادثة جديدة</button></span></div>
+<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>المساعد الذكي (عام — موسوعة شاملة)</b><span class="row"><button class="k" onclick="hp()">السجل</button><button class="k" onclick="newChat()">+ محادثة جديدة</button></span></div>
 <div id="tokstat" class="mt" style="text-align:left;margin-bottom:4px">0 رسالة</div>
 <div id="hl" style="display:none;max-height:170px;overflow:auto;margin-bottom:8px"></div>
 <div id="chat"></div>
 <div id="ats" style="margin-top:6px"></div>
 <div class="row" style="flex-wrap:nowrap;margin-top:8px;align-items:flex-end">
-<button class="k" onclick="$('fl').click()" title="رفع">📎</button><input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''"><button class="k" id="mic" onclick="voice()">🎤</button>
-<textarea id="ui" rows="2" style="margin:0" placeholder="اسأل عن أي حاجة: جغرافيا، برمجة،  الخ " onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+<button class="k" onclick="$('fl').click()" title="رفع">إرفاق</button><input id="fl" type="file" multiple hidden accept="image/*,.txt,.js,.ts,.jsx,.tsx,.html,.css,.py,.json,.geojson,.kml,.gpx,.csv,.md,.php,.sql,.xml,.svg,.yaml,.yml" onchange="attach(this.files);this.value=''"><button class="k" id="mic" onclick="voice()" title="إدخال صوتي">إملاء</button>
+<textarea id="ui" rows="2" style="margin:0" placeholder="اطرح سؤالك في أي مجال: جغرافيا، برمجة، تصميم، مساحة..." onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
 <button onclick="send()">نفّذ ➤</button>
 </div></div>
 </section>
@@ -432,30 +431,30 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <section id="s-studio" class="sec">
 <div class="card">
   <div class="row" style="justify-content:space-between;margin-bottom:8px">
-    <h3 style="margin:0">🛠 اكتب التصميم أو الكود</h3>
+    <h3 style="margin:0">اكتب التصميم أو الكود</h3>
     <span class="row">
-      <button class="a" onclick="$('upCode').click()">📂 رفع كود</button>
+      <button class="a" onclick="$('upCode').click()">رفع كود</button>
       <input id="upCode" type="file" hidden accept=".html,.js,.css,.txt" onchange="loadCustomCode(this.files[0]);this.value=''">
-      <button class="k" onclick="exportZip()" title="تصدير ZIP (Ctrl+E)">📦 ZIP</button>
-      <button class="g" onclick="makePWA()">📱 PWA</button>
+      <button class="k" onclick="exportZip()" title="تصدير ZIP (Ctrl+E)">ZIP</button>
+      <button class="g" onclick="makePWA()">PWA</button>
     </span>
   </div>
 <textarea id="sd" rows="5" placeholder="اطلب أي شيء: تصميم موقع، خريطة تفاعلية، سكربت..."></textarea>
 <div class="mt" style="margin-bottom:4px">أمثلة:</div><div class="chips" id="ex"></div>
-<details><summary>⚙️ خيارات اختيارية</summary>
+<details><summary>خيارات اختيارية</summary>
 <div class="g2"><div>
 <select id="stp"><option value="">النوع: حسب وصفي</option><option>موقع شركة / بورتفوليو</option><option>موقع عقارات</option><option>متجر إلكتروني</option><option>تطبيق Web GIS</option><option>لوحة تحكم Dashboard</option><option>حاسبة / أداة مساحية</option><option>مدونة / موقع محتوى</option><option>صفحة هبوط Landing Page</option></select>
 <select id="slg"><option value="">اللغة: حسب وصفي</option><option>عربي RTL</option><option>إنجليزي LTR</option><option>ثنائي اللغة</option></select>
 <select id="ssy"><option value="">الستايل: حسب وصفي</option><option>داكن عصري</option><option>فاتح بسيط</option><option>زجاجي</option><option>رسمي للشركات</option><option>فاخر Luxury</option></select>
 </div><div class="chips" id="chips"></div></div></details>
-<div class="row"><button class="g" onclick="buildSite()">⚡ ولّد</button><span id="st" class="mt"></span><button class="r" id="stop" style="display:none" onclick="ctl&&ctl.abort()">إيقاف</button></div>
+<div class="row"><button class="g" onclick="buildSite()">ولّد</button><span id="st" class="mt"></span><button class="r" id="stop" style="display:none" onclick="ctl&&ctl.abort()">إيقاف</button></div>
 </div>
-<div class="card"><div class="row"><input id="ep" style="flex:1;min-width:180px" placeholder="طلب تعديل على الكود..."><button onclick="editSite()">✨ عدّل</button></div></div>
-<div id="rb" class="card row" style="display:none;justify-content:space-between"><b style="color:var(--gr)">✅ اكتمل</b><span class="row"><button class="a" onclick="ov(true)">فتح كاملة ↗</button><button class="k" onclick="full()">تبويب جديد</button></span></div>
+<div class="card"><div class="row"><input id="ep" style="flex:1;min-width:180px" placeholder="طلب تعديل على الكود..."><button onclick="editSite()">عدّل</button></div></div>
+<div id="rb" class="card row" style="display:none;justify-content:space-between"><b style="color:var(--gr)">اكتمل</b><span class="row"><button class="a" onclick="ov(true)">فتح كاملة ↗</button><button class="k" onclick="full()">تبويب جديد</button></span></div>
 <div id="blocks"></div>
 <div class="g2">
 <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="c" id="fn">index.html</b>
-<span class="row"><button class="k" onclick="toggleWrap()" id="wrapBtn" title="التفاف">↩</button><button class="k" onclick="preview()" title="معاينة">🔄</button><button class="k" onclick="fs(-1)">A−</button><button class="k" onclick="fs(1)">A+</button><button class="k" onclick="cp()">نسخ</button><button class="k" onclick="dlText($('code').value,$('fn').textContent)">تحميل</button></span></div>
+<span class="row"><button class="k" onclick="toggleWrap()" id="wrapBtn" title="التفاف">التفاف</button><button class="k" onclick="preview()" title="معاينة">معاينة</button><button class="k" onclick="fs(-1)">A−</button><button class="k" onclick="fs(1)">A+</button><button class="k" onclick="cp()">نسخ</button><button class="k" onclick="dlText($('code').value,$('fn').textContent)">تحميل</button></span></div>
 <div class="ed"><pre id="gut"></pre><div class="ec"><pre id="hlp"></pre><textarea id="code" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off"></textarea></div></div><div id="sb" class="mt c" style="margin-top:6px"></div></div>
 <div class="card"><div class="row" style="justify-content:space-between"><b style="color:var(--gr)">المعاينة</b><button class="a" onclick="ov(true)">كاملة ⤢</button></div><iframe id="pv" sandbox="allow-scripts allow-popups allow-forms" style="margin-top:6px"></iframe></div>
 </div>
@@ -464,33 +463,33 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <!-- ===== 3: المساحة (نظام الكروت الجديد) ===== -->
 <section id="s-survey" class="sec">
   <div class="card" style="background:linear-gradient(135deg, rgba(59,130,246,0.1), transparent);border-color:var(--bl)">
-    <h2 style="margin:0 0 8px;color:var(--bl)">📐 قسم المساحة الهندسية</h2>
+    <h2 style="margin:0 0 8px;color:var(--bl)">قسم المساحة الهندسية</h2>
     <p class="mt" style="margin:0;line-height:1.6">مجموعة أدوات متكاملة لحساب المساحات، الكميات، التكاليف، والتحويلات الهندسية. اختر الأداة للبدء.</p>
   </div>
 
   <div class="dash-grid" id="surveyGrid"></div>
 
   <!-- Modals -->
-  <div id="modal-shapes" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>📐 حاسبة الأشكال الهندسية</h3><button class="close-btn" onclick="closeTool('shapes')">✕</button></div><div class="tool-body">
+  <div id="modal-shapes" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>حاسبة الأشكال الهندسية</h3><button class="close-btn" onclick="closeTool('shapes')">✕</button></div><div class="tool-body">
     <select id="shapeType" onchange="shapeTypeChanged()">
-      <option value="square">⬛ مربع</option>
+      <option value="square">مربع</option>
       <option value="rect">▭ مستطيل</option>
-      <option value="circle">⚫ دائرة</option>
-      <option value="triangle_sss">🔺 مثلث (3 أضلاع)</option>
-      <option value="triangle_base">🔺 مثلث (قاعدة × ارتفاع)</option>
+      <option value="circle">دائرة</option>
+      <option value="triangle_sss">مثلث (3 أضلاع)</option>
+      <option value="triangle_base">مثلث (قاعدة × ارتفاع)</option>
       <option value="trapezoid">⬟ شبه منحرف</option>
       <option value="parallelogram">▱ متوازي أضلاع</option>
       <option value="regular_polygon">⬡ مضلع منتظم (ضلع)</option>
       <option value="regular_polygon_r">⬡ مضلع منتظم (نصف قطر)</option>
-      <option value="any_quad">🔷 رباعي بأي أضلاع + قطر</option>
+      <option value="any_quad">رباعي بأي أضلاع + قطر</option>
     </select>
     <div id="shapeInputs" style="margin-top:8px"></div>
-    <button class="g" style="width:100%;margin-top:8px" onclick="calcShape()">📊 احسب</button>
+    <button class="g" style="width:100%;margin-top:8px" onclick="calcShape()">احسب</button>
     <div id="shapeResult" class="res" style="display:none;line-height:2"></div>
   </div></div></div>
 
-  <div id="modal-triangle" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🔺 حاسبة المثلثات المتقدمة</h3><button class="close-btn" onclick="closeTool('triangle')">✕</button></div><div class="tool-body">
-    <div class="tri-hint" id="triHint">اختر نوع المعطيات وهنعرض الحقول المناسبة.</div>
+  <div id="modal-triangle" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>حاسبة المثلثات المتقدمة</h3><button class="close-btn" onclick="closeTool('triangle')">✕</button></div><div class="tool-body">
+    <div class="tri-hint" id="triHint">اختر نوع المعطيات لعرض الحقول المناسبة.</div>
     <select id="triMode" onchange="triModeChanged()">
       <option value="sss">3 أضلاع (SSS)</option>
       <option value="sas">ضلعان + زاوية (SAS)</option>
@@ -501,17 +500,17 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     </select>
     <div id="triInputs"></div>
     <div class="row" style="margin-top:6px">
-      <button class="g" style="flex:1" onclick="triSolve()">⚡ احسب</button>
-      <button class="k" onclick="triHelp()">❓ مساعدة</button>
+      <button class="g" style="flex:1" onclick="triSolve()">احسب</button>
+      <button class="k" onclick="triHelp()">مساعدة</button>
       <button class="k" onclick="triReset()">↺ مسح</button>
     </div>
     <div id="triResult"></div>
     <svg id="triSvg" width="100%" height="280" viewBox="0 0 400 280"></svg>
   </div></div></div>
 
-  <div id="modal-map" class="tool-modal"><div class="tool-content" style="max-width:900px"><div class="tool-header"><h3>🌍 الرفع المساحي</h3><button class="close-btn" onclick="closeTool('map')">✕</button></div><div class="tool-body">
+  <div id="modal-map" class="tool-modal"><div class="tool-content" style="max-width:900px"><div class="tool-header"><h3>الرفع المساحي</h3><button class="close-btn" onclick="closeTool('map')">✕</button></div><div class="tool-body">
     <div class="row" style="justify-content:space-between;margin-bottom:8px">
-      <span class="row"><button onclick="gps()">📍 GPS</button><button class="k" onclick="undo()">↩</button><button class="k" onclick="$('gf').click()">استيراد</button><input id="gf" type="file" hidden accept=".geojson,.json,.csv,.txt" onchange="impF(this.files[0]);this.value=''"><button class="g" onclick="exportGJ()">GeoJSON</button><button class="r" onclick="clearMap()">مسح</button></span>
+      <span class="row"><button onclick="gps()">GPS</button><button class="k" onclick="undo()">تراجع</button><button class="k" onclick="$('gf').click()">استيراد</button><input id="gf" type="file" hidden accept=".geojson,.json,.csv,.txt" onchange="impF(this.files[0]);this.value=''"><button class="g" onclick="exportGJ()">GeoJSON</button><button class="r" onclick="clearMap()">مسح</button></span>
     </div>
     <div id="map"></div>
     <div class="st"><div><div class="mt">النقاط</div><b id="pc" class="c" style="color:var(--bl)">0</b></div><div><div class="mt">الطول</div><b id="pl" class="c" style="color:var(--gr);font-size:12px">0 m</b></div><div><div class="mt">المحيط</div><b id="pp" class="c" style="color:var(--am);font-size:12px">0 m</b></div><div><div class="mt">المساحة</div><b id="pa" class="c" style="color:var(--am);font-size:12px">0 m²</b></div></div>
@@ -519,18 +518,18 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     <div style="overflow-x:auto;margin-top:8px"><table class="pt c"><thead><tr><th>#</th><th>Lat</th><th>Lng</th><th>E (Red)</th><th>N (Red)</th><th></th></tr></thead><tbody id="ptb"></tbody></table></div>
   </div></div></div>
 
-  <div id="modal-coord" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧭 محول الإحداثيات و COGO</h3><button class="close-btn" onclick="closeTool('coord')">✕</button></div><div class="tool-body">
+  <div id="modal-coord" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>محول الإحداثيات و COGO</h3><button class="close-btn" onclick="closeTool('coord')">✕</button></div><div class="tool-body">
     <input id="lat" type="number" step="any" value="28.1099" class="c" placeholder="Latitude">
     <input id="lng" type="number" step="any" value="30.7503" class="c" placeholder="Longitude">
     <button style="width:100%" onclick="conv(true)">حوّل ووقّع</button>
     <div class="res c"><div style="color:var(--bl)" id="utl">UTM</div><div id="utm"></div><div style="color:var(--am);margin-top:6px">Egypt Red Belt (EPSG:22992)</div><div id="etm"></div></div>
-    <h3 style="margin-top:14px">📏 Inverse COGO</h3>
+    <h3 style="margin-top:14px">Inverse COGO</h3>
     <div class="row"><input id="e1" type="number" value="1000" class="c" style="width:48%"><input id="n1" type="number" value="1000" class="c" style="width:48%"><input id="e2" type="number" value="1150" class="c" style="width:48%"><input id="n2" type="number" value="1220" class="c" style="width:48%"></div>
     <button class="g" style="width:100%;margin-top:6px" onclick="cogo()">احسب المسافة والانحراف</button>
     <div class="res c" id="cg">E1,N1 → E2,N2</div>
   </div></div></div>
 
-  <div id="modal-convert" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🔄 تحويل وحدات المساحة</h3><button class="close-btn" onclick="closeTool('convert')">✕</button></div><div class="tool-body">
+  <div id="modal-convert" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>تحويل وحدات المساحة</h3><button class="close-btn" onclick="closeTool('convert')">✕</button></div><div class="tool-body">
     <div class="g2">
       <div><label class="mt">متر مربع (m²)</label><input id="cvM2" type="number" placeholder="0" oninput="convArea('m2')"></div>
       <div><label class="mt">فدان</label><input id="cvFed" type="number" placeholder="0" oninput="convArea('fed')"></div>
@@ -539,7 +538,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     </div>
   </div></div></div>
 
-  <div id="modal-calc" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧮 جمع وطرح (فدان/متر)</h3><button class="close-btn" onclick="closeTool('calc')">✕</button></div><div class="tool-body">
+  <div id="modal-calc" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>جمع وطرح (فدان/متر)</h3><button class="close-btn" onclick="closeTool('calc')">✕</button></div><div class="tool-body">
     <div class="row" style="align-items:flex-start">
       <div style="flex:1"><label class="mt">فدان 1</label><input id="addF1" type="number" placeholder="0"></div>
       <div style="flex:1"><label class="mt">متر 1</label><input id="addM1" type="number" placeholder="0"></div>
@@ -553,19 +552,19 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     <div class="res" id="mathResult" style="display:none"></div>
   </div></div></div>
 
-  <div id="modal-compass" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🧭 البوصلة</h3><button class="close-btn" onclick="closeTool('compass')">✕</button></div><div class="tool-body">
+  <div id="modal-compass" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>البوصلة</h3><button class="close-btn" onclick="closeTool('compass')">✕</button></div><div class="tool-body">
     <p class="mt">تأكد من تفعيل مستشعر البوصلة في جهازك.</p>
     <div class="compass-wrap">
       <div class="compass-needle" id="compassNeedle"></div>
       <div id="compassText" style="font-size:20px;font-weight:bold;color:var(--bl)">0°</div>
       <div class="mt" id="compassDir">شمال</div>
     </div>
-    <button class="g" style="width:100%;margin-top:15px" onclick="startCompass()">تشغيل البوصلة 📍</button>
+    <button class="g" style="width:100%;margin-top:15px" onclick="startCompass()">تشغيل البوصلة</button>
   </div></div></div>
 
-  <div id="modal-qibla" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>🕋 اتجاه القبلة</h3><button class="close-btn" onclick="closeTool('qibla')">✕</button></div><div class="tool-body">
+  <div id="modal-qibla" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>اتجاه القبلة</h3><button class="close-btn" onclick="closeTool('qibla')">✕</button></div><div class="tool-body">
     <p class="mt">احسب اتجاه القبلة بناءً على إحداثياتك.</p>
-    <button style="width:100%;margin-bottom:10px" onclick="getGpsForQibla()">📍 استخدام موقعي الحالي</button>
+    <button style="width:100%;margin-bottom:10px" onclick="getGpsForQibla()">استخدام موقعي الحالي</button>
     <div class="row">
       <input id="qLat" type="number" step="any" placeholder="Latitude" style="width:48%">
       <input id="qLng" type="number" step="any" placeholder="Longitude" style="width:48%">
@@ -578,27 +577,26 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     </div>
   </div></div></div>
 
-  <div id="modal-dev" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>👨‍💻 عن التطبيق</h3><button class="close-btn" onclick="closeTool('dev')">✕</button></div><div class="tool-body" style="text-align:center;padding:30px 16px">
-    <div style="font-size:60px;margin-bottom:10px">🛠️</div>
+  <div id="modal-dev" class="tool-modal"><div class="tool-content"><div class="tool-header"><h3>عن التطبيق</h3><button class="close-btn" onclick="closeTool('dev')">✕</button></div><div class="tool-body" style="text-align:center;padding:30px 16px">
     <h2 style="margin:0 0 5px;color:var(--bl)">GeoDev Studio Pro</h2>
     <p class="mt" style="margin-bottom:20px">الإصدار 2.0</p>
     <p style="line-height:1.8">تم التطوير بواسطة المهندس/ <b>أحمد سمير</b><br><span class="mt">خبير الجيوماتكس والمساحة</span></p>
     <div class="row" style="justify-content:center;margin-top:20px">
-      <button class="k" onclick="toast('شكراً لتقييمك! ⭐⭐⭐⭐⭐','success')">⭐ تقييم التطبيق</button>
+      <button class="k" onclick="toast('شكراً لتقييمك!','success')">تقييم التطبيق</button>
     </div>
   </div></div></div>
 
   <div class="card" style="grid-column:1/-1;">
-    <h3>🛠️ أدوات إضافية</h3>
+    <h3>أدوات إضافية</h3>
     <div class="row" style="margin-bottom:10px">
-      <button class="a" onclick="$('csvFile').click()">📁 CSV → TXT</button>
+      <button class="a" onclick="$('csvFile').click()">CSV → TXT</button>
       <input id="csvFile" type="file" hidden accept=".csv" onchange="csvToTxt(this.files[0]);this.value=''">
       <span class="mt">يحوّل الإحداثيات (P,E,N,Z) لصيغة Total Station.</span>
     </div>
     <div class="row">
-      <button class="k" onclick="go('agent');qp('اشرح لي طريقة حساب مساحة شكل غير منتظم باستخدام Triangulation خطوة بخطوة')">🔺 Triangulation</button>
-      <button class="k" onclick="go('agent');qp('اكتب كود Autolisp أو Python لبرنامج Civil 3D لتعديل نقاط الرفع المساحي')">🏗️ Civil 3D</button>
-      <button class="k" onclick="go('agent');qp('احسب لي ميزانية تقريبية لمشروع رفع مساحي لمساحة 100 فدان بأسعار السوق')">💰 ميزانية</button>
+      <button class="k" onclick="go('agent');qp('اشرح لي طريقة حساب مساحة شكل غير منتظم باستخدام Triangulation خطوة بخطوة')">Triangulation</button>
+      <button class="k" onclick="go('agent');qp('اكتب كود Autolisp أو Python لبرنامج Civil 3D لتعديل نقاط الرفع المساحي')">Civil 3D</button>
+      <button class="k" onclick="go('agent');qp('احسب لي ميزانية تقريبية لمشروع رفع مساحي لمساحة 100 فدان بأسعار السوق')">ميزانية</button>
     </div>
   </div>
 </section>
@@ -606,7 +604,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <!-- ===== 4: الجيوماتكس (مع الشات المخصص) ===== -->
 <section id="s-gis" class="sec">
 <div class="card">
-  <h3>🌍 الجيوماتكس والجغرافيا</h3>
+  <h3>الجيوماتكس والجغرافيا</h3>
   <p class="mt">اختر موضوعاً لتبدأ المحادثة المخصصة في الأسفل، أو اسأل الشات مباشرة.</p>
 </div>
 <div class="g2" id="gisCards"></div>
@@ -614,7 +612,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <!-- GIS Dedicated Chat -->
 <div class="card" style="border-color:var(--gr);margin-top:12px">
   <div class="row" style="justify-content:space-between;margin-bottom:8px">
-    <b style="color:var(--gr)">🌍 شات الجغرافيا المخصص (GIS Only)</b>
+    <b style="color:var(--gr)">شات الجغرافيا المخصص (GIS Only)</b>
     <button class="k" onclick="$('gisChatBox').innerHTML=''">+ جديد</button>
   </div>
   <div id="gisChatBox" style="height:35vh;min-height:200px;border-color:var(--gr)"></div>
@@ -627,7 +625,7 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 
 <!-- ===== 5: المختبر ===== -->
 <section id="s-py" class="sec">
-<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="row"><b>🧪 مختبر الأكواد</b><select id="pl2" style="width:auto;margin:0;padding:6px" onchange="swapLang()"><option value="js" selected>JavaScript</option><option value="py">Python (Pyodide)</option></select></span><button class="a" onclick="runPy()">▶ تشغيل</button></div>
+<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="row"><b>مختبر الأكواد</b><select id="pl2" style="width:auto;margin:0;padding:6px" onchange="swapLang()"><option value="js" selected>JavaScript</option><option value="py">Python (Pyodide)</option></select></span><button class="a" onclick="runPy()">▶ تشغيل</button></div>
 <div class="g2"><textarea id="py" class="c" rows="14" spellcheck="false" style="color:var(--am)"></textarea>
 <pre id="po" class="res" style="margin:0;color:var(--gr);min-height:200px;overflow:auto">اضغط تشغيل...</pre></div></div>
 </section>
@@ -635,50 +633,49 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 <!-- ===== 6: الأدمن ===== -->
 <section id="s-admin" class="sec">
 <div id="adminGate" class="card">
-  <h3>🔐 بوابة الأدمن</h3>
-
-  <input id="adminPw" type="password" class="c" placeholder="كلمة سر الأدمن" onkeydown="if(event.key=='Enter')adminLogin()">
-  <button class="g" style="width:100%" onclick="adminLogin()">دخول</button>
+  <h3>لوحة الإدارة</h3>
+  <p class="mt">الدخول متاح لحساب الإدارة فقط، بعد تسجيل الدخول والتحقق من البريد الإلكتروني.</p>
+  <button class="g" style="width:100%" onclick="adminLogin()">دخول لوحة الإدارة</button>
 </div>
 
 <div id="adminPanel" style="display:none">
 <div class="card">
   <div class="row" style="justify-content:space-between">
-    <h3 style="margin:0">⚙️ لوحة الإعدادات</h3>
-    <button class="r" onclick="adminLock()">🔒 قفل</button>
+    <h3 style="margin:0">لوحة الإعدادات</h3>
+    <button class="r" onclick="adminLock()">قفل</button>
   </div>
 </div>
 
 <div class="card">
-  <h3>🤖 إعدادات AI</h3>
+  <h3>إعدادات AI</h3>
   <button class="k" onclick="aiSettings()">فتح إعدادات المصدر</button>
   <input id="adminMaxTokens" type="number" placeholder="max_tokens" value="8000" style="margin-top:8px">
-  <button class="g" onclick="localStorage.setItem('gd_max_tokens',document.getElementById('adminMaxTokens').value);toast('✅ تم','success')">حفظ max_tokens</button>
+  <button class="g" onclick="localStorage.setItem('gd_max_tokens',document.getElementById('adminMaxTokens').value);toast('تم','success')">حفظ max_tokens</button>
 </div>
 
 <div class="card">
-  <h3>📝 تعديل SYS Prompt</h3>
+  <h3>تعديل SYS Prompt</h3>
   <textarea id="adminSys" rows="8" class="c"></textarea>
-  <button class="g" onclick="adminSaveSys()">💾 حفظ SYS</button>
+  <button class="g" onclick="adminSaveSys()">حفظ SYS</button>
 </div>
 
 <div class="card">
-  <h3>📝 تعديل DES Prompt</h3>
+  <h3>تعديل DES Prompt</h3>
   <textarea id="adminDes" rows="8" class="c"></textarea>
-  <button class="g" onclick="adminSaveDes()">💾 حفظ DES</button>
+  <button class="g" onclick="adminSaveDes()">حفظ DES</button>
 </div>
 
 <div class="card">
-  <h3>🎨 تعديل الثيم</h3>
+  <h3>تعديل الثيم</h3>
   <div id="themeEditor" class="g2"></div>
-  <button class="g" style="width:100%;margin-top:8px" onclick="adminSaveTheme()">💾 حفظ الثيم</button>
+  <button class="g" style="width:100%;margin-top:8px" onclick="adminSaveTheme()">حفظ الثيم</button>
 </div>
 
 <div class="card">
-  <h3>📤 تصدير / استيراد</h3>
+  <h3>تصدير / استيراد</h3>
   <div class="row">
-    <button class="k" onclick="adminExport()">⬇️ تصدير JSON</button>
-    <button class="k" onclick="$('adminImport').click()">⬆️ استيراد JSON</button>
+    <button class="k" onclick="adminExport()">تصدير JSON</button>
+    <button class="k" onclick="$('adminImport').click()">استيراد JSON</button>
     <input id="adminImport" type="file" hidden accept=".json" onchange="adminImportFile(this.files[0]);this.value=''">
   </div>
 </div>
@@ -687,11 +684,11 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
 
 </main>
 
-<button id="fab" onclick="toggleSelfModify()" title="AI Assistant" style="position:fixed;bottom:80px;left:20px;z-index:100;border-radius:50%;width:56px;height:56px;font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,0.6);background:linear-gradient(135deg,var(--bl),#8b5cf6);color:white;display:flex;align-items:center;justify-content:center;border:2px solid #fff;cursor:pointer">✨</button>
+<button id="fab" onclick="toggleSelfModify()" title="AI Assistant" style="position:fixed;bottom:80px;left:20px;z-index:100;border-radius:50%;width:56px;height:56px;font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,0.6);background:linear-gradient(135deg,var(--bl),#8b5cf6);color:white;display:flex;align-items:center;justify-content:center;border:2px solid #fff;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
 
 <div id="selfModModal" style="display:none;position:fixed;bottom:150px;left:20px;z-index:100;background:var(--cd);border:1px solid var(--ln);padding:16px;border-radius:16px;width:min(340px,calc(100vw - 40px));box-shadow:0 8px 32px rgba(0,0,0,0.8);">
   <div class="row" style="justify-content:space-between;margin-bottom:8px">
-    <h4 style="margin:0;color:var(--tx)">✨ تعديل الثيم بالـ AI</h4>
+    <h4 style="margin:0;color:var(--tx)">تعديل الثيم بالـ AI</h4>
     <button class="k" style="padding:2px 8px;font-size:10px" onclick="toggleSelfModify()">✕</button>
   </div>
   <p class="mt" style="margin-bottom:8px">اطلب تعديل الألوان.</p>
@@ -702,10 +699,10 @@ details{margin-bottom:8px}summary{cursor:pointer;color:var(--bl);margin-bottom:6
     <label class="chip" onclick="$('selfModInput').value='أخضر وأصفر حيوي'">أخضر وأصفر</label>
     <label class="chip" onclick="$('selfModInput').value='رجوع للافتراضي (أزرق داكن)'">افتراضي</label>
   </div>
-  <button class="a" onclick="applySelfModify(this)" style="width:100%">🚀 تنفيذ</button>
+  <button class="a" onclick="applySelfModify(this)" style="width:100%">تنفيذ</button>
 </div>
 
-<div id="ov"><div class="bar"><b>🌐</b><div id="url" class="c">https://my-site.preview/</div><button class="k" onclick="mount($('ovf'),html())" title="تحديث">⟳</button><button class="k" onclick="dev('420px')">📱</button><button class="k" onclick="dev('860px')">▭</button><button class="k" onclick="dev('100%')">🖥</button><button class="k" onclick="dlText(html(),'site.html')">تحميل</button><button class="r" onclick="ov(false)">إغلاق ✕</button></div><div id="ovw"><iframe id="ovf" sandbox="allow-scripts allow-popups allow-forms"></iframe></div></div>
+<div id="ov"><div class="bar"><b>الرابط</b><div id="url" class="c">https://my-site.preview/</div><button class="k" onclick="mount($('ovf'),html())" title="تحديث">⟳</button><button class="k" onclick="dev('420px')">جوال</button><button class="k" onclick="dev('860px')">لوحي</button><button class="k" onclick="dev('100%')">حاسوب</button><button class="k" onclick="dlText(html(),'site.html')">تحميل</button><button class="r" onclick="ov(false)">إغلاق ✕</button></div><div id="ovw"><iframe id="ovf" sandbox="allow-scripts allow-popups allow-forms"></iframe></div></div>
 
 <script>
 const ADMIN_EMAIL="eng.ahmedsamir.gis@gmail.com";
@@ -720,18 +717,18 @@ const DEFAULT_AI={
   backupKey:'',
   backupModel:'openai/gpt-oss-20b'
 };
-let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصصات، بتشتغل مع م. أحمد سمير.
-شخصيتك زي ChatGPT: ودود، مباشر، دقيق، وعندك معرفة واسعة في كل المجالات.
+let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصصات، تعمل مع م. أحمد سمير.
+أسلوبك رسمي ومهني: واضح ومباشر ودقيق، ولديك معرفة واسعة في مختلف المجالات.
 
 == قواعد إلزامية ==
-1. **التحية والمحادثة العادية** ("أهلا"، "إزيك"، "شكراً"، "مين إنت"، "إيه أخبارك"):
-   → رد طبيعي قصير ومفيد. **ممنوع تماماً** تطلع كود أو HTML أو صفحة.
+1. **التحية والمحادثة العادية** ("مرحبًا"، "السلام عليكم"، "شكرًا"، "من أنت؟"، "كيف حالك؟"):
+   → رد بعبارات رسمية مختصرة ومفيدة. **يُمنع تمامًا** إخراج كود أو HTML أو صفحة.
 2. **الأسئلة العلمية/العامة** (جغرافيا، تاريخ، رياضة، طب، فيزياء، برمجة نظرية، دين، لغات...):
    → اشرح بالتفصيل مع عناوين ونقاط وأمثلة. استخدم Markdown (tables، code inline، lists).
 3. **طلب كود/تصميم/موقع/تطبيق**:
-   → هنا بس تطلع الكود كامل في \`\`\`html / \`\`\`js / \`\`\`py جاهز للتشغيل.
+   → في هذه الحالة فقط أخرج الكود كاملًا ضمن \`\`\`html / \`\`\`js / \`\`\`py جاهز للتشغيل.
 4. **لو الطلب غامض**:
-   → اسأل سؤال توضيحي واحد قبل التنفيذ (مثلاً: "عايز الكود بأي لغة؟").
+   → اطرح سؤالًا توضيحيًا واحدًا قبل التنفيذ (مثال: "ما لغة البرمجة المطلوبة؟").
 
 == مجالات خبرتك ==
 • الجغرافيا والجيوماتكس والمساحة (Traverse, COGO, UTM, EPSG, Civil 3D, ArcGIS, QGIS)
@@ -739,15 +736,15 @@ let SYS=`أنت "GeoDev AI" — مساعد ذكي عام متعدد التخصص
 • التصميم (UI/UX, Material 3, Design Systems, Tailwind)
 • العلوم العامة والرياضيات
 • التاريخ والجغرافيا السياسية
-• أي حاجة تانية — عندك معرفة عامة شاملة
+• أي مجال آخر — لديك معرفة عامة شاملة
 
 == اللغة ==
-عربي افتراضي، إنجليزي لو المستخدم كتب إنجليزي.
+العربية الفصحى المبسطة افتراضيًا دون استخدام العامية، والإنجليزية إذا كتب المستخدم بالإنجليزية.
 
 == الأسلوب ==
 - جمل قصيرة، إجابة مباشرة، ممنوع الحشو.
 - استخدم Markdown للعناوين والجداول والنقاط.
-- استخدم emoji بشكل خفيف لو مناسب.`;
+- لا تستخدم الإيموجي أو الرموز التعبيرية إطلاقًا، والتزم بأسلوب رسمي.`;
 
 let DES=`== دليل التصميم الاحترافي ==
 
@@ -827,13 +824,13 @@ Techy: Space Grotesk + IBM Plex Mono
 Luxury: Cormorant Garamond + Montserrat
 
 ▸ الكود النهائي:
-✅ كل CSS في <style>
-✅ كل JS في <script>
-✅ Semantic HTML
-✅ alt لكل صورة
-✅ Real content (مفيش lorem ipsum)
-✅ Favicon SVG inline
-✅ Smooth scroll`;
+كل CSS في <style>
+كل JS في <script>
+Semantic HTML
+alt لكل صورة
+Real content (مفيش lorem ipsum)
+Favicon SVG inline
+Smooth scroll`;
 
 const SYS_GIS = `أنت خبير جغرافيا وجيوماتكس (GIS) من الطراز الأول. 
 مهمتك الوحيدة هي الإجابة عن الأسئلة المتعلقة بـ:
@@ -846,18 +843,18 @@ const SYS_GIS = `أنت خبير جغرافيا وجيوماتكس (GIS) من ا
 - ردودك يجب أن تكون علمية، دقيقة، ومنظمة في نقاط.`;
 
 const EX=[
-["🌐 تصميم موقع","صمم موقعاً احترافياً متكاملاً لشركة أو بورتفوليو مع أحدث تقنيات التصميم."],
-["🗺️ تحليل خريطة","قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم."],
-["📐 مساحة (Traverse)","اكتب سكربت Python لحساب Traverse Surveying مع تصحيح الأخطاء."],
-["📏 قياس مساحات","اشرح طرق قياس الأشكال المنتظمة وغير المنتظمة."],
-["🏗️ Civil 3D","اكتب كود Autolisp أو Python لبرنامج Civil 3D."],
-["💰 ميزانية مساحة","احسب ميزانية مشروع رفع مساحي لمساحة 100 فدان."],
-["🌍 جغرافيا شاملة","اشرح التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود."],
-["💻 تحويل CSV لـ TXT","اكتب كود لتحويل ملفات الرفع من CSV إلى TXT."]
+["تصميم موقع","صمم موقعاً احترافياً متكاملاً لشركة أو بورتفوليو مع أحدث تقنيات التصميم."],
+["تحليل خريطة","قم بتحليل خريطة طبوغرافية أو جغرافية وشرح المعالم."],
+["مساحة (Traverse)","اكتب سكربت Python لحساب Traverse Surveying مع تصحيح الأخطاء."],
+["قياس مساحات","اشرح طرق قياس الأشكال المنتظمة وغير المنتظمة."],
+["Civil 3D","اكتب كود Autolisp أو Python لبرنامج Civil 3D."],
+["ميزانية مساحة","احسب ميزانية مشروع رفع مساحي لمساحة 100 فدان."],
+["جغرافيا شاملة","اشرح التأثيرات الجغرافية السياسية والاقتصادية على رسم الحدود."],
+["تحويل CSV لـ TXT","اكتب كود لتحويل ملفات الرفع من CSV إلى TXT."]
 ];
 
 let hist=[],ctl,map,grp,pts=[],pyo=null,CH=[],cid=null,AT=[],F=[],cu=0,fz=13,tm,adminAuthed=false;
-const WEL="أهلاً م. أحمد سمير 👋<br>أنا <b>GeoDev AI</b> — مساعد ذكي عام، اسألني في أي حاجة: جغرافيا، برمجة، تصميم، رياضة، تاريخ، مساحة... أو اطلب كود/صفحة/تطبيق كامل، وأنا هعمله لك.<br><span class='mt'>جرّب: \"اشرح لي نظرية النسبية\" أو \"صمم لي موقع شركة\"</span>";
+const WEL="مرحبًا م. أحمد سمير<br>أنا <b>GeoDev AI</b>، مساعد ذكي متعدد التخصصات. يمكنك طرح أسئلتك في الجغرافيا والبرمجة والتصميم والمساحة والتاريخ وغيرها، أو طلب كود أو صفحة أو تطبيق متكامل.<br><span class='mt'>أمثلة: \"اشرح لي نظرية النسبية\" أو \"صمم لي موقع شركة\"</span>";
 
 function toast(msg,type='info'){
   const c={info:'var(--bl)',success:'var(--gr)',error:'#991b1b',warn:'var(--am)'}[type]||'var(--bl)';
@@ -875,7 +872,7 @@ function saveProjects(){
   const projs=JSON.parse(localStorage.getItem("gd_projects")||"[]");
   projs.unshift({id:Date.now(),name:(F[0]?.n||"project").replace(".html",""),files:F,savedAt:new Date().toISOString()});
   localStorage.setItem("gd_projects",JSON.stringify(projs.slice(0,20)));
-  toast("💾 تم الحفظ","success");
+  toast("تم الحفظ","success");
 }
 function loadProjects(){
   const projs=JSON.parse(localStorage.getItem("gd_projects")||"[]");
@@ -883,7 +880,7 @@ function loadProjects(){
   const list=projs.map((p,i)=>`${i+1}. ${p.name} — ${new Date(p.savedAt).toLocaleString('ar-EG')}`).join("\n");
   const pick=prompt("اختر رقم المشروع:\n\n"+list);
   const idx=parseInt(pick)-1;
-  if(projs[idx]){F=projs[idx].files;cu=0;$("code").value=F[0].c;$("fn").textContent=F[0].n;tabs();paint();preview();go('studio');toast("📂 تم التحميل","success")}
+  if(projs[idx]){F=projs[idx].files;cu=0;$("code").value=F[0].c;$("fn").textContent=F[0].n;tabs();paint();preview();go('studio');toast("تم التحميل","success")}
 }
 async function exportZip(){
   if(!F.length)return toast("لا ملفات","warn");
@@ -895,7 +892,7 @@ async function exportZip(){
   const blob=await zip.generateAsync({type:"blob"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="geodev-"+Date.now()+".zip";a.click();
-  toast("📦 تم التصدير","success");
+  toast("تم التصدير","success");
 }
 function toggleWrap(){
   const t=$("code"),on=t.wrap==="off";
@@ -920,7 +917,7 @@ function newChat(){hist=[];cid=null;$("chat").innerHTML="";addMsg("a",WEL)}
 function openC(id){const c=CH.find(x=>x.id==id);if(!c)return;cid=id;hist=c.h;$("chat").innerHTML="";hist.forEach(m=>addMsg(m.role=="user"?"u":"a",m.role=="user"?esc(m.s||m.content):md(m.content)));$("hl").style.display="none"}
 function delC(id){CH=CH.filter(c=>c.id!=id);if(cid==id)newChat();sv();hl()}
 async function attach(fs){for(const f of fs){if(f.type.startsWith("image/"))AT.push({n:f.name,img:f});else if(/\.(txt|js|ts|jsx|tsx|html|css|py|json|geojson|kml|gpx|csv|md|php|sql|xml|svg|ya?ml)$/i.test(f.name))AT.push({n:f.name,t:(await f.text()).slice(0,60000)});else toast('نوع غير مدعوم: '+f.name,'warn')}ats()}
-function ats(){$("ats").innerHTML=AT.map((a,i)=>`<span class="chip">${a.img?"🖼️":"📄"} ${esc(a.n)} <b onclick="AT.splice(${i},1);ats()">×</b></span>`).join("")}
+function ats(){$("ats").innerHTML=AT.map((a,i)=>`<span class="chip">${esc(a.n)} <b onclick="AT.splice(${i},1);ats()">×</b></span>`).join("")}
 const CM={py:/#[^\n]*/,sql:/--[^\n]*/,ht:/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//,js:/\/\*[\s\S]*?\*\/|\/\/[^\n]*/},ST=/"""[\s\S]*?"""|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`[^`]*`/,TG=/<\/?[A-Za-z][\w-]*|\/?>/,
 KW=/^(?:function|const|let|var|return|if|else|for|while|class|new|import|from|export|default|async|await|try|catch|throw|switch|case|break|continue|def|elif|in|is|not|and|or|None|True|False|self|lambda|with|as|pass|yield|null|true|false|undefined|this|SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|TABLE|JOIN|ORDER|BY|GROUP|LIMIT|INTO|VALUES)$/;
 function hlt(c,l){
@@ -932,7 +929,7 @@ function paint(){const t=$("code");$("hlp").innerHTML=hlt(t.value,F[cu]?F[cu].l:
 function sync(){const t=$("code");$("hlp").scrollTop=$("gut").scrollTop=t.scrollTop;$("hlp").scrollLeft=t.scrollLeft}
 function ln(){const t=$("code"),v=t.value,p=v.slice(0,t.selectionStart).split("\n");$("sb").textContent=((F[cu]&&F[cu].l)||"html").toUpperCase()+" | Ln "+p.length+", Col "+(p.pop().length+1)+" | "+v.split("\n").length+" lines"}
 function fs(d){fz=Math.max(10,Math.min(20,fz+d));document.querySelectorAll(".ed pre,.ed textarea").forEach(e=>{e.style.fontSize=fz+"px";e.style.lineHeight=Math.round(fz*1.6)+"px"});sync()}
-function cp(){navigator.clipboard&&navigator.clipboard.writeText($("code").value).catch(()=>{});$("sb").textContent="✅ تم النسخ"}
+function cp(){navigator.clipboard&&navigator.clipboard.writeText($("code").value).catch(()=>{});$("sb").textContent="تم النسخ"}
 function edit(){
   if(F[cu])F[cu].c=$("code").value;
   paint();clearTimeout(tm);tm=setTimeout(preview,450);
@@ -979,11 +976,11 @@ function md(t){
   div.querySelectorAll("pre").forEach(pre=>{
     if(pre.querySelector(".copy-btn"))return;
     const btn=document.createElement("button");
-    btn.className="copy-btn";btn.textContent="📋 نسخ";
+    btn.className="copy-btn";btn.textContent="نسخ";
     btn.style.cssText="position:absolute;top:6px;left:6px;background:#334155;color:#fff;border:0;padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;opacity:0;transition:.2s";
     pre.onmouseenter=()=>btn.style.opacity="1";
     pre.onmouseleave=()=>btn.style.opacity="0";
-    btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector("code")?.textContent||pre.textContent);btn.textContent="✅";setTimeout(()=>btn.textContent="📋 نسخ",1500)};
+    btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector("code")?.textContent||pre.textContent);btn.textContent="تم";setTimeout(()=>btn.textContent="نسخ",1500)};
     pre.appendChild(btn);
   });
   return div.innerHTML
@@ -993,7 +990,7 @@ function slim(m,i,a){return i>=a.length-2?m:{role:m.role,content:m.content.repla
 function toggleSelfModify(){const m=$("selfModModal");m.style.display=m.style.display==="none"?"block":"none"}
 async function applySelfModify(btn){
   const req=$("selfModInput").value.trim();if(!req)return;
-  const oldText=btn.textContent;btn.disabled=true;btn.textContent="⏳...";
+  const oldText=btn.textContent;btn.disabled=true;btn.textContent="...";
   const sysPrompt=`أرجع JSON فقط بالمتغيرات: bg, cd, ln, bl, gr, am, mt, tx. مثال: {"bg":"#064e3b"}`;
   try{
     const r=await callAIWithRetry(sysPrompt+"\n\nطلب: "+req,{tier:'quick'});
@@ -1002,8 +999,8 @@ async function applySelfModify(btn){
     const colors=JSON.parse(j);const root=document.documentElement;
     for(const[k,v]of Object.entries(colors))root.style.setProperty(`--${k}`,v);
     localStorage.setItem('gd_theme',JSON.stringify(colors));
-    toast("✅ تم التحديث","success");toggleSelfModify();$("selfModInput").value="";
-  }catch(e){toast("❌ "+e.message,"error")}finally{btn.disabled=false;btn.textContent=oldText}
+    toast("تم التحديث","success");toggleSelfModify();$("selfModInput").value="";
+  }catch(e){toast(e.message,"error")}finally{btn.disabled=false;btn.textContent=oldText}
 }
 function loadTheme(){try{const s=JSON.parse(localStorage.getItem('gd_theme')||'null');if(s){const r=document.documentElement;for(const[k,v]of Object.entries(s))r.style.setProperty(`--${k}`,v)}}catch(e){}}
 
@@ -1020,18 +1017,18 @@ const PROVIDERS={
 };
 function aiSettings(){
   if (sessionStorage.getItem("gd_role") !== "admin") {
-    return toast("❌ إعدادات الذكاء الاصطناعي متاحة للأدمن فقط", "error");
+    return toast("إعدادات الذكاء الاصطناعي متاحة للأدمن فقط", "error");
   }
   const c=getCfg(),p=c.provider||'groq',cur=PROVIDERS[p];
   const opts=Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}" ${k===p?'selected':''}>${v.n}</option>`).join('');
   const html=`<div id="aiM" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.65);display:grid;place-items:center;padding:16px" onclick="if(event.target===this)this.remove()">
   <div class="card" style="max-width:500px;width:100%;max-height:90vh;overflow:auto">
-    <h3 style="margin-top:0">⚙️ مصدر AI</h3>
+    <h3 style="margin-top:0">مصدر AI</h3>
     <select id="pv_sel" onchange="aiModalRefresh()">${opts}</select>
-    <div id="pv_fields">${cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${c.base||cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${c.model||cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">🛡️ احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}" autocomplete="off"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:''}</div>
+    <div id="pv_fields">${cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${c.base||cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${c.model||cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}" autocomplete="off"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:''}</div>
     <div id="ai_test_result" class="res c" style="display:none"></div>
     <div class="row" style="justify-content:space-between;margin-top:10px">
-      <button class="k" onclick="testAI()" id="pv_test_btn">🧪 اختبار</button>
+      <button class="k" onclick="testAI()" id="pv_test_btn">اختبار</button>
       <span class="row"><button class="k" onclick="document.getElementById('aiM').remove()">إلغاء</button><button class="g" onclick="aiSave()">حفظ</button></span>
     </div>
   </div></div>`;
@@ -1040,23 +1037,23 @@ function aiSettings(){
 }
 function aiModalRefresh(){
   const p=document.getElementById('pv_sel').value,cur=PROVIDERS[p],c=getCfg();
-  document.getElementById('pv_fields').innerHTML=cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">🛡️ احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:'';
+  document.getElementById('pv_fields').innerHTML=cur.needKey?`<input id="pv_key" class="c" placeholder="API Key" value="${c.key||''}" autocomplete="off"><input id="pv_base" class="c" placeholder="Base URL" value="${cur.base}"><input id="pv_model" class="c" placeholder="Model" value="${cur.model}"><hr style="border:0;border-top:1px solid var(--ln);margin:10px 0"><div class="mt">احتياطي:</div><input id="pv_backup_key" class="c" placeholder="Key احتياطي" value="${c.backupKey||''}"><input id="pv_backup_model" class="c" placeholder="Model احتياطي" value="${c.backupModel||'openai/gpt-oss-20b'}">`:'';
   document.getElementById('ai_test_result').style.display='none';
 }
 function aiSave(){
   const sel=document.getElementById('pv_sel').value;const c={provider:sel};
   if(PROVIDERS[sel].needKey){c.key=(document.getElementById('pv_key')?.value||'').trim();c.base=(document.getElementById('pv_base')?.value||'').trim()||PROVIDERS[sel].base;c.model=(document.getElementById('pv_model')?.value||'').trim()||PROVIDERS[sel].model;c.backupKey=(document.getElementById('pv_backup_key')?.value||'').trim();c.backupModel=(document.getElementById('pv_backup_model')?.value||'').trim()||'openai/gpt-oss-20b'}
-  setCfg(c);document.getElementById('aiM')?.remove();toast('✅ تم الحفظ','success');
+  setCfg(c);document.getElementById('aiM')?.remove();toast('تم الحفظ','success');
 }
 function buildChain(cfg){if(cfg.provider==='claude')return[{...cfg,label:'Claude'}];const chain=[{...cfg,label:(cfg.model||'أساسي')}];if(cfg.backupKey){chain.push({...cfg,key:cfg.backupKey,label:'احتياطي'});if(cfg.backupModel&&cfg.backupModel!==cfg.model)chain.push({...cfg,key:cfg.backupKey,model:cfg.backupModel,label:'احتياطي خفيف'})}return chain}
 async function testAI(){
   const btn=document.getElementById('pv_test_btn'),out=document.getElementById('ai_test_result');
-  out.style.display='block';out.textContent='⏳...';btn.disabled=true;
+  out.style.display='block';out.textContent='...';btn.disabled=true;
   try{const sel=document.getElementById('pv_sel').value;const c={provider:sel};
     if(PROVIDERS[sel].needKey){c.key=(document.getElementById('pv_key')?.value||'').trim();c.base=(document.getElementById('pv_base')?.value||'').trim()||PROVIDERS[sel].base;c.model=(document.getElementById('pv_model')?.value||'').trim()||PROVIDERS[sel].model;c.backupKey=(document.getElementById('pv_backup_key')?.value||'').trim();c.backupModel=(document.getElementById('pv_backup_model')?.value||'').trim()||'openai/gpt-oss-20b'}
     const r=await callAIWithRetry('قل فقط: "الاتصال ناجح"',{tier:'quick',cfgOverride:c});
-    out.innerHTML='<b style="color:var(--gr)">✅ نجح!</b> '+esc((r.text||'').slice(0,80));
-  }catch(e){out.innerHTML='<b style="color:#f87171">❌ فشل:</b> '+esc(e.message||e)}finally{btn.disabled=false}
+    out.innerHTML='<b style="color:var(--gr)">نجح!</b> '+esc((r.text||'').slice(0,80));
+  }catch(e){out.innerHTML='<b style="color:#f87171">فشل:</b> '+esc(e.message||e)}finally{btn.disabled=false}
 }
 
 async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={}){
@@ -1097,14 +1094,14 @@ async function callAI(prompt,{signal,onText,tier,images,cfgOverride,sysPrompt}={
 }
 async function callAIWithRetry(prompt,opts,onStatus){
   const chain=buildChain((opts&&opts.cfgOverride)||getCfg());let lastErr;
-  for(let i=0;i<chain.length;i++){const att=chain[i];for(let r=0;r<2;r++){try{return await callAI(prompt,{...opts,cfgOverride:att})}catch(e){lastErr=e;if(e.code==='rate_limited'&&r===0){onStatus&&onStatus(`⏳ انتظار...`);await new Promise(rr=>setTimeout(rr,2500));continue}if(i<chain.length-1){onStatus&&onStatus(`↻ التبديل`);break}}}}
+  for(let i=0;i<chain.length;i++){const att=chain[i];for(let r=0;r<2;r++){try{return await callAI(prompt,{...opts,cfgOverride:att})}catch(e){lastErr=e;if(e.code==='rate_limited'&&r===0){onStatus&&onStatus(`انتظار...`);await new Promise(rr=>setTimeout(rr,2500));continue}if(i<chain.length-1){onStatus&&onStatus(`↻ التبديل`);break}}}}
   throw lastErr||new Error('فشلت كل المحاولات');
 }
 
 async function ask(prompt,shown){
  addMsg("u",esc(shown||prompt));
- const el=addMsg("a","⏳ جاري التنفيذ...");
- $("st").textContent="⏳...";$("stop").style.display="inline-block";
+ const el=addMsg("a","جارٍ التنفيذ...");
+ $("st").textContent="...";$("stop").style.display="inline-block";
  const imgs=AT.filter(a=>a.img).map(a=>a.img);
  if(AT.length){prompt+="\n\nالملفات:\n"+AT.filter(a=>a.t).map(a=>"### "+a.n+"\n```\n"+a.t+"\n```").join("\n")+(imgs.length?"\n("+imgs.length+" صورة)":"");AT=[];ats()}
  cur();hist.push({role:"user",content:prompt,s:shown||prompt});
@@ -1126,10 +1123,10 @@ async function ask(prompt,shown){
     } else {
       const tail=allText.slice(-2000);
       currentPrompt=`المحادثة الأصلية:\n${conv}\n\nكنت بترد ووصلت للحد الأقصى. `+
-        `اكمل من آخر حرف توقفت عنده بالظبط، بدون مقدمات، بدون إعادة أي كود سابق، بدون كتابة "أكمل".\n\n`+
+        `أكمل من آخر حرف توقفت عنده تمامًا، دون مقدمات، ودون إعادة أي كود سابق، بدون كتابة "أكمل".\n\n`+
         `آخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
-      $("st").textContent=`⏳ استكمال ${iteration}/${MAX_ITER-1}...`;
-      el.innerHTML=md(allText)+`<div class="mt" style="text-align:center;padding:8px">⏳ جاري الاستكمال...</div>`;
+      $("st").textContent=`استكمال ${iteration}/${MAX_ITER-1}...`;
+      el.innerHTML=md(allText)+`<div class="mt" style="text-align:center;padding:8px">جاري الاستكمال...</div>`;
     }
     const r=await callAIWithRetry(currentPrompt,callOpts,msg=>{el.innerHTML=md(allText+(iteration>0?"\n\n":"")+msg);$("st").textContent=msg});
     allText+=r.text;lastResult=r;iteration++;
@@ -1137,29 +1134,29 @@ async function ask(prompt,shown){
   }
 
   const stillTruncated=lastResult?.truncated;
-  const t=allText+(stillTruncated?"\n\n> ⚠️ الرد لسه طويل. اضغط الزر تحت للاستكمال.":"");
+  const t=allText+(stillTruncated?"\n\n> تنبيه: الرد طويل، اضغط الزر أدناه للاستكمال.":"");
   hist.push({role:"assistant",content:t});
   {const c=cur();if(c.t=="محادثة")c.t=(shown||prompt).slice(0,40);sv();hl()}
   $("stop").style.display="none";el.innerHTML=md(t);
-  if(stillTruncated)el.innerHTML+=`<button class="g" style="width:100%;margin-top:8px" onclick="continueLast()">🔄 أكمل</button>`;
-  $("chat").scrollTop=1e9;$("st").textContent=stillTruncated?"⚠️ اضغط أكمل":"✅ تم";
+  if(stillTruncated)el.innerHTML+=`<button class="g" style="width:100%;margin-top:8px" onclick="continueLast()">أكمل</button>`;
+  $("chat").scrollTop=1e9;$("st").textContent=stillTruncated?"اضغط للاستكمال":"تم";
   handleCode(t);
  }catch(e){$("stop").style.display="none";hist.pop();const m=e.code=="rate_limited"?"حد مؤقت":(e.message||"خطأ");
-  el.innerHTML=`❌ ${esc(m)} <button class="k" style="margin-right:8px" onclick="ask(${JSON.stringify(prompt)},${JSON.stringify(shown||prompt)})">🔁 إعادة</button>`;
-  $("st").textContent="❌ "+m}
+  el.innerHTML=`خطأ: ${esc(m)} <button class="k" style="margin-right:8px" onclick="ask(${JSON.stringify(prompt)},${JSON.stringify(shown||prompt)})">إعادة</button>`;
+  $("st").textContent=m}
 }
 async function continueLast(){
   const last=hist[hist.length-1];
   if(!last||last.role!=='assistant')return toast("لا يوجد رد","warn");
   const tail=last.content.slice(-2000);
-  const prompt=`اكمل من آخر حرف توقفت عنده بالظبط، بدون مقدمات أو إعادة.\n\nآخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
-  await ask(prompt,"🔄 استكمال");
+  const prompt=`أكمل من آخر حرف توقفت عنده تمامًا، دون مقدمات أو إعادة.\n\nآخر 2000 حرف:\n\`\`\`\n${tail}\n\`\`\`\n\nابدأ مباشرة.`;
+  await ask(prompt,"استكمال");
 }
 function send(){
   const v=$("ui").value.trim();
   if(!v&&!AT.length)return;
   if(/مساحة\s*(مربع|مستطيل|دائرة|مضلع)/i.test(v)){
-    toast("💡 فيه حاسبة جاهزة كمان في قسم المساحة","info");
+    toast("تتوفر حاسبة جاهزة أيضًا في قسم المساحة","info");
   }
   $("ui").value="";
   ask(v||"حلّل الملفات المرفقة");
@@ -1168,7 +1165,7 @@ function qp(t){go('agent');$("ui").value=t;if(!t.endsWith(": "))send();else $("u
 
 function downloadGISPDF(element) {
   if (typeof html2pdf === 'undefined') {
-    return toast("❌ مكتبة الـ PDF لم يتم تحميلها. تأكد من الإنترنت.", "error");
+    return toast("مكتبة الـ PDF لم يتم تحميلها. تأكد من الإنترنت.", "error");
   }
 
   const btn = element.querySelector('button');
@@ -1217,7 +1214,7 @@ function downloadGISPDF(element) {
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  toast("⏳ جاري تحضير الـ PDF...", "info");
+  toast("جاري تحضير الـ PDF...", "info");
   
   setTimeout(() => {
     // بنستخدم outputPdf عشان نجيب اللينك ونفتحه في تاب جديد
@@ -1225,16 +1222,16 @@ function downloadGISPDF(element) {
       const newWindow = window.open(blobUrl, '_blank');
       
       if (!newWindow) {
-        toast("⚠️ المتصفح منع فتح النافذة. جرب السماح بالنوافذ المنبثقة.", "warn");
+        toast("المتصفح منع فتح النافذة. جرب السماح بالنوافذ المنبثقة.", "warn");
       } else {
-        toast("✅ تم فتح ملف الـ PDF في نافذة جديدة", "success");
+        toast("تم فتح ملف الـ PDF في نافذة جديدة", "success");
       }
       
       if(btn) btn.style.display = 'flex';
       document.body.removeChild(wrapper);
     }).catch(err => {
       console.error("PDF Error:", err);
-      toast("❌ حدث خطأ أثناء التحميل", "error");
+      toast("حدث خطأ أثناء التحميل", "error");
       if(btn) btn.style.display = 'flex';
       document.body.removeChild(wrapper);
     });
@@ -1248,7 +1245,7 @@ async function gisSend(){
   if(!v) return;
   $("gisInput").value = "";
   addMsg("u", esc(v), "gisChatBox");
-  const el = addMsg("a", "⏳ جاري البحث الجغرافي...", "gisChatBox");
+  const el = addMsg("a", "جارٍ البحث الجغرافي...", "gisChatBox");
   
   try {
     const r = await callAIWithRetry(v, {
@@ -1262,13 +1259,13 @@ async function gisSend(){
     const pdfBtn = document.createElement('button');
     pdfBtn.className = 'k';
     pdfBtn.style.cssText = 'margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;';
-    pdfBtn.innerHTML = '📄 تحميل الإجابة كـ PDF';
+    pdfBtn.innerHTML = 'تحميل الإجابة كـ PDF';
     pdfBtn.onclick = () => downloadGISPDF(el);
     el.appendChild(pdfBtn);
 
     $("gisChatBox").scrollTop = 1e9;
   } catch (e) {
-    el.innerHTML = `❌ خطأ: ${e.message}`;
+    el.innerHTML = `خطأ: ${e.message}`;
   }
 }
 
@@ -1286,7 +1283,7 @@ async function loadCustomCode(f){
   if(!f)return;
   try{const text=await f.text();
     F=[{l:'html',c:text,n:f.name}];cu=0;$("code").value=text;$("fn").textContent=f.name;tabs();paint();preview();
-    $("rb").style.display="flex";toast("✅ تم","success");
+    $("rb").style.display="flex";toast("تم","success");
   }catch(e){toast("خطأ: "+e.message,"error")}
 }
 async function dlText(t,n){
@@ -1314,10 +1311,10 @@ function buildSite(){
   if (isFeaturePro('studio') && needPro()) return;
   const d=$("sd").value.trim(),t=[...document.querySelectorAll(".chips input:checked")].map(x=>x.value).join("، "),o=[["النوع",$("stp").value],["لغة",$("slg").value],["ستايل",$("ssy").value],["تقنيات",t]].filter(x=>x[1]).map(x=>x[0]+": "+x[1]).join("\n");
   if(!d)return $("st").textContent="اكتب وصف أولاً";
-  ask(`نفّذ التصميم التالي بدون قيود.\nالوصف: ${d}\n${o}\nالواجهة في HTML واحد كامل داخل بلوك html. كود كامل بدون اختصار.`,"🛠 "+d)
+  ask(`نفّذ التصميم التالي بدون قيود.\nالوصف: ${d}\n${o}\nالواجهة في HTML واحد كامل داخل بلوك html. كود كامل بدون اختصار.`,""+d)
 }
 
-function editSite(){const r=$("ep").value.trim();if(!r)return;ask(`عدّل الكود: (${r}). أرجع الكود كاملاً في بلوك html.\n\`\`\`html\n${$("code").value}\n\`\`\``,"✏️ "+r);$("ep").value=""}
+function editSite(){const r=$("ep").value.trim();if(!r)return;ask(`عدّل الكود: (${r}). أرجع الكود كاملاً في بلوك html.\n\`\`\`html\n${$("code").value}\n\`\`\``,""+r);$("ep").value=""}
 
 function makePWA(){
   const currentHtml=html();
@@ -1327,7 +1324,7 @@ function makePWA(){
   const sw=`const CACHE_NAME='geodev-cache-v1';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.add('/')))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});`;
   let newHtml=currentHtml;
   if(!newHtml.includes('rel="manifest"')){newHtml=newHtml.replace('</head>',`<link rel="manifest" href="manifest.json">\n<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}<\/script>\n</head>`)}
-  toast("✅ تحميل HTML + manifest + sw","success");
+  toast("تحميل HTML + manifest + sw","success");
   dlText(newHtml,'index.html');setTimeout(()=>dlText(JSON.stringify(manifest,null,2),'manifest.json'),500);setTimeout(()=>dlText(sw,'sw.js'),1000);
 }
 
@@ -1394,12 +1391,12 @@ function calcShape(){
     }
     const fed=area/4200.83,qir=fed*24;
     $("shapeResult").style.display="block";
-    $("shapeResult").innerHTML=`<b style="color:var(--gr)">✅ النتائج:</b><br>
+    $("shapeResult").innerHTML=`<b style="color:var(--gr)">النتائج:</b><br>
       <b>المساحة:</b> ${area.toFixed(3)} m²<br>
       <b>بالفدان:</b> ${fed.toFixed(4)} فدان (${qir.toFixed(2)} قيراط)<br>
       ${perimeter>0?`<b>المحيط:</b> ${perimeter.toFixed(3)} m<br>`:""}
       ${extra?`<b>${extra}</b>`:""}`;
-  }catch(e){$("shapeResult").style.display="block";$("shapeResult").innerHTML=`<span style="color:#f87171">❌ ${e}</span>`}
+  }catch(e){$("shapeResult").style.display="block";$("shapeResult").innerHTML=`<span style="color:#f87171">${e}</span>`}
 }
 
 /* ===== Triangle Calculator ===== */
@@ -1423,18 +1420,18 @@ function triModeChanged(){
     basic:'أدخل الزاوية لعرض sin/cos/tan.'
   };
   $("triInputs").innerHTML=fields[m].map(([k,l])=>`<input id="tri_${k}" type="number" step="any" class="c" placeholder="${l}">`).join("");
-  $("triHint").innerHTML="💡 "+hint[m];
+  $("triHint").innerHTML=""+hint[m];
   $("triResult").innerHTML="";
   drawTriEmpty();
 }
 function triReset(){$("triMode").value="right";triModeChanged()}
 function triHelp(){
   $("triResult").innerHTML=`<div class="res" style="line-height:1.9">
-  <b style="color:var(--bl)">📖 كيف أستخدم؟</b><br>
+  <b style="color:var(--bl)">كيف أستخدم؟</b><br>
   1) اختر نوع المعطيات<br>
   2) أدخل القيم<br>
   3) اضغط احسب<br>
-  <b style="color:var(--bl)">⚙️ القوانين:</b><br>
+  <b style="color:var(--bl)">القوانين:</b><br>
   • قانون الجيوب: a/sin(A) = b/sin(B) = c/sin(C)<br>
   • الجيوب التمام: c² = a² + b² − 2ab·cos(C)<br>
   • المساحة: √[s(s−a)(s−b)(s−c)] حيث s=(a+b+c)/2
@@ -1465,14 +1462,14 @@ function triSolve(){
     if(a<=0||b<=0||c<=0)throw"الأضلاع لازم موجبة";
     const s=(a+b+c)/2,area=Math.sqrt(Math.max(0,s*(s-a)*(s-b)*(s-c))),per=a+b+c;
     $("triResult").innerHTML=`<div class="res" style="line-height:2">
-      <b style="color:var(--gr)">✅ النتائج:</b><br>
+      <b style="color:var(--gr)">النتائج:</b><br>
       <b>الأضلاع:</b> a=${a.toFixed(3)} | b=${b.toFixed(3)} | c=${c.toFixed(3)}<br>
       <b>الزوايا:</b> A=${A.toFixed(2)}° | B=${B.toFixed(2)}° | C=${C.toFixed(2)}°<br>
       <b>المحيط:</b> ${per.toFixed(3)}<br>
       <b>المساحة:</b> ${area.toFixed(3)}
     </div>`;
     drawTri(a,b,c,A,B,C);
-  }catch(e){$("triResult").innerHTML=`<div class="res" style="color:#f87171">❌ ${e}</div>`}
+  }catch(e){$("triResult").innerHTML=`<div class="res" style="color:#f87171">${e}</div>`}
 }
 function drawTriEmpty(){$("triSvg").innerHTML=`<text x="200" y="140" text-anchor="middle" fill="var(--mt)" font-size="14">أدخل القيم واضغط احسب</text>`}
 function drawTri(a,b,c,A,B,C){
@@ -1569,12 +1566,12 @@ function calcQibla(){
 
 /* ===== GIS Cards ===== */
 const GIS_TOPICS=[
-  {icon:"🌍",title:"الجغرافيا الطبيعية",items:["المناخ والأنواع المناخية","التضاريس والظواهر الجيومورفولوجية","التربة وأنواعها","المياه السطحية والجوفية","الغطاء النباتي والحيواني","الأخطار الطبيعية"]},
-  {icon:"👥",title:"الجغرافيا البشرية",items:["السكان والتوزيع","الهجرة والتحضر","العمران والمدن","الثقافات واللغات","الديانات"]},
-  {icon:"💼",title:"الجغرافيا الاقتصادية",items:["الزراعة وأنماطها","الصناعة والمواقع الصناعية","التعدين والطاقة","السياحة","التجارة والنقل"]},
-  {icon:"🗺️",title:"نظم المعلومات الجغرافية",items:["مكونات GIS","أنواع البيانات (Vector/Raster)","الإسقاطات ونظم الإحداثيات","ArcGIS Pro","ArcGIS Online","QGIS","PostGIS","التحليل المكاني"]},
-  {icon:"🛰️",title:"الاستشعار عن بعد",items:["مبادئ الاستشعار","Sentinel-2","Landsat","Google Earth Engine","التصنيف","NDVI والمؤشرات"]},
-  {icon:"📊",title:"التحليل المكاني",items:["Buffer / Overlay","Interpolation (IDW/Kriging)","Network Analysis","Spatial Statistics","Cost Distance","3D Analysis"]}
+  {icon:"",title:"الجغرافيا الطبيعية",items:["المناخ والأنواع المناخية","التضاريس والظواهر الجيومورفولوجية","التربة وأنواعها","المياه السطحية والجوفية","الغطاء النباتي والحيواني","الأخطار الطبيعية"]},
+  {icon:"",title:"الجغرافيا البشرية",items:["السكان والتوزيع","الهجرة والتحضر","العمران والمدن","الثقافات واللغات","الديانات"]},
+  {icon:"",title:"الجغرافيا الاقتصادية",items:["الزراعة وأنماطها","الصناعة والمواقع الصناعية","التعدين والطاقة","السياحة","التجارة والنقل"]},
+  {icon:"",title:"نظم المعلومات الجغرافية",items:["مكونات GIS","أنواع البيانات (Vector/Raster)","الإسقاطات ونظم الإحداثيات","ArcGIS Pro","ArcGIS Online","QGIS","PostGIS","التحليل المكاني"]},
+  {icon:"",title:"الاستشعار عن بعد",items:["مبادئ الاستشعار","Sentinel-2","Landsat","Google Earth Engine","التصنيف","NDVI والمؤشرات"]},
+  {icon:"",title:"التحليل المكاني",items:["Buffer / Overlay","Interpolation (IDW/Kriging)","Network Analysis","Spatial Statistics","Cost Distance","3D Analysis"]}
 ];
 function renderGisCards(){
   if(!$("gisCards"))return;
@@ -1582,7 +1579,7 @@ function renderGisCards(){
   $("gisCards").innerHTML=GIS_TOPICS.map(g=>`
     <div class="card ${isLocked ? 'gcard' : ''}">
       ${isLocked ? '<span class="pro-b">PRO</span>' : ''}
-      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.icon} ${g.title}</h3>
+      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.title}</h3>
       <div class="chips">
         ${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}
       </div>
@@ -1598,19 +1595,17 @@ function askGis(topic,category){
 
 /* ===== Admin ===== */
 function adminLogin(){
-  if($("adminPw").value===ADMIN_PW){
+  if(sessionStorage.getItem("gd_role")==="admin"){
     adminAuthed=true;
     $("adminGate").style.display="none";
     $("adminPanel").style.display="block";
     adminLoad();
-    toast("✅ أهلاً في لوحة الأدمن","success");
-  }else toast("❌ كلمة سر خاطئة","error");
+  }else toast("هذه اللوحة مخصصة لحساب الإدارة فقط","error");
 }
 function adminLock(){
   adminAuthed=false;
   $("adminGate").style.display="block";
   $("adminPanel").style.display="none";
-  $("adminPw").value="";
 }
 function adminLoad(){
   $("adminSys").value=SYS;
@@ -1625,65 +1620,20 @@ function adminLoad(){
     </div>
   `).join("");
   
-  // لوحة التحكم في الميزات
-  if(!$("proFeaturesPanel")){
-    $("adminPanel").insertAdjacentHTML("beforeend", `
-      <div class="card" id="proFeaturesPanel">
-        <h3>⚙️ التحكم في المميزات (مجاني / PRO)</h3>
-        <p class="mt">علم على الميزة عشان تبقى PRO (مقفولة للمستخدم العادي).</p>
-        <div class="g2">
-          <div><b>أدوات المساحة:</b><br>
-            <label><input type="checkbox" id="chk_triangle" ${isToolPro('triangle')?'checked':''}> حاسبة المثلثات</label><br>
-            <label><input type="checkbox" id="chk_map" ${isToolPro('map')?'checked':''}> الخريطة والرفع</label><br>
-            <label><input type="checkbox" id="chk_coord" ${isToolPro('coord')?'checked':''}> تحويل الإحداثيات</label><br>
-            <label><input type="checkbox" id="chk_compass" ${isToolPro('compass')?'checked':''}> البوصلة</label><br>
-            <label><input type="checkbox" id="chk_qibla" ${isToolPro('qibla')?'checked':''}> اتجاه القبلة</label>
-          </div>
-          <div><b>محركات الذكاء الاصطناعي:</b><br>
-            <label><input type="checkbox" id="chk_g38" ${isEnginePro('g38')?'checked':''}> GEO 3.8 FLASH</label><br>
-            <label><input type="checkbox" id="chk_g52" ${isEnginePro('g52')?'checked':''}> GEO 5.2 ULTRA</label>
-          </div>
-          <div style="grid-column: 1 / -1; margin-top: 10px;"><b>أقسام وأدوات أخرى (PRO):</b></div>
-          <div>
-            <label><input type="checkbox" id="chk_gis_cards" ${isFeaturePro('gis_cards')?'checked':''}> كروت مكتبة الجيوماتكس</label><br>
-            <label><input type="checkbox" id="chk_gis_chat" ${isFeaturePro('gis_chat')?'checked':''}> شات الجيوماتكس المخصص</label>
-          </div>
-          <div>
-            <label><input type="checkbox" id="chk_lab" ${isFeaturePro('lab')?'checked':''}> مختبر الأكواد (Python/JS)</label><br>
-            <label><input type="checkbox" id="chk_studio" ${isFeaturePro('studio')?'checked':''}> توليد المواقع والأكواد (الاستوديو)</label>
-          </div>
-        </div>
-        <button class="g" style="width:100%;margin-top:10px" onclick="saveProConfig()">💾 حفظ إعدادات الميزات</button>
-      </div>
-    `);
-  }
 }
-function saveProConfig(){
-  const tools=[], engines=[], features=[];
-  ['triangle','map','coord','compass','qibla'].forEach(t=>{ if($("chk_"+t) && $("chk_"+t).checked) tools.push(t); });
-  ['g38','g52'].forEach(e=>{ if($("chk_"+e) && $("chk_"+e).checked) engines.push(e); });
-  ['gis_cards','gis_chat','lab','studio'].forEach(f=>{ if($("chk_"+f) && $("chk_"+f).checked) features.push(f); });
-  
-  proConfig = { tools, engines, features };
-  localStorage.setItem("gd_pro_config", JSON.stringify(proConfig));
-  toast("✅ تم حفظ الإعدادات بنجاح", "success");
-  renderEng(); 
-  renderSurveyGrid();
-  if(typeof renderGisCards === 'function') renderGisCards();
-}
-function adminSaveSys(){SYS=$("adminSys").value;localStorage.setItem('gd_sys',SYS);toast("✅ تم حفظ SYS","success")}
-function adminSaveDes(){DES=$("adminDes").value;localStorage.setItem('gd_des',DES);toast("✅ تم حفظ DES","success")}
+function adminSaveSys(){SYS=$("adminSys").value;localStorage.setItem('gd_sys',SYS);toast("تم حفظ SYS","success")}
+function adminSaveDes(){DES=$("adminDes").value;localStorage.setItem('gd_des',DES);toast("تم حفظ DES","success")}
 function adminSaveTheme(){
   const t={};
   ['bg','cd','ln','bl','gr','am','mt','tx'].forEach(v=>{t[v]=$("th_"+v).value});
   Object.entries(t).forEach(([k,v])=>document.documentElement.style.setProperty('--'+k,v));
   localStorage.setItem('gd_theme',JSON.stringify(t));
-  toast("✅ تم حفظ الثيم","success");
+  toast("تم حفظ الثيم","success");
 }
 function adminExport(){
   const data={sys:SYS,des:DES,theme:JSON.parse(localStorage.getItem('gd_theme')||'null'),ai:getCfg(),maxTokens:localStorage.getItem('gd_max_tokens')};
   dlText(JSON.stringify(data,null,2),'geodev-admin-'+Date.now()+'.json');
-  toast("⬇️ تم التصدير","success");
+  toast("تم التصدير","success");
 }
 async function adminImportFile(f){
   if(!f)return;
@@ -1694,8 +1644,8 @@ async function adminImportFile(f){
     if(d.theme){Object.entries(d.theme).forEach(([k,v])=>document.documentElement.style.setProperty('--'+k,v));localStorage.setItem('gd_theme',JSON.stringify(d.theme))}
     if(d.ai)setCfg(d.ai);
       if(d.maxTokens)localStorage.setItem('gd_max_tokens',d.maxTokens);
-    toast("✅ تم الاستيراد بنجاح","success");
-  }catch(e){toast("❌ JSON غير صالح: "+e.message,"error")}
+    toast("تم الاستيراد بنجاح","success");
+  }catch(e){toast("JSON غير صالح: "+e.message,"error")}
 }
 
 /* ===== MAP / SURVEY ===== */
@@ -1755,12 +1705,12 @@ function updateTable(){
 function gps(){
   if(!navigator.geolocation) return toast("GPS غير مدعوم في المتصفح","warn");
   if(!map) initMap();
-  toast("📍 جاري تحديد موقعك...","info");
+  toast("جاري تحديد موقعك...","info");
   navigator.geolocation.getCurrentPosition(p=>{
     map.setView([p.coords.latitude,p.coords.longitude],17);
     addPt(p.coords.latitude,p.coords.longitude);
-    toast("✅ تم تحديد موقعك","success");
-  },e=>toast("❌ "+e.message,"error"),{enableHighAccuracy:true,timeout:15000});
+    toast("تم تحديد موقعك","success");
+  },e=>toast(e.message,"error"),{enableHighAccuracy:true,timeout:15000});
 }
 function undo(){if(pts.length){pts.pop();drawMap();toast("↩ تم التراجع","info")}}
 function clearMap(){if(pts.length&&confirm("هل تريد مسح كل النقاط؟")){pts=[];drawMap();toast("تم المسح","info")}}
@@ -1777,7 +1727,7 @@ async function impF(f){
       else walk(gj.coordinates);
       coords.forEach(c=>pts.push([c[1],c[0]]));
       drawMap();
-      toast(`✅ تم استيراد ${coords.length} نقطة`,"success");
+      toast(`تم استيراد ${coords.length} نقطة`,"success");
     }else if(/\.(csv|txt)$/i.test(f.name)){
       const lines=txt.split(/\r?\n/).filter(l=>l.trim());
       let n=0;
@@ -1789,9 +1739,9 @@ async function impF(f){
         }
       });
       drawMap();
-      toast(`✅ تم استيراد ${n} نقطة`,"success");
+      toast(`تم استيراد ${n} نقطة`,"success");
     }else toast("صيغة غير مدعومة","warn");
-  }catch(e){toast("❌ "+e.message,"error")}
+  }catch(e){toast(e.message,"error")}
 }
 function exportGJ(){
   if(!pts.length) return toast("لا توجد نقاط","warn");
@@ -1806,7 +1756,7 @@ function exportGJ(){
     gj.features.push({type:"Feature",geometry:{type:"Polygon",coordinates:[pc]},properties:{area_m2:turf.area(turf.polygon([pc]))}});
   }
   dlText(JSON.stringify(gj,null,2),'survey-'+Date.now()+'.geojson');
-  toast("✅ تم التصدير","success");
+  toast("تم التصدير","success");
 }
 
 /* ===== COORDINATES ===== */
@@ -1859,8 +1809,8 @@ async function csvToTxt(f){
       out+=`${p},${e},${nn},${z},${code}\n`;n++;
     });
     dlText(out,f.name.replace(/\.csv$/i,'')+'.txt');
-    toast(`✅ تم تحويل ${n} نقطة`,"success");
-  }catch(e){toast("❌ "+e.message,"error")}
+    toast(`تم تحويل ${n} نقطة`,"success");
+  }catch(e){toast(e.message,"error")}
 }
 
 /* ===== LAB ===== */
@@ -1896,19 +1846,19 @@ async function runPy(){
   if (isFeaturePro('lab') && needPro()) return;
   
   const l=$("pl2").value, code=$("py").value, out=$("po");
-  out.textContent="⏳...";
+  out.textContent="...";
   if(l==='js'){
     const logs=[];
     const orig=console.log;
     console.log=(...a)=>{logs.push(a.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(' '));orig(...a)};
     try{const r=eval(code);if(r!==undefined)logs.push("→ "+String(r));}
-    catch(e){logs.push("❌ "+e.message)}
+    catch(e){logs.push(""+e.message)}
     finally{console.log=orig}
-    out.textContent=logs.join('\n')||"✅ لا مخرجات";
+    out.textContent=logs.join('\n')||"لا مخرجات";
   }else{
     try{
       if(!pyo){
-        out.textContent="⏳ تحميل Pyodide (قد يأخذ 15-30 ثانية)...";
+        out.textContent="تحميل Pyodide (قد يأخذ 15-30 ثانية)...";
         if(!window.loadPyodide){
           await new Promise((res,rej)=>{
             const s=document.createElement('script');
@@ -1921,10 +1871,10 @@ async function runPy(){
       }
       out.textContent="";
       pyo.setStdout({batched:s=>{out.textContent+=s+"\n"}});
-      pyo.setStderr({batched:s=>{out.textContent+="⚠️ "+s+"\n"}});
+      pyo.setStderr({batched:s=>{out.textContent+=""+s+"\n"}});
       await pyo.runPythonAsync(code);
-      if(!out.textContent) out.textContent="✅ تم التنفيذ (بدون مخرجات)";
-    }catch(e){out.textContent="❌ "+(e.message||e)}
+      if(!out.textContent) out.textContent="تم التنفيذ (بدون مخرجات)";
+    }catch(e){out.textContent=(e.message||e)}
   }
 }
 
@@ -1934,14 +1884,14 @@ function voice(){
   if(!SR) return toast("التعرف على الصوت غير مدعوم","warn");
   const r=new SR();
   r.lang='ar-EG';r.interimResults=false;r.continuous=false;
-  r.onstart=()=>{$("mic").style.background="var(--r)";toast("🎤 جاري الاستماع...","info")};
+  r.onstart=()=>{$("mic").style.background="var(--r)";toast("جاري الاستماع...","info")};
   r.onresult=e=>{
     const t=e.results[0][0].transcript;
     $("ui").value+=($("ui").value?" ":"")+t;
   };
-  r.onerror=e=>toast("❌ "+e.error,"error");
+  r.onerror=e=>toast(e.error,"error");
   r.onend=()=>{$("mic").style.background="";};
-  try{r.start()}catch(e){toast("❌ "+e.message,"error")}
+  try{r.start()}catch(e){toast(e.message,"error")}
 }
 
 /* ===== CHIPS INIT ===== */
@@ -1989,7 +1939,7 @@ window.openTool=function(id){
 /* GeoDev Studio Pro — Patch v2.9
    الاستخدام: ضع <script src="geo-patch.js"><\/script> قبل سكربت الـ serviceWorker في آخر index.html */
 const GOOGLE_CLIENT_ID="310415906594-v9gceucmp5c2qh0tjhtklmssijpb9u3l.apps.googleusercontent.com";     // ← ضع Client ID من Google Cloud Console لتفعيل الدخول بجوجل
-const GEO_SECRET="geo-sec-2026",D3=3*864e5,DAY=864e5;
+const D3=3*864e5,DAY=864e5;
 let proConfig = JSON.parse(localStorage.getItem("gd_pro_config")) || {
   tools: ['triangle','map','coord','compass','qibla'],
   engines: ['g38','g52'],
@@ -2046,37 +1996,23 @@ function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").inner
 
 
 
-/* ---------- Subscription codes (single-use per account) ---------- */
-const chk=s=>{let h=5381;for(const c of s+GEO_SECRET)h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36).toUpperCase().padStart(4,"0").slice(-4)};
-function mkCode(d){const b=String(d).padStart(3,"0")+(Math.random().toString(36)+"0000").slice(2,6).toUpperCase();return"GEO-"+b+"-"+chk(b)}
-function redeem(id){
- const c=($(id).value||"").trim().toUpperCase(),m=c.match(/^GEO-(\d{3})([A-Z0-9]{4})-([A-Z0-9]{4})$/);
- if(!m||chk(m[1]+m[2])!==m[3])return toast("❌ كود غير صحيح","error");
- if(isAdm()||!uemail())return toast("سجّل بحساب مستخدم لتفعيل الكود","warn");
- const used=JSON.parse(localStorage.getItem("gd_used")||"[]"),mm=me();
- if(used.includes(c)||(mm.usedCodes||[]).includes(c))return toast("❌ الكود مستخدم من قبل","error");
- used.push(c);localStorage.setItem("gd_used",JSON.stringify(used));
- upMe(u=>{u.usedCodes=(u.usedCodes||[]).concat(c);u.proUntil=Math.max(u.proUntil||0,Date.now())+(+m[1])*DAY});
- document.getElementById("proM")?.remove();refreshUI();toast("🎉 تم تفعيل PRO لمدة "+(+m[1])+" يوم","success")}
-function genCodes(){const d=parseInt($("cdDays").value)||30,n=Math.min(50,parseInt($("cdN").value)||1),l=JSON.parse(localStorage.getItem("gd_codes")||"[]");for(let i=0;i<n;i++)l.unshift({c:mkCode(d),d});localStorage.setItem("gd_codes",JSON.stringify(l.slice(0,200)));listCodes()}
-function listCodes(){const u=JSON.parse(localStorage.getItem("gd_used")||"[]"),l=JSON.parse(localStorage.getItem("gd_codes")||"[]");$("cdList").innerHTML=l.map(x=>`<div>${x.c} — ${x.d} يوم ${u.includes(x.c)?"❌ مستخدم":"✅"}</div>`).join("")||"لا أكواد"}
 
 /* ---------- PRO modal ---------- */
 function showPro(mode){
  document.getElementById("proM")?.remove();
  const L=proLeft(),m=me(),paid=m&&m.proUntil>Date.now(),day=x=>Math.ceil(x/DAY);
- const head=isAdm()?"👑 حساب الأدمن — كل المزايا مفعّلة":paid?`✅ اشتراك PRO فعّال — متبقي ${day(m.proUntil-Date.now())} يوم`:L>0?`🎁 تجربة مجانية لمدة 3 أيام — متبقي ${day(L)} يوم`:"⏳ انتهت التجربة المجانية — أنت الآن ضيف في الباقة المجانية";
+ const head=isAdm()?"حساب الأدمن — كل المزايا مفعّلة":paid?`اشتراك PRO فعّال — متبقي ${day(m.proUntil-Date.now())} يوم`:L>0?`تجربة مجانية لمدة 3 أيام — متبقي ${day(L)} يوم`:"انتهت التجربة المجانية — أنت الآن ضيف في الباقة المجانية";
  document.body.insertAdjacentHTML("beforeend",`<div id="proM" class="tool-modal on" style="z-index:110" onclick="if(event.target===this)this.remove()"><div class="tool-content" style="padding:20px">
  <button class="close-btn" style="position:absolute;top:6px;right:8px;z-index:5" onclick="document.getElementById('proM').remove()">✕</button>
- <div style="text-align:center;padding-top:14px"><div style="font-size:34px">👋</div><h3 style="font-size:17px">أهلاً ${esc(uname())}</h3><div class="trial">${head}</div></div>
- ${mode=="lock"?'<div class="res" style="color:var(--am);text-align:center">🔒 هذه الميزة متاحة لمشتركي PRO فقط</div>':""}
- <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0"><h3 style="color:var(--am)">⭐ اشترك في عرض تفعيل ال PRO</h3>
+ <div style="text-align:center;padding-top:14px"><h3 style="font-size:17px">أهلاً ${esc(uname())}</h3><div class="trial">${head}</div></div>
+ ${mode=="lock"?'<div class="res" style="color:var(--am);text-align:center">هذه الميزة متاحة لمشتركي PRO فقط</div>':""}
+ <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0"><h3 style="color:var(--am)">اشترك في عرض تفعيل ال PRO</h3>
  <p class="mt">لكي تتاح لك جميع الأدوات والمحركات — أنت الآن ضيف، وهذه مزايا PRO:</p>
- <ul class="pl"><li>🧠 <b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li>🚀 <b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>📐 كل أدوات المساحة (مثلثات، رفع، إحداثيات، الحاسبة الفائقة)</li><li>🌍 كل متصفحات الجيوماتكس</li><li>💻 توليد مواقع وأكواد كاملة بدون قيود</li></ul>
+ <ul class="pl"><li><b>GEO 3.8 FLASH</b> — شبه متكامل في جميع الأدوات</li><li><b>GEO 5.2 ULTRA</b> — موسوعي مربوط بمصادر الويب العالمية</li><li>كل أدوات المساحة (مثلثات، رفع، إحداثيات، الحاسبة الفائقة)</li><li>كل متصفحات الجيوماتكس</li><li>توليد مواقع وأكواد كاملة بدون قيود</li></ul>
  <input id="proCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('proCode')">تفعيل كود الاشتراك</button>
  <div style="display:flex;gap:8px;margin-top:10px">
-   <a href="https://wa.me/201015912371?text=${encodeURIComponent('أريد الاشتراك في باقة PRO لمنصة GeoDev')}" target="_blank" style="flex:1;text-align:center;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">📱 واتساب</a>
-   <a href="mailto:${ADMIN_EMAIL}" style="flex:1;text-align:center;background:#334155;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">✉️ إيميل</a>
+   <a href="https://wa.me/201015912371?text=${encodeURIComponent('أريد الاشتراك في باقة PRO لمنصة GeoDev')}" target="_blank" style="flex:1;text-align:center;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">واتساب</a>
+   <a href="mailto:${ADMIN_EMAIL}" style="flex:1;text-align:center;background:#334155;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">إيميل</a>
  </div></div></div>`)}
  
 /* ---------- Engines / Drawer / UI ---------- */
@@ -2086,7 +2022,7 @@ function renderGisCards(){
   $("gisCards").innerHTML=GIS_TOPICS.map(g=>`
     <div class="card ${isLocked ? 'gcard' : ''}">
       ${isLocked ? '<span class="pro-b">PRO</span>' : ''}
-      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.icon} ${g.title}</h3>
+      <h3 style="margin-top:${isLocked ? '14px' : '0'}">${g.title}</h3>
       <div class="chips">
         ${g.items.map(i=>`<button class="chip" onclick="askGis('${i.replace(/'/g,"\\'")}','${g.title}')">${i}</button>`).join("")}
       </div>
@@ -2094,7 +2030,7 @@ function renderGisCards(){
   `).join("");
 }
 
-function pickEng(k){if(isEnginePro(k)&&needPro())return;eng=k;localStorage.setItem("gd_eng",k);renderEng();toast("✅ "+ENGS[k].n,"success")}
+function pickEng(k){if(isEnginePro(k)&&needPro())return;eng=k;localStorage.setItem("gd_eng",k);renderEng();toast(ENGS[k].n,"success")}
 
 function toggleDrawer(){$("drw").classList.toggle("on");$("dov").classList.toggle("on")}
 function refreshUI(){const m=me(),paid=m&&m.proUntil>Date.now(),t=isAdm()?"ADMIN":paid?"PRO":proLeft()>0?"TRIAL":"FREE";
@@ -2115,7 +2051,7 @@ function newChat(){hist=[];cid=null;$("chat").innerHTML="";addMsg("a",welc())}
 
 /* ---------- Preview fix: robust code extraction ---------- */
 function handleCode(t){
- t=t.replace(/\n*> ⚠️[^\n]*\s*$/,"");
+ t=t.replace(/\n*> تنبيه: الرد طويل[^\n]*\s*$/,"");
  let bs=[...t.matchAll(/```[ \t]*([\w+-]*)[ \t]*\r?\n([\s\S]*?)(?:```|$)/g)].map(m=>({l:(m[1]||"txt").toLowerCase(),c:m[2].trim()})).filter(b=>b.c);
  bs.forEach(b=>{if(/^(htm|html5)$/.test(b.l)||/^\s*<(!doctype html|html)/i.test(b.c))b.l="html"});
  if(!bs.some(b=>b.l=="html")){const m=t.match(/<!doctype html[\s\S]*$/i)||t.match(/<html[\s\S]*$/i);if(m)bs.unshift({l:"html",c:m[0].replace(/```[\s\S]*$/,"").trim()})}
@@ -2136,9 +2072,9 @@ function startCompass(){startSensor("c",h=>handleOrientation({webkitCompassHeadi
 function qInit(){const r=$("qRing");if(!r||r.children.length)return;let h="";
  for(let i=0;i<360;i+=10)h+=`<i style="transform:rotate(${i}deg);${i%90?"":"height:16px;background:var(--tx)"}"></i>`;
  [["N",0],["E",90],["S",180],["W",270]].forEach(([l,a])=>h+=`<b class="ql ${l=="N"?"n":""}" style="transform:rotate(${a}deg)">${l}</b>`);
- r.innerHTML=h+'<div class="qm" id="qMark"><span>🕋</span></div>';qDraw()}
+ r.innerHTML=h+'<div class="qm" id="qMark"><span class="kaaba"></span></div>';qDraw()}
 function qDraw(){const r=$("qRing");if(!r)return;r.style.transform=`rotate(${-qH}deg)`;const m=$("qMark");if(m)m.style.transform=`rotate(${qB||0}deg)`;
- if(qB!=null){const d=((qB-qH+540)%360)-180,ok=Math.abs(d)<4;$("qiblaText").textContent=qB.toFixed(1)+"°";$("qDiff").innerHTML=ok?'<b style="color:var(--gr)">✅ أنت في اتجاه القبلة</b>':"دُر "+(d>0?"يميناً":"يساراً")+" "+Math.abs(d).toFixed(0)+"°";r.style.borderColor=ok?"var(--gr)":""}}
+ if(qB!=null){const d=((qB-qH+540)%360)-180,ok=Math.abs(d)<4;$("qiblaText").textContent=qB.toFixed(1)+"°";$("qDiff").innerHTML=ok?'<b style="color:var(--gr)">أنت في اتجاه القبلة</b>':"دُر "+(d>0?"يميناً":"يساراً")+" "+Math.abs(d).toFixed(0)+"°";r.style.borderColor=ok?"var(--gr)":""}}
 function calcQibla(){const lat=parseFloat($("qLat").value),lng=parseFloat($("qLng").value);if(isNaN(lat)||isNaN(lng))return toast("أدخل الإحداثيات أو استخدم GPS","warn");
  const R=Math.PI/180,pk=21.4225*R,lk=39.8262*R,p=lat*R,l=lng*R;qB=(Math.atan2(Math.sin(lk-l),Math.cos(p)*Math.tan(pk)-Math.sin(p)*Math.cos(lk-l))/R+360)%360;qInit();qDraw()}
 function startQibla(){if(qB==null)getGpsForQibla();startSensor("q",h=>{qH=h;qDraw()})}
@@ -2154,21 +2090,21 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
 (function(){
  document.querySelector("header").innerHTML=`<button class="k" onclick="toggleDrawer()" style="font-size:20px;padding:6px 12px" title="القائمة">☰</button><div style="flex:1"><h1>GeoDev Studio Pro</h1><span class="mt">جيوماتكس • جغرافيا • تصميم • مساحة</span></div><span id="planBadge" class="plan-b">FREE</span><select id="tier" hidden><option value="quick">q</option><option value="default" selected>d</option><option value="complex">c</option></select>`;
  document.body.insertAdjacentHTML("beforeend",`<div id="dov" onclick="toggleDrawer()"></div><aside id="drw"><div class="row" style="justify-content:space-between"><b>GeoDev Studio Pro</b><button class="k" onclick="toggleDrawer()">✕</button></div>
- <div class="du"><div class="av">👤</div><div><b id="dName"></b><div class="mt" id="dMail"></div><span id="dPlan" class="plan-b">FREE</span></div></div>
+ <div class="du"><div class="av"><svg width="38" height="38" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="48" fill="#1e293b"/><circle cx="48" cy="36" r="16" fill="#64748b"/><path d="M16 88c3-20 17-28 32-28s29 8 32 28a46 46 0 0 1-64 0z" fill="#64748b"/></svg></div><div><b id="dName"></b><div class="mt" id="dMail"></div><span id="dPlan" class="plan-b">FREE</span></div></div>
  <div class="dm">
-   <button onclick="saveProjects();toggleDrawer()">💾 حفظ المشروع</button>
-   <button onclick="loadProjects();toggleDrawer()">📂 فتح مشروع محفوظ</button>
-   ${sessionStorage.getItem("gd_role") === "admin" ? '<button onclick="aiSettings();toggleDrawer()">⚙️ إعدادات AI</button>' : ''}
-   <button onclick="toggleDrawer();showPro('info')">⭐ PRO وكود الاشتراك</button>
-   <button class="r" onclick="logout()">🚪 خروج</button>
+   <button onclick="saveProjects();toggleDrawer()">حفظ المشروع</button>
+   <button onclick="loadProjects();toggleDrawer()">فتح مشروع محفوظ</button>
+   ${sessionStorage.getItem("gd_role") === "admin" ? '<button onclick="aiSettings();toggleDrawer()">إعدادات AI</button>' : ''}
+   <button onclick="toggleDrawer();showPro('info')">PRO وكود الاشتراك</button>
+   <button class="r" onclick="logout()">خروج</button>
  </div></aside>`);
  $("ui").closest(".row").insertAdjacentHTML("afterend",'<div class="engbar" id="engBar"></div>');
- document.querySelector("#loginForm button.a").insertAdjacentHTML("afterend",'<button class="k" style="width:100%;padding:12px;margin-top:8px" onclick="googleLogin()">🟢 المتابعة بحساب Google</button>');
- document.querySelector("#modal-qibla .tool-body").innerHTML=`<button style="width:100%;margin-bottom:8px" onclick="getGpsForQibla()">📍 استخدام موقعي الحالي</button>
+ document.querySelector("#loginForm button.a").insertAdjacentHTML("afterend",'<button class="k" style="width:100%;padding:12px;margin-top:8px" onclick="googleLogin()">المتابعة بحساب Google</button>');
+ document.querySelector("#modal-qibla .tool-body").innerHTML=`<button style="width:100%;margin-bottom:8px" onclick="getGpsForQibla()">استخدام موقعي الحالي</button>
  <div class="row"><input id="qLat" type="number" step="any" placeholder="Latitude" style="width:48%"><input id="qLng" type="number" step="any" placeholder="Longitude" style="width:48%"></div>
- <div class="row"><button class="g" style="flex:1" onclick="calcQibla()">احسب القبلة</button><button class="a" style="flex:1" onclick="startQibla()">🧭 بوصلة حية</button></div>
+ <div class="row"><button class="g" style="flex:1" onclick="calcQibla()">احسب القبلة</button><button class="a" style="flex:1" onclick="startQibla()">بوصلة حية</button></div>
  <div class="qd"><div class="qp"></div><div class="qr" id="qRing"></div><div class="qc"></div></div><div id="qiblaText" class="qt">--°</div><div class="mt" id="qDiff" style="text-align:center">اتجاه الكعبة من موقعك</div>`;
- $("adminPanel").insertAdjacentHTML("beforeend",'<div class="card"><h3>🎟️ أكواد الاشتراك</h3><div class="row"><input id="cdDays" type="number" value="30" style="width:90px" placeholder="أيام"><input id="cdN" type="number" value="1" style="width:90px" placeholder="العدد"><button class="g" onclick="genCodes()">إنشاء</button></div><div id="cdList" class="res c" style="max-height:220px;overflow:auto"></div></div>');
+ $("adminPanel").insertAdjacentHTML("beforeend",'<div class="card"><h3>أكواد الاشتراك</h3><div class="row"><input id="cdDays" type="number" value="30" style="width:90px" placeholder="أيام"><input id="cdN" type="number" value="1" style="width:90px" placeholder="العدد"><button class="g" onclick="genCodes()">إنشاء</button></div><div id="cdList" class="res c" style="max-height:220px;overflow:auto"></div></div>');
  const c=$("code");c.addEventListener("input",edit);c.addEventListener("scroll",sync);["keyup","click"].forEach(e=>c.addEventListener(e,ln));
  try{renderGisCards();renderSurveyGrid();personalize();refreshUI()}catch(e){console.warn(e)}
  if(!hist.length&&$("chat").children.length==1){$("chat").innerHTML="";addMsg("a",welc())}
@@ -2220,7 +2156,7 @@ body.gd-admin nav button[data-t="admin"]{display:flex}
 .gd-cw.gd-live canvas{opacity:.6}
 .gd-cw.gd-live .m.a{background:rgba(15,23,42,.72);background:color-mix(in srgb,var(--cd) 72%,transparent)}
 .gd-acts{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px solid var(--ln)}
-.gd-acts button{background:var(--bg);color:var(--mt);border:1px solid var(--ln);padding:4px 9px;font-size:14px;min-height:32px;border-radius:8px;line-height:1}
+.gd-acts button{background:var(--bg);color:var(--mt);border:1px solid var(--ln);padding:4px 10px;font-size:12px;min-height:32px;border-radius:8px;line-height:1}
 .gd-acts button.on{color:#fff;background:var(--bl);border-color:var(--bl)}
 .gd-acts button.dn.on{background:#991b1b;border-color:#991b1b}
 .m.a:not(:last-child) .gd-acts .rg{display:none}
@@ -2238,7 +2174,7 @@ const dl=(t,n,m)=>{const a=document.createElement('a');a.href=URL.createObjectUR
 
 /* ---------- 1) PRO لكل المستخدمين ---------- */
 W('proLeft',o=>PRO_FOR_ALL&&sessionStorage.getItem('gd_auth')=='1'?1e12:o());
-W('showPro',(o,m)=>{if(!PRO_FOR_ALL||isAdm())return o(m);if(m=='info')toast('✅ PRO مفعّل لحسابك — كل الأدوات والمحركات متاحة','success')});
+W('showPro',(o,m)=>{if(!PRO_FOR_ALL||isAdm())return o(m);if(m=='info')toast('PRO مفعّل لحسابك — كل الأدوات والمحركات متاحة','success')});
 W('refreshUI',o=>{o();if(PRO_FOR_ALL&&!isAdm())['planBadge','dPlan'].forEach(i=>{const e=$(i);if(e){e.textContent='PRO';e.className='plan-b pro'}})});
 document.body.classList.toggle('gd-proall',PRO_FOR_ALL);
 
@@ -2252,23 +2188,23 @@ setInterval(syncAdmin,1500);syncAdmin();
 const STREAM={},G={},FB=()=>{try{return JSON.parse(localStorage.getItem('gd_fb')||'{}')}catch(e){return{}}};
 const hs=s=>{let h=5381;for(const c of s.slice(0,160))h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36)};
 const gt=el=>{const c=el.cloneNode(true);c.querySelectorAll('.gd-acts,.copy-btn,button').forEach(n=>n.remove());c.querySelectorAll('p,li,h1,h2,h3,h4,pre,tr,br,div').forEach(n=>n.after('\n'));return c.textContent.replace(/\n{3,}/g,'\n\n').trim()};
-const ACTS=[['copy','📋','نسخ الإجابة'],['rg','🔄','إعادة الإجابة'],['up','👍','أعجبني'],['dn','👎','لم تعجبني'],['say','🔊','قراءة صوتية'],['sh','📤','مشاركة'],['dl','⬇️','تحميل']];
+const ACTS=[['copy','نسخ','نسخ الإجابة'],['rg','إعادة','إعادة الإجابة'],['up','إعجاب','أعجبتني الإجابة'],['dn','عدم إعجاب','لم تعجبني الإجابة'],['say','استماع','قراءة صوتية'],['sh','مشاركة','مشاركة'],['dl','تحميل','تحميل']];
 function decorate(id){const r=$(id);if(!r)return;r.querySelectorAll('.m.a').forEach(el=>{
   if(el.querySelector('.gd-acts'))return;const p=el.previousElementSibling;if(!p||!p.classList.contains('u'))return;
-  if(/^\s*(❌|⏳)/.test(el.textContent)||(STREAM[id]&&el===r.lastElementChild))return;
+  if(/^\s*(خطأ:|جارٍ )/.test(el.textContent)||(STREAM[id]&&el===r.lastElementChild))return;
   const f=FB()[hs(gt(el))];
   el.insertAdjacentHTML('beforeend','<div class="gd-acts" role="toolbar" aria-label="إجراءات الرد">'+ACTS.map(([a,i,t])=>`<button class="${a=='rg'?'rg':a=='dn'?'dn':''}${f==a?' on':''}" data-a="${a}" title="${t}" aria-label="${t}">${i}</button>`).join('')+'</div>')})}
 function regen(el,box){
   if(box=='gisChatBox'){const u=[...$(box).querySelectorAll('.m.u')].pop();if(!u)return;const q=u.textContent;$('gisInput').value=q;el.remove();u.remove();return gisSend()}
-  const l=window.__lastAsk;if(!l)return toast('مفيش سؤال سابق لإعادته','warn');
+  const l=window.__lastAsk;if(!l)return toast('لا يوجد سؤال سابق لإعادته','warn');
   let n=[...$('chat').querySelectorAll('.m.u')].pop();while(n){const x=n.nextElementSibling;n.remove();n=x}
   if(hist.length&&hist[hist.length-1].role=='assistant')hist.pop();if(hist.length&&hist[hist.length-1].role=='user')hist.pop();
   ask(l.p,l.s)}
 document.addEventListener('click',e=>{const b=e.target.closest('.gd-acts button');if(!b)return;
   const el=b.closest('.m.a'),box=el.parentNode.id,a=b.dataset.a,t=gt(el),fl=ic=>{const o=b.textContent;b.textContent=ic;setTimeout(()=>b.textContent=o,1400)};
-  if(a=='copy'){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove()});fl('✅')}
+  if(a=='copy'){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove()});fl('تم')}
   else if(a=='rg')regen(el,box);
-  else if(a=='up'||a=='dn'){const s=FB(),k=hs(t),on=s[k]!=a;on?s[k]=a:delete s[k];localStorage.setItem('gd_fb',JSON.stringify(s));el.querySelectorAll('.gd-acts .up,.gd-acts .dn,.gd-acts [data-a=up],.gd-acts [data-a=dn]').forEach(x=>x.classList.remove('on'));if(on){b.classList.add('on');toast(a=='up'?'شكراً! سعيدين إنها أعجبتك 👍':'شكراً على رأيك — جرّب 🔄 إعادة الإجابة','info')}}
+  else if(a=='up'||a=='dn'){const s=FB(),k=hs(t),on=s[k]!=a;on?s[k]=a:delete s[k];localStorage.setItem('gd_fb',JSON.stringify(s));el.querySelectorAll('.gd-acts .up,.gd-acts .dn,.gd-acts [data-a=up],.gd-acts [data-a=dn]').forEach(x=>x.classList.remove('on'));if(on){b.classList.add('on');toast(a=='up'?'شكرًا لك، يسعدنا أن الإجابة نالت إعجابك.':'شكرًا لملاحظتك، يمكنك استخدام خيار إعادة الإجابة.','info')}}
   else if(a=='say'){if(!window.speechSynthesis)return toast('القراءة الصوتية غير مدعومة','warn');if(speechSynthesis.speaking){speechSynthesis.cancel();b.classList.remove('on');return}const u=new SpeechSynthesisUtterance(t.replace(/[#*`>|_]+/g,' ').slice(0,3000));u.lang=/[\u0600-\u06FF]/.test(t)?'ar-EG':'en-US';u.onend=()=>b.classList.remove('on');speechSynthesis.speak(u);b.classList.add('on')}
   else if(a=='sh'){navigator.share?navigator.share({text:t}).catch(()=>{}):(navigator.clipboard&&navigator.clipboard.writeText(t),toast('تم نسخ الإجابة للمشاركة','success'))}
   else if(a=='dl')dl(t,'geodev-answer-'+Date.now()+'.md')});
@@ -2289,7 +2225,7 @@ function wrapBox(id){const c=$(id);if(!c||c.parentNode.classList.contains('gd-cw
   new MutationObserver(()=>{clearTimeout(c._t);c._t=setTimeout(()=>decorate(id),150)}).observe(c,{childList:true})}
 function strm(id,on){STREAM[id]=on;const c=$(id),w=c&&c.parentNode;if(!w||!w.classList.contains('gd-cw'))return;w.classList.toggle('gd-live',!!on);
   if(on)G[id].on();else{setTimeout(()=>{if(!STREAM[id])G[id].off()},800);setTimeout(()=>decorate(id),60)}}
-W('ask',(o,p,s)=>{if(!/^🔄 استكمال/.test(s||''))window.__lastAsk={p,s};strm('chat',1);return Promise.resolve(o(p,s)).finally(()=>strm('chat',0))});
+W('ask',(o,p,s)=>{if(!/^استكمال$/.test(s||''))window.__lastAsk={p,s};strm('chat',1);return Promise.resolve(o(p,s)).finally(()=>strm('chat',0))});
 W('gisSend',o=>{strm('gisChatBox',1);return Promise.resolve(o()).finally(()=>strm('gisChatBox',0))});
 wrapBox('chat');wrapBox('gisChatBox');decorate('chat');
 
@@ -2902,12 +2838,12 @@ window.exportDXF=()=>{const a=PT();if(!a)return;let d='0\nSECTION\n2\nENTITIES\n
 
 /* ---------- 6) ما الجديد / الخصوصية / الوضع الفاتح ---------- */
 window.showInfo=(t,h)=>{$('gdInfo')?.remove();document.body.insertAdjacentHTML('beforeend',`<div id="gdInfo" class="tool-modal on" style="z-index:120" onclick="if(event.target===this)this.remove()"><div class="tool-content"><div class="tool-header"><h3>${t}</h3><button class="close-btn" aria-label="إغلاق" onclick="$('gdInfo').remove()">✕</button></div><div class="tool-body" style="line-height:1.9;font-size:13px">${h}</div></div></div>`)};
-window.showWhats=()=>showInfo('🆕 ما الجديد في '+VER,'<ul class="pl"><li>⭐ تحكم كامل من الأدمن في الأدوات (مجاني / PRO / مقفول)، عداد انتهاء الاشتراك، وصفحة الملف الشخصي</li><li>📋🔄👍 أزرار تحت كل إجابة: نسخ، إعادة، أعجبني، قراءة، مشاركة، تحميل</li><li>🌍 كرة أرضية متحركة في خلفية الشات أثناء الإجابة</li><li>⛏️ أدوات جديدة: الكميات والحفر، المناسيب، المنحنيات الأفقية، تصحيح المضلع</li><li>🧭 تحويل إحداثيات إلى Blue Belt و Purple Belt</li><li>🗺️ تصدير الرفع المساحي: KML و CSV و DXF</li><li>🌗 وضع فاتح/داكن</li></ul>');
-window.showPrivacy=()=>showInfo('🔒 الخصوصية والشروط','<p>• الحساب يُدار عبر Firebase. المحادثات والمشاريع والإعدادات تُحفظ في متصفحك على جهازك.</p><p>• أسئلتك تُرسل لمزوّد الذكاء الاصطناعي لتوليد الرد. لا ترسل بيانات سرية أو شخصية حساسة.</p><p>• الموقع (GPS) والبوصلة والميكروفون لا تُستخدم إلا عند ضغطك على الزر المخصص.</p><p>• نتائج الأدوات الهندسية استرشادية، وتُراجع قبل أي استخدام تنفيذي أو قانوني.</p>');
+window.showWhats=()=>showInfo('ما الجديد في '+VER,'<ul class="pl"><li>تحكم كامل من الأدمن في الأدوات (مجاني / PRO / مقفول)، عداد انتهاء الاشتراك، وصفحة الملف الشخصي</li><li>أزرار تحت كل إجابة: نسخ، إعادة، أعجبني، قراءة، مشاركة، تحميل</li><li>كرة أرضية متحركة في خلفية الشات أثناء الإجابة</li><li>أدوات جديدة: الكميات والحفر، المناسيب، المنحنيات الأفقية، تصحيح المضلع</li><li>تحويل إحداثيات إلى Blue Belt و Purple Belt</li><li>تصدير الرفع المساحي: KML و CSV و DXF</li><li>وضع فاتح/داكن</li></ul>');
+window.showPrivacy=()=>showInfo('الخصوصية والشروط','<p>• الحساب يُدار عبر Firebase. المحادثات والمشاريع والإعدادات تُحفظ في متصفحك على جهازك.</p><p>• أسئلتك تُرسل لمزوّد الذكاء الاصطناعي لتوليد الرد. لا ترسل بيانات سرية أو شخصية حساسة.</p><p>• الموقع (GPS) والبوصلة والميكروفون لا تُستخدم إلا عند ضغطك على الزر المخصص.</p><p>• نتائج الأدوات الهندسية استرشادية، وتُراجع قبل أي استخدام تنفيذي أو قانوني.</p>');
 window.toggleLight=()=>{const r=document.documentElement,on=!r.classList.contains('light');r.classList.toggle('light',on);localStorage.setItem('gd_light',on?'1':'0');
   if(on)['bg','cd','ln','tx','mt'].forEach(k=>r.style.removeProperty('--'+k));else try{loadTheme()}catch(e){}};
 if(localStorage.getItem('gd_light')=='1')document.documentElement.classList.add('light');
-const dm=document.querySelector('#drw .dm');if(dm)dm.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();showWhats()">🆕 ما الجديد</button><button onclick="toggleLight();toggleDrawer()">🌗 الوضع الفاتح / الداكن</button><button onclick="toggleDrawer();showPrivacy()">🔒 الخصوصية والشروط</button>');
+const dm=document.querySelector('#drw .dm');if(dm)dm.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();showWhats()">ما الجديد</button><button onclick="toggleLight();toggleDrawer()">الوضع الفاتح / الداكن</button><button onclick="toggleDrawer();showPrivacy()">الخصوصية والشروط</button>');
 W('afterLogin',o=>{o();syncAdmin();setTimeout(()=>{if(localStorage.getItem('gd_seen')!=VER){localStorage.setItem('gd_seen',VER);showWhats()}},1500)});
 const vp=document.querySelector('#modal-dev p.mt');if(vp)vp.textContent='الإصدار '+VER;
 document.querySelectorAll('button[title]').forEach(b=>{if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',b.title)});
@@ -2926,8 +2862,8 @@ try{renderSurveyGrid();refreshUI()}catch(e){console.warn(e)}
 /* ===== GeoDev v3.1 — تحكم كامل + عداد اشتراك + ملف شخصي ===== */
 const ALLOW_TRIAL=false;   // false = PRO للمشتركين بكود فقط (بدون تجربة مجانية)
 const REG=[
-['أدوات المساحة',[['t:shapes','📐 حاسبة الأشكال'],['t:triangle','🔺 المثلثات'],['t:convert','🔄 تحويل الوحدات'],['t:calc','🧮 جمع وطرح'],['t:map','🗺️ الخريطة والرفع'],['t:coord','🧭 تحويل الإحداثيات'],['t:compass','🧭 البوصلة'],['t:qibla','🕋 القبلة'],['t:vol','⛏️ الكميات والحفر'],['t:lvl','📏 المناسيب'],['t:crv','↪️ المنحنيات'],['t:trv','🔁 تصحيح المضلع']]],
-['الأقسام',[['s:studio','💻 البرمجة'],['s:survey','📐 المساحة'],['s:gis','🌍 الجيوماتكس'],['s:py','🧪 المختبر']]],
+['أدوات المساحة',[['t:shapes','حاسبة الأشكال'],['t:triangle','المثلثات'],['t:convert','تحويل الوحدات'],['t:calc','جمع وطرح'],['t:map','الخريطة والرفع'],['t:coord','تحويل الإحداثيات'],['t:compass','البوصلة'],['t:qibla','القبلة'],['t:vol','الكميات والحفر'],['t:lvl','المناسيب'],['t:crv','المنحنيات'],['t:trv','تصحيح المضلع']]],
+['الأقسام',[['s:studio','البرمجة'],['s:survey','المساحة'],['s:gis','الجيوماتكس'],['s:py','المختبر']]],
 ['ميزات',[['f:gis_cards','كروت الجيوماتكس'],['f:gis_chat','شات الجيوماتكس'],['f:lab','مختبر الأكواد'],['f:studio','توليد المواقع']]],
 ['محركات AI',[['e:g38','GEO 3.8 FLASH'],['e:g52','GEO 5.2 ULTRA']]]];
 const DEF_PRO=['t:triangle','t:map','t:coord','t:compass','t:qibla','f:gis_cards','f:gis_chat','f:lab','f:studio','e:g38','e:g52'];
@@ -2941,10 +2877,13 @@ function applyCfg(){
   document.querySelectorAll('[data-ctl]').forEach(s=>s.value=st(s.dataset.ctl));
   document.querySelectorAll('nav button[data-t]').forEach(b=>{if(b.dataset.t!='admin')b.style.display=off('s:'+b.dataset.t)?'none':''});
   ['renderSurveyGrid','renderGisCards','renderEng'].forEach(f=>{try{window[f]()}catch(e){}})}
-async function pullCfg(){const d=fsDoc();if(!d)return;try{const s=await d.get();if(s.exists&&s.data().cfg){CFG=s.data().cfg;localStorage.setItem('gd_ctl',JSON.stringify(CFG));applyCfg()}}catch(e){}}
-const closed=()=>toast('🚧 هذه الأداة مغلقة حالياً','warn');
+async function pullCfg(){try{const r=await fetch((window.GEO_API||'')+'/config');if(!r.ok)return;const j=await r.json();
+  if(j&&j.at){CFG=j.cfg||{};localStorage.setItem('gd_ctl',JSON.stringify(CFG));applyCfg();return}
+  /* لم تُحفظ إعدادات على الخادم بعد: نقرأ النسخة القديمة من Firestore مرة واحدة */
+  const d=fsDoc();if(!d)return;const s=await d.get();if(s.exists&&s.data().cfg){CFG=s.data().cfg;localStorage.setItem('gd_ctl',JSON.stringify(CFG));applyCfg()}}catch(e){}}
+const closed=()=>toast('هذه الأداة مغلقة حالياً','warn');
 W('renderSurveyGrid',o=>{o();document.querySelectorAll('#surveyGrid .dash-card').forEach(c=>{const id=((c.getAttribute('onclick')||'').match(/'(\w+)'/)||[])[1],s=st('t:'+id);
-  if(s=='off'){isAdm()?(c.style.opacity='.45',c.insertAdjacentHTML('afterbegin','<span class="pro-b" style="background:#991b1b">🚫 مقفول</span>')):c.remove()}
+  if(s=='off'){isAdm()?(c.style.opacity='.45',c.insertAdjacentHTML('afterbegin','<span class="pro-b" style="background:#991b1b">مقفول</span>')):c.remove()}
   else if(s=='pro'&&!c.querySelector('.pro-b'))c.insertAdjacentHTML('afterbegin','<span class="pro-b">PRO</span>')})});
 W('openTool',(o,id)=>{if(off('t:'+id))return closed();if(st('t:'+id)=='pro'&&needPro())return;o(id)});
 W('go',(o,t)=>{if(off('s:'+t))return closed();if(!isAdm()&&st('s:'+t)=='pro'&&needPro())return;o(t);if(t=='profile')pfLoad()});
@@ -2955,38 +2894,38 @@ Object.entries({gisSend:'gis_chat',askGis:'gis_chat',runPy:'lab',buildSite:'stud
 /* PRO للمشتركين بكود فقط (بدون تجربة) */
 W('proLeft',o=>{if(isAdm())return 1e12;if(ALLOW_TRIAL)return o();const m=typeof me=='function'?me():null;return m?(m.proUntil||0)-Date.now():o()});
 /* لوحة تحكم الأدمن */
-$('adminPanel').insertAdjacentHTML('afterbegin',`<div class="card" id="gdCtl"><h3>🎛️ التحكم الكامل في الأدوات</h3><p class="mt">لكل أداة: 🟢 مجاني للكل • ⭐ PRO للمشتركين بكود • 🚫 مقفول (مخفي عن المستخدمين).</p>${REG.map(([g,l])=>`<b>${g}</b>`+l.map(([i,n])=>`<div class="ctl-row"><label>${n}</label><select data-ctl="${i}">${[['free','🟢 مجاني'],['pro','⭐ PRO'],['off','🚫 مقفول']].map(([v,t])=>`<option value="${v}" ${st(i)==v?'selected':''}>${t}</option>`).join('')}</select></div>`).join('')).join('')}<button class="g" style="width:100%;margin-top:8px" onclick="saveCtl()">💾 حفظ ونشر لكل المستخدمين</button><div id="ctlMsg" class="mt" style="margin-top:6px"></div></div>`);
+$('adminPanel').firstElementChild.insertAdjacentHTML('afterend',`<div class="card" id="gdCtl"><h3>التحكم في الأدوات والأقسام</h3><p class="mt">لكل عنصر ثلاث حالات: مجاني لجميع المستخدمين، أو PRO للمشتركين فقط، أو مقفول (مخفي عن المستخدمين).</p>${REG.map(([g,l])=>`<b>${g}</b>`+l.map(([i,n])=>`<div class="ctl-row"><label>${n}</label><select data-ctl="${i}">${[['free','مجاني'],['pro','PRO'],['off','مقفول']].map(([v,t])=>`<option value="${v}" ${st(i)==v?'selected':''}>${t}</option>`).join('')}</select></div>`).join('')).join('')}<button class="g" style="width:100%;margin-top:8px" onclick="saveCtl()">حفظ ونشر لجميع المستخدمين</button><div id="ctlMsg" class="mt" style="margin-top:6px"></div></div>`);
 window.saveCtl=async()=>{const n={};document.querySelectorAll('[data-ctl]').forEach(s=>{if(s.value!=(DEF_PRO.includes(s.dataset.ctl)?'pro':'free'))n[s.dataset.ctl]=s.value});CFG=n;localStorage.setItem('gd_ctl',JSON.stringify(n));applyCfg();
-  let m='✅ تم الحفظ على هذا الجهاز فقط (Firestore غير متصل)';const d=fsDoc();
-  if(d)try{await d.set({cfg:n,at:Date.now()});m='✅ تم الحفظ والنشر لكل المستخدمين'}catch(e){m='⚠️ اتحفظ محلياً فقط — اسمح للأدمن بالكتابة في قواعد Firestore ('+(e.code||e.message)+')'}
-  $('ctlMsg').textContent=m;toast(m,'success')};
+  let m,ok=true;try{await window.geoApi('/admin/config',{method:'POST',body:{cfg:n}});m='تم الحفظ والنشر لجميع المستخدمين.'}catch(e){ok=false;m='تم الحفظ على هذا الجهاز فقط، وتعذّر النشر للمستخدمين ('+((e&&e.message)||'خطأ')+').'}
+  $('ctlMsg').textContent=m;toast(m,ok?'success':'warn')};
 
 /* ---------- عداد انتهاء الاشتراك ---------- */
 const pad=n=>String(n).padStart(2,'0');
 const cdText=ms=>{const s=Math.max(0,ms/1000|0);return(s>=86400?(s/86400|0)+'ي ':'')+pad(s%86400/3600|0)+':'+pad(s%3600/60|0)+':'+pad(s%60)};
 const proEnd=()=>{const m=typeof me=='function'?me():null;return m&&m.proUntil>Date.now()?m.proUntil:0};
-function tick(){const e=proEnd();['gdCd','dCd','pfCd'].forEach(i=>{const x=$(i);if(x)x.textContent=e?'⏱️ '+cdText(e-Date.now()):''});
-  const pe=$('pfEnd');if(pe)pe.textContent=e?'ينتهي في: '+new Date(e).toLocaleString('ar-EG'):(isAdm()?'👑 حساب الأدمن — بدون انتهاء':'لا يوجد اشتراك فعّال — فعّل كود للحصول على PRO');
-  if(window._hp&&!e&&!isAdm()){window._hp=0;toast('⏳ انتهى اشتراك PRO','warn');refreshUI()}if(e)window._hp=1}
+function tick(){const e=proEnd();['gdCd','dCd','pfCd'].forEach(i=>{const x=$(i);if(x)x.textContent=e?''+cdText(e-Date.now()):''});
+  const pe=$('pfEnd');if(pe)pe.textContent=e?'ينتهي في: '+new Date(e).toLocaleString('ar-EG'):(isAdm()?'حساب الأدمن — بدون انتهاء':'لا يوجد اشتراك فعّال — فعّل كود للحصول على PRO');
+  if(window._hp&&!e&&!isAdm()){window._hp=0;toast('انتهى اشتراك PRO','warn');refreshUI()}if(e)window._hp=1}
 const pb=$('planBadge');if(pb)pb.insertAdjacentHTML('afterend','<span id="gdCd" class="gd-cd"></span>');
 const dp=$('dPlan');if(dp)dp.insertAdjacentHTML('afterend','<div id="dCd" class="gd-cd" style="font-size:12px;margin-top:4px"></div>');
 setInterval(tick,1000);
 
 /* ---------- الملف الشخصي ---------- */
+const AVSVG='<svg width="38" height="38" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="48" fill="#1e293b"/><circle cx="48" cy="36" r="16" fill="#64748b"/><path d="M16 88c3-20 17-28 32-28s29 8 32 28a46 46 0 0 1-64 0z" fill="#64748b"/></svg>';
 const AVA='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="#1e293b"/><circle cx="48" cy="36" r="17" fill="#64748b"/><path d="M14 96c2-22 18-32 34-32s32 10 34 32z" fill="#64748b"/></svg>');
 const prof=()=>{try{return JSON.parse(localStorage.getItem('gd_prof_'+uemail())||'{}')}catch(e){return{}}};
 const savP=p=>{localStorage.setItem('gd_prof_'+uemail(),JSON.stringify(p));try{firebase.apps.length&&firebase.firestore().collection('profiles').doc(uemail()).set(p,{merge:true}).catch(()=>{})}catch(e){}};
-function applyAv(){const p=prof();document.querySelectorAll('#drw .av').forEach(a=>a.innerHTML=p.photo?`<img src="${p.photo}" alt="">`:'👤')}
-document.querySelector('main').insertAdjacentHTML('beforeend',`<section id="s-profile" class="sec"><div class="card"><h3>👤 الملف الشخصي</h3><img id="pfImg" class="pf-av" alt="صورة المستخدم" src="${AVA}"><div class="row" style="justify-content:center;margin-bottom:10px"><button class="k" onclick="$('pfFile').click()">📷 تغيير الصورة</button><button class="r" onclick="pfDel()">حذف</button></div><input id="pfFile" type="file" accept="image/*" hidden onchange="pfPhoto(this.files[0]);this.value=''"><label class="mt">الاسم</label><input id="pfName" maxlength="60"><label class="mt">البريد الإلكتروني</label><input id="pfMail" class="c" readonly><label class="mt">رقم الهاتف</label><input id="pfPhone" type="tel" class="c" maxlength="20"><button class="g" style="width:100%" onclick="pfSave()">💾 حفظ البيانات</button></div><div class="card"><h3>⭐ الاشتراك</h3><div>الباقة: <span id="pfPlan" class="plan-b">FREE</span></div><div id="pfCd" class="gd-cd" style="font-size:22px;margin:8px 0"></div><div id="pfEnd" class="mt" style="margin-bottom:8px"></div><input id="pfCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('pfCode')">تفعيل كود اشتراك</button></div></section>`);
+function applyAv(){const p=prof();document.querySelectorAll('#drw .av').forEach(a=>a.innerHTML=p.photo?`<img src="${p.photo}" alt="">`:AVSVG)}
+document.querySelector('main').insertAdjacentHTML('beforeend',`<section id="s-profile" class="sec"><div class="card"><h3>الملف الشخصي</h3><img id="pfImg" class="pf-av" alt="صورة المستخدم" src="${AVA}"><div class="row" style="justify-content:center;margin-bottom:10px"><button class="k" onclick="$('pfFile').click()">تغيير الصورة</button><button class="r" onclick="pfDel()">حذف</button></div><input id="pfFile" type="file" accept="image/*" hidden onchange="pfPhoto(this.files[0]);this.value=''"><label class="mt">الاسم</label><input id="pfName" maxlength="60"><label class="mt">البريد الإلكتروني</label><input id="pfMail" class="c" readonly><label class="mt">رقم الهاتف</label><input id="pfPhone" type="tel" class="c" maxlength="20"><button class="g" style="width:100%" onclick="pfSave()">حفظ البيانات</button></div><div class="card"><h3>الاشتراك</h3><div>الباقة: <span id="pfPlan" class="plan-b">FREE</span></div><div id="pfCd" class="gd-cd" style="font-size:22px;margin:8px 0"></div><div id="pfEnd" class="mt" style="margin-bottom:8px"></div><input id="pfCode" class="c" placeholder="GEO-XXXXXXX-XXXX" autocomplete="off"><button class="a" style="width:100%" onclick="redeem('pfCode')">تفعيل كود اشتراك</button></div></section>`);
 window.pfLoad=()=>{const p=prof();$('pfName').value=p.name||uname();$('pfMail').value=uemail();$('pfPhone').value=p.phone||'';$('pfImg').src=p.photo||AVA;$('pfPlan').textContent=($('dPlan')||{}).textContent||'FREE';tick()};
-window.pfSave=()=>{const p=prof();p.name=$('pfName').value.trim()||uname();p.phone=$('pfPhone').value.trim();savP(p);sessionStorage.setItem('gd_name',p.name);try{upMe(u=>{u.name=p.name;u.phone=p.phone})}catch(e){}try{personalize()}catch(e){}refreshUI();toast('✅ تم حفظ بياناتك','success')};
-window.pfPhoto=f=>{if(!f||!f.type.startsWith('image/'))return toast('اختر صورة صالحة','warn');const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),s=Math.min(im.width,im.height);c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const p=prof();p.photo=c.toDataURL('image/jpeg',.82);savP(p);$('pfImg').src=p.photo;applyAv();toast('✅ تم تحديث الصورة','success');URL.revokeObjectURL(im.src)};im.onerror=()=>toast('تعذر قراءة الصورة','error');im.src=URL.createObjectURL(f)};
+window.pfSave=()=>{const p=prof();p.name=$('pfName').value.trim()||uname();p.phone=$('pfPhone').value.trim();savP(p);sessionStorage.setItem('gd_name',p.name);try{upMe(u=>{u.name=p.name;u.phone=p.phone})}catch(e){}try{personalize()}catch(e){}refreshUI();toast('تم حفظ بياناتك','success')};
+window.pfPhoto=f=>{if(!f||!f.type.startsWith('image/'))return toast('اختر صورة صالحة','warn');const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),s=Math.min(im.width,im.height);c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const p=prof();p.photo=c.toDataURL('image/jpeg',.82);savP(p);$('pfImg').src=p.photo;applyAv();toast('تم تحديث الصورة','success');URL.revokeObjectURL(im.src)};im.onerror=()=>toast('تعذر قراءة الصورة','error');im.src=URL.createObjectURL(f)};
 window.pfDel=()=>{const p=prof();delete p.photo;savP(p);$('pfImg').src=AVA;applyAv()};
 W('refreshUI',o=>{o();applyAv();tick();if($('s-profile').classList.contains('on'))$('pfPlan').textContent=($('dPlan')||{}).textContent||'FREE'});
-const dm2=document.querySelector('#drw .dm');if(dm2)dm2.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();go(\'profile\')">👤 الملف الشخصي</button>');
+const dm2=document.querySelector('#drw .dm');if(dm2)dm2.insertAdjacentHTML('afterbegin','<button onclick="toggleDrawer();go(\'profile\')">الملف الشخصي</button>');
 const du=document.querySelector('#drw .du');if(du)du.onclick=()=>{toggleDrawer();go('profile')};
 W('afterLogin',o=>{o();pullCfg();applyAv()});
-applyCfg();if(sessionStorage.getItem('gd_auth')=='1')pullCfg();applyAv();tick();
+applyCfg();pullCfg();applyAv();tick();
 // Initialize professional Lucide icons
 if (window.lucide && typeof window.lucide.createIcons === 'function') {
   window.lucide.createIcons({
@@ -2995,6 +2934,82 @@ if (window.lucide && typeof window.lucide.createIcons === 'function') {
     }
   });
 }
+</script>
+<script id="gd-v32-js">
+/* ===== لوحة الإدارة: إحصائيات المنصة وإدارة الحسابات ===== */
+(function(){
+const api=(p,o)=>window.geoApi?window.geoApi(p,o):Promise.reject(new Error('الخدمة غير متاحة'));
+const nf=n=>Number(n||0).toLocaleString('en-US');
+const fd=ms=>ms?new Date(ms).toLocaleDateString('en-GB'):'-';
+const hint=e=>{const t=(e&&e.message)||'';
+  if(t==='forbidden')return 'هذا القسم متاح لحساب الإدارة فقط.';
+  if(t==='unauthorized')return 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.';
+  return 'تعذّر تحميل البيانات ('+t+'). تأكد من نشر نسخة الـ Worker المحدّثة وتنفيذ ملف migration.sql.'};
+let U=[],total=0,off=0,qT=null;const PAGE=20;
+$('adminPanel').firstElementChild.insertAdjacentHTML('afterend',
+`<div class="card" id="gdDash">
+  <div class="row" style="justify-content:space-between"><h3 style="margin:0">إحصائيات المنصة</h3><button class="k" onclick="dashLoad()">تحديث</button></div>
+  <div class="adm-stats" id="dashStats"></div>
+  <div id="dashBars"></div>
+  <div id="dashMsg" class="mt" style="margin-top:8px"></div>
+</div>
+<div class="card" id="gdUsers">
+  <h3>الحسابات المسجلة</h3>
+  <input id="usQ" type="search" placeholder="بحث بالبريد الإلكتروني" oninput="usSearch()" style="margin-bottom:10px">
+  <div id="usList"></div>
+  <div class="row" style="justify-content:space-between;margin-top:8px">
+    <button class="k" id="usPrev" onclick="usPage(-1)">السابق</button>
+    <span id="usInfo" class="mt"></span>
+    <button class="k" id="usNext" onclick="usPage(1)">التالي</button>
+  </div>
+</div>`);
+window.dashLoad=async function(){
+  const m=$('dashMsg');m.textContent='جارٍ التحميل...';
+  try{
+    const s=await api('/admin/stats'),v=s.visitors,a=s.accounts,c=s.codes;
+    const tiles=[
+      ['زوار اليوم',nf(v.today)],
+      ['إجمالي الزوار',nf(v.total)],
+      ['الحسابات المسجلة',nf(a.total),'جديد خلال 24 ساعة: '+nf(a.newToday)],
+      ['حسابات PRO الفعّالة',nf(a.pro)],
+      ['حسابات في الفترة التجريبية',nf(a.trial)],
+      ['أكواد الاشتراك المستخدمة',nf(c.used)+' / '+nf(c.total)]];
+    $('dashStats').innerHTML=tiles.map(x=>`<div class="adm-stat"><div class="adm-n">${x[1]}</div><div class="adm-l">${x[0]}</div>${x[2]?`<div class="adm-s">${x[2]}</div>`:''}</div>`).join('');
+    const mx=Math.max(1,...v.series.map(d=>d.n));
+    $('dashBars').innerHTML='<div class="adm-bt">الزوار خلال آخر 7 أيام</div><div class="adm-bw">'+v.series.map(d=>`<div class="adm-b"><span>${nf(d.n)}</span><i style="height:${Math.max(3,Math.round(d.n/mx*70))}px"></i><em>${d.day.slice(5)}</em></div>`).join('')+'</div>';
+    m.textContent='آخر تحديث: '+new Date().toLocaleTimeString('en-GB');
+  }catch(e){m.textContent=hint(e)}
+};
+function row(u,i,now){
+  const pro=u.proUntil>now;
+  const st=u.plan==='admin'?'حساب الإدارة':pro?'PRO حتى '+fd(u.proUntil):u.plan==='trial'?'فترة تجريبية حتى '+fd(u.trialEnd):'مجاني';
+  const act=u.plan==='admin'?'':`<div class="adm-ua"><button class="g" onclick="usGrant(${i},30)">منح 30 يومًا</button><button class="k" onclick="usGrant(${i})">مدة مخصصة</button>${pro?`<button class="r" onclick="usRevoke(${i})">إلغاء PRO</button>`:''}</div>`;
+  return `<div class="adm-u"><div class="adm-um"><b dir="ltr">${esc(u.email||'-')}</b><span class="mt">${st} - تاريخ التسجيل: ${fd(u.created)}</span></div>${act}</div>`}
+window.usLoad=async function(){
+  const l=$('usList');l.innerHTML='<div class="mt">جارٍ التحميل...</div>';
+  try{
+    const r=await api('/admin/users?q='+encodeURIComponent($('usQ').value.trim())+'&limit='+PAGE+'&offset='+off);
+    U=r.users;total=r.total;
+    l.innerHTML=U.length?U.map((u,i)=>row(u,i,r.now)).join(''):'<div class="mt">لا توجد نتائج.</div>';
+    $('usInfo').textContent=total?(off+1)+' - '+(off+U.length)+' من '+total:'0';
+    $('usPrev').disabled=off<=0;$('usNext').disabled=off+PAGE>=total;
+  }catch(e){l.innerHTML='<div class="mt">'+esc(hint(e))+'</div>'}
+};
+window.usSearch=()=>{clearTimeout(qT);qT=setTimeout(()=>{off=0;usLoad()},350)};
+window.usPage=d=>{off=Math.max(0,off+d*PAGE);usLoad()};
+window.usGrant=async(i,d)=>{
+  const u=U[i];if(!u)return;
+  if(!d){d=parseInt(prompt('عدد أيام PRO المراد إضافتها','30'));if(!d||d<1)return}
+  if(!confirm('إضافة '+d+' يومًا من اشتراك PRO إلى الحساب:\n'+u.email))return;
+  try{await api('/admin/setPro',{method:'POST',body:{uid:u.uid,mode:'add',days:d}});toast('تم تحديث الاشتراك','success');usLoad();dashLoad()}
+  catch(e){toast(hint(e),'error')}};
+window.usRevoke=async i=>{
+  const u=U[i];if(!u)return;
+  if(!confirm('إلغاء اشتراك PRO للحساب:\n'+u.email))return;
+  try{await api('/admin/setPro',{method:'POST',body:{uid:u.uid,mode:'revoke'}});toast('تم إلغاء الاشتراك','success');usLoad();dashLoad()}
+  catch(e){toast(hint(e),'error')}};
+W('adminLoad',o=>{o();dashLoad();usLoad()});
+})();
 </script>
 
 </body>
