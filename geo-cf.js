@@ -18,7 +18,7 @@ const auth=firebase.auth();
 const ERR={
  "auth/invalid-credential":"البريد أو كلمة المرور غير صحيحة","auth/wrong-password":"البريد أو كلمة المرور غير صحيحة",
  "auth/user-not-found":"البريد أو كلمة المرور غير صحيحة","auth/email-already-in-use":"هذا البريد مسجل بالفعل",
- "auth/weak-password":"كلمة المرور ضعيفة","auth/invalid-email":"بريد غير صالح","auth/too-many-requests":"محاولات كثيرة، انتظر قليلاً",
+ "auth/weak-password":"كلمة المرور ضعيفة","auth/invalid-email":"بريد غير صالح","auth/too-many-requests":"تم تجاوز عدد المحاولات المسموح، يرجى الانتظار قليلًا",
  "auth/network-request-failed":"مشكلة في الاتصال بالإنترنت"};
 const em2=c=>ERR[c]||"حدث خطأ، حاول مرة أخرى";
 
@@ -39,7 +39,7 @@ window.register=async function(){
     await c.user.updateProfile({displayName:name});
     sessionStorage.setItem("gd_name",name);personalize();refreshUI();
     await c.user.sendEmailVerification();
-    toast("📧 أرسلنا رسالة تفعيل على بريدك. فعّله لتستخدم الذكاء الاصطناعي","success");
+    toast("تم إرسال رسالة تفعيل إلى بريدك الإلكتروني. يرجى تفعيله لاستخدام الذكاء الاصطناعي","success");
   }catch(x){bad(em2(x.code))}
 };
 window.googleLogin=async function(){
@@ -47,12 +47,12 @@ window.googleLogin=async function(){
   try{await auth.signInWithPopup(p)}
   catch(x){
     if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment"].includes(x.code))return auth.signInWithRedirect(p);
-    if(!["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(x.code))toast("❌ "+em2(x.code),"error");
+    if(!["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(x.code))toast(""+em2(x.code),"error");
   }
 };
 window.forgot=async function(){
   const e=$("em").value.trim();if(!e)return toast("اكتب بريدك أولاً","warn");
-  try{await auth.sendPasswordResetEmail(e);toast("📧 تم إرسال رابط إعادة التعيين","success")}catch(x){toast("❌ "+em2(x.code),"error")}
+  try{await auth.sendPasswordResetEmail(e);toast("تم إرسال رابط إعادة التعيين","success")}catch(x){toast(""+em2(x.code),"error")}
 };
 window.logout=async function(){
   await auth.signOut();
@@ -61,7 +61,7 @@ window.logout=async function(){
 };
 /* ---------- بيانات الخطة من الـ Worker ---------- */
 async function token(force){
-  let u=auth.currentUser;if(!u)throw new Error("سجّل الدخول أولاً");
+  let u=auth.currentUser;if(!u)throw new Error("يرجى تسجيل الدخول أولًا");
   if(!u.emailVerified){await u.reload();u=auth.currentUser;if(u.emailVerified)force=true}
   return u.getIdToken(!!force);
 }
@@ -94,11 +94,38 @@ auth.onAuthStateChanged(async u=>{
 const _call=window.callAI;
 window.callAI=async function(prompt,o={}){
   const key=await token();
-  if(!auth.currentUser.emailVerified)throw new Error("فعّل بريدك الإلكتروني أولاً (راجع رسالة التحقق)");
+  if(!auth.currentUser.emailVerified)throw new Error("يرجى تفعيل بريدك الإلكتروني أولًا (راجع رسالة التحقق)");
   const model=(o.cfgOverride&&o.cfgOverride.model)||"openai/gpt-oss-120b";
   return _call(prompt,{...o,cfgOverride:{provider:"custom",base:API,model,key,backupKey:"",backupModel:""}});
 };
 window.aiSettings=()=>toast("الذكاء الاصطناعي يعمل عبر السيرفر الآمن","info");
+
+/* ---------- واجهة الـ Worker (للأدمن) وتسجيل الزيارات ---------- */
+async function api(path,opt){
+  opt=opt||{};const h={};
+  if(opt.body)h["Content-Type"]="application/json";
+  if(opt.auth!==false)h.Authorization="Bearer "+await token();
+  const r=await fetch(API+path,{method:opt.method||"GET",headers:h,body:opt.body?JSON.stringify(opt.body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||"فشل الطلب");
+  return j;
+}
+window.geoApi=api;
+/* زائر فريد = معرّف عشوائي محفوظ في المتصفح، يُسجَّل مرة واحدة يوميًا */
+(function trackVisit(){
+  try{
+    let v=localStorage.getItem("gd_vid");
+    if(!v){
+      v=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now().toString(36)).replace(/[^A-Za-z0-9_-]/g,"");
+      while(v.length<16)v+=Math.random().toString(36).slice(2);
+      localStorage.setItem("gd_vid",v);
+    }
+    const d=new Date().toISOString().slice(0,10);
+    if(localStorage.getItem("gd_vday")===d)return;
+    fetch(API+"/visit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vid:v})})
+      .then(r=>{if(r.ok)localStorage.setItem("gd_vday",d)}).catch(()=>{});
+  }catch(e){}
+})();
 
 /* ---------- أكواد الاشتراك ---------- */
 async function post(path,data){
@@ -113,21 +140,21 @@ window.redeem=async function(id){
     const r=await post("/redeem",{code});
     document.getElementById("proM")?.remove();
     await refreshProfile();
-    toast("🎉 تم تفعيل PRO لمدة "+r.days+" يوم","success");
-  }catch(e){toast(e.message==="used"?"❌ الكود مستخدم من قبل":"❌ كود غير صحيح","error")}
+    toast("تم تفعيل PRO لمدة "+r.days+" يوم","success");
+  }catch(e){toast(e.message==="used"?"الكود مستخدم من قبل":"كود غير صحيح","error")}
 };
 let shown=[];
-window.listCodes=function(){const e=$("cdList");if(e)e.innerHTML=shown.map(x=>`<div>${x.c} — ${x.d} يوم</div>`).join("")||"الأكواد المولّدة بتظهر هنا (وبتتحفظ في D1 ← جدول codes)"};
+window.listCodes=function(){const e=$("cdList");if(e)e.innerHTML=shown.map(x=>`<div>${x.c} — ${x.d} يوم</div>`).join("")||"تظهر الأكواد المولّدة هنا، وتُحفظ في قاعدة البيانات"};
 window.genCodes=async function(){
   try{
     const r=await post("/genCodes",{days:parseInt($("cdDays").value)||30,n:parseInt($("cdN").value)||1});
     shown=r.codes.concat(shown);listCodes();
-  }catch(e){toast("❌ "+e.message,"error")}
+  }catch(e){toast(""+e.message,"error")}
 };
 window.adminLogin=function(){
   if(sessionStorage.getItem("gd_role")==="admin"){
-    adminAuthed=true;$("adminGate").style.display="none";$("adminPanel").style.display="block";adminLoad();toast("✅ أهلاً في لوحة الأدمن","success");
-  }else toast("❌ للأدمن فقط","error");
+    adminAuthed=true;$("adminGate").style.display="none";$("adminPanel").style.display="block";adminLoad();toast("أهلاً في لوحة الأدمن","success");
+  }else toast("للأدمن فقط","error");
 };
 
 /* ---------- شات الجيوماتكس + الذاكرة المعرفية ---------- */
@@ -149,7 +176,7 @@ window.gisSend=async function(){
   const v=$("gisInput").value.trim();if(!v)return;
   $("gisInput").value="";
   addMsg("u",esc(v),"gisChatBox");
-  const el=addMsg("a","⏳ جاري البحث الجغرافي...","gisChatBox");
+  const el=addMsg("a","جارٍ البحث الجغرافي...","gisChatBox");
   try{
     const r=await callAIWithRetry(v,{
       sysPrompt:SYS_GIS+await gisCtx(v),tier:"quick",
@@ -158,9 +185,9 @@ window.gisSend=async function(){
     el.innerHTML=`<div class="gis-content-text">${md(r.text)}</div>`;
     const b=document.createElement("button");b.className="k";
     b.style.cssText="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px";
-    b.innerHTML="📄 تحميل الإجابة كـ PDF";b.onclick=()=>downloadGISPDF(el);el.appendChild(b);
+    b.innerHTML="تحميل الإجابة بصيغة PDF";b.onclick=()=>downloadGISPDF(el);el.appendChild(b);
     $("gisChatBox").scrollTop=1e9;
-  }catch(e){el.innerHTML="❌ "+esc(e.message||"خطأ")}
+  }catch(e){el.innerHTML="خطأ: "+esc(e.message||"غير معروف")}
 };
 
 /* رابط "نسيت كلمة المرور" تحت زر Google */
