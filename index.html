@@ -1991,10 +1991,9 @@ const welc=()=>WEL.replace("م. أحمد سمير",esc(uname()));
 function personalize(){SYS=SYS0.split("م. أحمد سمير").join(uname())}
 function needPro(){if(isPro())return false;showPro("lock");return true}
 
+
 function startSession(name,email,role){["auth","role","name","email"].forEach((k,i)=>sessionStorage.setItem("gd_"+k,[1,role,name,email][i]));gate();afterLogin()}
-function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").innerHTML="";addMsg("a",welc())}if(!isAdm())setTimeout(()=>showPro("welcome"),400)}
-
-
+function afterLogin(){personalize();refreshUI();if(!hist.length){$("chat").innerHTML="";addMsg("a",welc())}if(!isAdm() && !isPro())setTimeout(()=>showPro("welcome"),400); }
 
 
 /* ---------- PRO modal ---------- */
