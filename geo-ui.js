@@ -165,8 +165,7 @@ if(g){
       <div class="fld"><label for="regPw">كلمة المرور</label><div class="in"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><input id="regPw" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل" onkeydown="if(event.key=='Enter')register()"><button type="button" class="eye" onclick="gdEye('regPw',this)" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div id="regEr" class="au-err" style="display:none" role="alert"></div>
       <button id="btnReg" type="button" class="au-btn gr" onclick="register()">إنشاء الحساب</button>
-      <p class="au-note">هنبعتلك رسالة على بريدك لتفعيل الحساب</p>
-      <div class="au-or"><span>أو</span></div>
+            <div class="au-or"><span>أو</span></div>
       ${gBtn}
     </div>
 
