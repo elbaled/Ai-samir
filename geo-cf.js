@@ -15,11 +15,12 @@ const auth=firebase.auth();
 // تم إيقاف الحذف التلقائي للبيانات المحلية.
 // سنحافظ على البيانات القديمة إلى أن نتحقق من ترحيلها بأمان.
 
+try{auth.languageCode="ar"}catch(e){}
 const ERR={
  "auth/invalid-credential":"البريد أو كلمة المرور غير صحيحة","auth/wrong-password":"البريد أو كلمة المرور غير صحيحة",
  "auth/user-not-found":"البريد أو كلمة المرور غير صحيحة","auth/email-already-in-use":"هذا البريد مسجل بالفعل",
  "auth/weak-password":"كلمة المرور ضعيفة","auth/invalid-email":"بريد غير صالح","auth/too-many-requests":"تم تجاوز عدد المحاولات المسموح، يرجى الانتظار قليلًا",
- "auth/network-request-failed":"مشكلة في الاتصال بالإنترنت"};
+ "auth/network-request-failed":"مشكلة في الاتصال بالإنترنت","auth/missing-email":"اكتب بريدك الإلكتروني أولًا"};
 const em2=c=>ERR[c]||"حدث خطأ، حاول مرة أخرى";
 
 /* ---------- الدخول / التسجيل ---------- */
@@ -38,8 +39,8 @@ window.register=async function(){
     const c=await auth.createUserWithEmailAndPassword(email,pw);
     await c.user.updateProfile({displayName:name});
     sessionStorage.setItem("gd_name",name);personalize();refreshUI();
-    await c.user.sendEmailVerification();
-    toast("تم إرسال رسالة تفعيل إلى بريدك الإلكتروني. يرجى تفعيله لاستخدام الذكاء الاصطناعي","success");
+    try{await c.user.getIdToken(true)}catch(e){}
+    toast("تم إنشاء الحساب بنجاح","success");
   }catch(x){bad(em2(x.code))}
 };
 window.googleLogin=async function(){
@@ -51,8 +52,8 @@ window.googleLogin=async function(){
   }
 };
 window.forgot=async function(){
-  const e=$("em").value.trim();if(!e)return toast("اكتب بريدك أولاً","warn");
-  try{await auth.sendPasswordResetEmail(e);toast("تم إرسال رابط إعادة التعيين","success")}catch(x){toast(""+em2(x.code),"error")}
+  const e=$("em").value.trim();if(!e)return toast("اكتب بريدك الإلكتروني في خانة البريد أولًا ثم اضغط نسيت كلمة المرور","warn");
+  try{await auth.sendPasswordResetEmail(e);toast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. افتح الرسالة واختر كلمة مرور جديدة.","success")}catch(x){toast(em2(x.code),"error")}
 };
 window.logout=async function(){
   await auth.signOut();
@@ -62,7 +63,6 @@ window.logout=async function(){
 /* ---------- بيانات الخطة من الـ Worker ---------- */
 async function token(force){
   let u=auth.currentUser;if(!u)throw new Error("يرجى تسجيل الدخول أولًا");
-  if(!u.emailVerified){await u.reload();u=auth.currentUser;if(u.emailVerified)force=true}
   return u.getIdToken(!!force);
 }
 async function refreshProfile(){
@@ -94,7 +94,6 @@ auth.onAuthStateChanged(async u=>{
 const _call=window.callAI;
 window.callAI=async function(prompt,o={}){
   const key=await token();
-  if(!auth.currentUser.emailVerified)throw new Error("يرجى تفعيل بريدك الإلكتروني أولًا (راجع رسالة التحقق)");
   const model=(o.cfgOverride&&o.cfgOverride.model)||"openai/gpt-oss-120b";
   return _call(prompt,{...o,cfgOverride:{provider:"custom",base:API,model,key,backupKey:"",backupModel:""}});
 };
