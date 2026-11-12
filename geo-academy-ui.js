@@ -543,19 +543,24 @@ function refreshAcademyIcons(root = document) {
   min-width:0;
 }
 
+
 #s-academy .teacher-bubble {
-  max-width:88%;
-  padding:13px 15px;
-  border:1px solid var(--border,#334155);
-  border-radius:15px 15px 15px 4px;
-  background:var(--card,#182334);
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding:16px;
+  border:1px solid var(--ln,#1e293b);
+  border-radius:16px;
+  background:var(--cd,#0f172a);
   line-height:1.9;
   overflow-wrap:anywhere;
+  box-sizing:border-box;
 }
 
 #s-academy .teacher-bubble p {
-  margin:7px 0 0;
+  margin:10px 0;
 }
+
 
 #s-academy .teacher-composer {
   padding:12px;
@@ -960,6 +965,165 @@ function refreshAcademyIcons(root = document) {
   #s-academy * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* ===== GEO TEACHER ANSWER - GENERAL ASSISTANT STYLE ===== */
+
+#s-academy .teacher-assistant {
+  width:100%;
+  align-items:flex-start;
+}
+
+#s-academy .teacher-assistant .teacher-bubble {
+  flex:1;
+  width:100%;
+  max-width:100%;
+  background:transparent;
+  border:0;
+  padding:8px 4px 18px;
+  border-radius:0;
+  color:var(--tx,#f1f5f9);
+  font-size:15px;
+  line-height:2;
+}
+
+#s-academy .teacher-assistant .teacher-bubble > strong {
+  display:block;
+  color:var(--bl,#3b82f6);
+  font-size:14px;
+  margin-bottom:12px;
+}
+
+#s-academy .teacher-answer-content {
+  width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:2;
+}
+
+#s-academy .teacher-answer-content h1,
+#s-academy .teacher-answer-content h2,
+#s-academy .teacher-answer-content h3,
+#s-academy .teacher-answer-content h4 {
+  color:var(--tx,#f1f5f9);
+  font-weight:750;
+  line-height:1.6;
+  margin:24px 0 12px;
+}
+
+#s-academy .teacher-answer-content h1 {font-size:23px}
+#s-academy .teacher-answer-content h2 {
+  font-size:20px;
+  padding-bottom:9px;
+  border-bottom:1px solid var(--ln);
+}
+#s-academy .teacher-answer-content h3 {font-size:17px}
+#s-academy .teacher-answer-content h4 {font-size:15px}
+
+#s-academy .teacher-answer-content p {
+  margin:12px 0;
+  line-height:2;
+}
+
+#s-academy .teacher-answer-content ul,
+#s-academy .teacher-answer-content ol {
+  padding-right:25px;
+  margin:12px 0;
+}
+
+#s-academy .teacher-answer-content li {
+  margin:8px 0;
+  padding-right:3px;
+  line-height:1.9;
+}
+
+#s-academy .teacher-answer-content strong {
+  color:#60a5fa;
+  font-weight:750;
+}
+
+#s-academy .teacher-answer-content blockquote {
+  margin:16px 0;
+  padding:12px 16px;
+  border-right:3px solid var(--bl);
+  background:rgba(59,130,246,.08);
+  border-radius:8px;
+}
+
+#s-academy .teacher-answer-content code {
+  direction:ltr;
+  unicode-bidi:embed;
+  background:#1e293b;
+  color:#7dd3fc;
+  padding:3px 7px;
+  border-radius:6px;
+  font-size:.9em;
+}
+
+#s-academy .teacher-answer-content pre {
+  direction:ltr;
+  text-align:left;
+  overflow-x:auto;
+  padding:15px;
+  margin:16px 0;
+  background:#080d18;
+  border:1px solid var(--ln);
+  border-radius:12px;
+  line-height:1.7;
+}
+
+#s-academy .teacher-answer-content pre code {
+  background:transparent;
+  padding:0;
+  color:#e2e8f0;
+}
+
+#s-academy .teacher-answer-content table {
+  width:100%;
+  border-collapse:collapse;
+  margin:16px 0;
+  display:block;
+  overflow-x:auto;
+}
+
+#s-academy .teacher-answer-content th,
+#s-academy .teacher-answer-content td {
+  border:1px solid var(--ln);
+  padding:10px;
+  text-align:right;
+  min-width:100px;
+}
+
+#s-academy .teacher-answer-content th {
+  background:#172554;
+  color:#bfdbfe;
+}
+
+#s-academy .teacher-answer-content a {
+  color:#60a5fa;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+
+#s-academy .teacher-answer-content hr {
+  border:0;
+  border-top:1px solid var(--ln);
+  margin:22px 0;
+}
+
+@media(max-width:600px) {
+  #s-academy .teacher-assistant .teacher-bubble {
+    padding:6px 2px 15px;
+    font-size:14px;
+  }
+
+  #s-academy .teacher-answer-content h1 {font-size:20px}
+  #s-academy .teacher-answer-content h2 {font-size:18px}
+  #s-academy .teacher-answer-content h3 {font-size:16px}
+
+  #s-academy .teacher-answer-content pre {
+    font-size:12px;
   }
 }
 
