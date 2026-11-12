@@ -624,6 +624,345 @@ function refreshAcademyIcons(root = document) {
 #s-academy .academy-tab.active svg {
   color:#fff;
 }
+
+/* =====================================
+   GeoDev Academy — Unified Visual Theme
+   ===================================== */
+
+#s-academy {
+  padding: 16px;
+  color: var(--tx);
+  direction: rtl;
+  animation: academyEnter .35s ease both;
+}
+
+@keyframes academyEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* رأس الأكاديمية */
+#s-academy .academy-header,
+#s-academy .teacher-header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb,var(--bl) 30%,var(--ln));
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb,var(--bl) 20%,transparent), transparent 45%),
+    linear-gradient(145deg,var(--cd),color-mix(in srgb,var(--cd) 82%,var(--bl)));
+  box-shadow: 0 12px 35px rgba(0,0,0,.12);
+}
+
+#s-academy .academy-header::after {
+  content: "";
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  left: -40px;
+  bottom: -65px;
+  border: 1px solid color-mix(in srgb,var(--bl) 30%,transparent);
+  border-radius: 35% 65% 55% 45%;
+  transform: rotate(35deg);
+  pointer-events: none;
+}
+
+#s-academy .academy-header h2 {
+  color: var(--tx);
+  font-weight: 900;
+  font-size: 23px;
+}
+
+#s-academy .academy-header h2 svg {
+  color: var(--bl);
+}
+
+#s-academy .academy-header p {
+  color: var(--mt);
+  line-height: 1.9;
+}
+
+/* التبويبات */
+#s-academy .academy-tabs {
+  gap: 9px;
+  padding: 9px 2px 15px;
+  scrollbar-width: thin;
+}
+
+#s-academy .academy-tab {
+  border: 1px solid var(--ln);
+  border-radius: 13px;
+  background: color-mix(in srgb,var(--cd) 94%,var(--bl));
+  color: var(--mt);
+  padding: 11px 16px;
+  font-weight: 700;
+  transition: all .25s ease;
+}
+
+#s-academy .academy-tab:hover {
+  border-color: var(--bl);
+  color: var(--tx);
+  transform: translateY(-2px);
+}
+
+#s-academy .academy-tab.active {
+  background: color-mix(in srgb,var(--bl) 17%,var(--cd));
+  color: var(--bl);
+  border-color: color-mix(in srgb,var(--bl) 55%,var(--ln));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--bl) 12%,transparent);
+}
+
+#s-academy .academy-tab.active svg {
+  color: var(--bl);
+}
+
+/* البطاقات */
+#s-academy .academy-card,
+#s-academy .academy-course-result {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg,
+    color-mix(in srgb,var(--cd) 96%,var(--bl)),
+    var(--cd));
+  border: 1px solid color-mix(in srgb,var(--ln) 85%,var(--bl));
+  border-radius: 19px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.09);
+  transition: transform .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+
+#s-academy .academy-card::before,
+#s-academy .academy-course-result::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 18px;
+  width: 48px;
+  height: 3px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(90deg,var(--bl),var(--gr));
+}
+
+#s-academy .academy-card:hover,
+#s-academy .academy-course-result:hover {
+  transform: translateY(-3px);
+  border-color: var(--bl);
+  box-shadow: 0 14px 32px rgba(0,0,0,.16);
+}
+
+#s-academy .academy-card h3,
+#s-academy .academy-course-result h4 {
+  color: var(--tx);
+  font-weight: 900;
+  line-height: 1.7;
+}
+
+#s-academy .academy-card p,
+#s-academy .academy-course-result p {
+  color: var(--mt);
+  line-height: 1.9;
+}
+
+/* أيقونات التخصصات */
+#s-academy .academy-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 17px;
+  color: var(--bl);
+  background: color-mix(in srgb,var(--bl) 13%,var(--cd));
+  border: 1px solid color-mix(in srgb,var(--bl) 25%,var(--ln));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* الأزرار */
+#s-academy .academy-btn {
+  border: 1px solid color-mix(in srgb,var(--bl) 25%,var(--ln));
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: var(--bl);
+  color: #fff;
+  font-weight: 800;
+  transition: transform .2s ease,filter .2s ease;
+}
+
+#s-academy .academy-btn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+}
+
+#s-academy .academy-btn.secondary {
+  background: color-mix(in srgb,var(--cd) 80%,var(--bl));
+  color: var(--tx);
+  border-color: var(--ln);
+}
+
+#s-academy .academy-btn.danger {
+  background: #991b1b;
+  color: #fff;
+}
+
+/* حقول الإدخال والبحث */
+#s-academy .academy-input,
+#s-academy .academy-textarea,
+#s-academy input,
+#s-academy select,
+#s-academy textarea {
+  background: var(--bg);
+  color: var(--tx);
+  border: 1px solid var(--ln);
+  border-radius: 13px;
+  font-family: inherit;
+  transition: border-color .2s ease,box-shadow .2s ease;
+}
+
+#s-academy .academy-input:focus,
+#s-academy .academy-textarea:focus,
+#s-academy input:focus,
+#s-academy select:focus,
+#s-academy textarea:focus {
+  outline: none;
+  border-color: var(--bl);
+  box-shadow: 0 0 0 3px color-mix(in srgb,var(--bl) 17%,transparent);
+}
+
+/* حالة التقدم والرسائل */
+#s-academy .academy-status,
+#s-academy .teacher-subject {
+  background: color-mix(in srgb,var(--cd) 92%,var(--bl));
+  border: 1px solid var(--ln);
+  border-radius: 15px;
+  color: var(--tx);
+}
+
+#s-academy .academy-progress {
+  background: var(--ln);
+  height: 9px;
+  border-radius: 20px;
+}
+
+#s-academy .academy-progress > span {
+  background: linear-gradient(90deg,var(--bl),var(--gr));
+  border-radius: 20px;
+}
+
+/* المدرس الذكي */
+#s-academy .teacher-header {
+  padding: 18px;
+}
+
+#s-academy .teacher-avatar {
+  background: color-mix(in srgb,var(--bl) 20%,var(--cd));
+  border: 1px solid color-mix(in srgb,var(--bl) 35%,var(--ln));
+  color: var(--bl);
+}
+
+#s-academy .academy-teacher-messages {
+  background: var(--bg);
+  border: 1px solid var(--ln);
+  border-radius: 18px;
+}
+
+#s-academy .teacher-bubble {
+  background: var(--cd);
+  border: 1px solid var(--ln);
+  color: var(--tx);
+  border-radius: 16px;
+  line-height: 1.95;
+}
+
+#s-academy .teacher-composer {
+  background: var(--cd);
+  border: 1px solid var(--ln);
+  border-radius: 17px;
+  box-shadow: 0 8px 25px rgba(0,0,0,.08);
+}
+
+/* نتائج البحث */
+#s-academy .academy-search-box,
+#s-academy .academy-results-box {
+  background: transparent;
+  border-radius: 18px;
+}
+
+#s-academy .academy-platform-fallback {
+  background: color-mix(in srgb,var(--bl) 15%,var(--cd));
+  color: var(--bl);
+  border: 1px solid var(--ln);
+}
+
+/* الجداول والنتائج */
+#s-academy .academy-analysis {
+  color: var(--tx);
+  line-height: 1.95;
+}
+
+#s-academy .academy-analysis table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#s-academy .academy-analysis th,
+#s-academy .academy-analysis td {
+  border: 1px solid var(--ln);
+  padding: 10px;
+}
+
+#s-academy .academy-analysis th {
+  background: color-mix(in srgb,var(--bl) 14%,var(--cd));
+  color: var(--bl);
+}
+
+/* الموبايل */
+@media(max-width:768px) {
+  #s-academy {
+    padding: 10px 7px;
+  }
+
+  #s-academy .academy-header {
+    padding: 17px;
+    border-radius: 17px;
+  }
+
+  #s-academy .academy-header h2 {
+    font-size: 19px;
+  }
+
+  #s-academy .academy-grid {
+    grid-template-columns: minmax(0,1fr);
+    gap: 11px;
+  }
+
+  #s-academy .academy-card {
+    padding: 14px;
+  }
+
+  #s-academy .academy-tabs {
+    margin-inline: -3px;
+    padding-inline: 3px;
+  }
+
+  #s-academy .academy-tab {
+    padding: 10px 13px;
+    font-size: 12px;
+  }
+
+  #s-academy .teacher-bubble {
+    max-width: 96%;
+    font-size: 13px;
+  }
+
+  #s-academy .academy-teacher-messages {
+    max-height: 58vh;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  #s-academy,
+  #s-academy * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
     `;
 
     document.head.appendChild(style);
