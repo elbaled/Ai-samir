@@ -28,7 +28,7 @@ document.head.appendChild(css);
 
 const getMode=()=>localStorage.getItem(MK)||'auto';
 const sys=()=>matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
-const LABEL={auto:'🌓 المظهر: تلقائي',light:'☀️ المظهر: فاتح',dark:'🌙 المظهر: داكن'};
+const LABEL={auto:'المظهر: تلقائي',light:'المظهر: فاتح',dark:'المظهر: داكن'};
 
 function apply(reset){
   const m=getMode(),r=m==='auto'?sys():m;
@@ -47,12 +47,12 @@ window.geoMode=()=>{const o=['auto','light','dark'];localStorage.setItem(MK,o[(o
 document.querySelector('#drw .dm')?.insertAdjacentHTML('afterbegin','<button id="modeBtn" onclick="geoMode()"></button>');
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(getMode()==='auto')apply(false)});
 
-/* زر "افتراضي" في نافذة ✨ يرجّع الثيم الأساسي بدل ما يطلب من الـ AI */
+/* زر "افتراضي" في نافذة يرجّع الثيم الأساسي بدل ما يطلب من الـ AI */
 const chip=document.querySelector('#selfModModal .chips label:last-child');
 if(chip){chip.textContent='الثيم الأساسي';chip.setAttribute('onclick',"$('selfModInput').value='رجوع للثيم الأساسي'")}
 const _asm=applySelfModify;
 applySelfModify=function(btn){
-  if(/رجوع|افتراضي/.test($('selfModInput').value)){apply(true);toast('✅ رجعنا للثيم الأساسي','success');toggleSelfModify();$('selfModInput').value='';return}
+  if(/رجوع|افتراضي/.test($('selfModInput').value)){apply(true);toast('تمت العودة إلى المظهر الأساسي','success');toggleSelfModify();$('selfModInput').value='';return}
   return _asm(btn)};
 
 apply(false);
