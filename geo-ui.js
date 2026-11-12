@@ -42,7 +42,7 @@ const css=`
 #gate .au-sub{margin:0;color:var(--mt);font-size:12.5px;line-height:1.7}
 #gate .au-feat{display:none;list-style:none;margin:30px 0 0;padding:0;text-align:right}
 #gate .au-feat li{display:flex;gap:14px;align-items:center;margin-bottom:16px}
-#gate .au-feat b{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(59,130,246,.12);border:1px solid var(--ln);font-size:20px}
+#gate .au-feat b{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(59,130,246,.12);border:1px solid var(--ln);color:var(--bl)}
 #gate .au-feat span{display:block;font-size:14px;font-weight:700;color:var(--tx)}
 #gate .au-feat small{display:block;font-size:11.5px;color:var(--mt);font-weight:400;margin-top:2px}
 #gate .au-form{display:flex;align-items:center;justify-content:center;padding:14px 14px 26px}
@@ -137,10 +137,10 @@ if(g){
       <h2>GeoDev <span>Studio Pro</span></h2>
       <p class="au-sub">منصتك المتكاملة للجيوماتكس والمساحة والبرمجة</p>
       <ul class="au-feat">
-        <li><b>📐</b><div><span>أدوات مساحية دقيقة</span><small>UTM • Red Belt • COGO • مثلثات</small></div></li>
-        <li><b>🤖</b><div><span>مساعد ذكي بمعرفة محدّثة يومياً</span><small>جغرافيا • برمجة • تصميم</small></div></li>
-        <li><b>🗺️</b><div><span>رفع مساحي وخرائط تفاعلية</span><small>GeoJSON • حساب المساحات بالفدان</small></div></li>
-        <li><b>💻</b><div><span>استوديو توليد مواقع وأكواد</span><small>معاينة فورية وتصدير ZIP / PWA</small></div></li>
+        <li><b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20 12 4l9 16z"/></svg></b><div><span>أدوات مساحية دقيقة</span><small>UTM • Red Belt • COGO • مثلثات</small></div></li>
+        <li><b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></b><div><span>مساعد ذكي بمعرفة محدّثة يومياً</span><small>جغرافيا • برمجة • تصميم</small></div></li>
+        <li><b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg></b><div><span>رفع مساحي وخرائط تفاعلية</span><small>GeoJSON • حساب المساحات بالفدان</small></div></li>
+        <li><b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4"/></svg></b><div><span>استوديو توليد مواقع وأكواد</span><small>معاينة فورية وتصدير ZIP / PWA</small></div></li>
       </ul>
     </div></aside>
 
@@ -148,9 +148,9 @@ if(g){
     <div class="au-tabs"><button id="tabL" type="button" class="on" onclick="toggleAuth(false)">تسجيل الدخول</button><button id="tabR" type="button" onclick="toggleAuth(true)">حساب جديد</button></div>
 
     <div id="loginForm">
-      <h3>أهلاً بعودتك 👋</h3><p class="au-p">سجّل دخولك لمتابعة عملك</p>
-      <div class="fld"><label for="em">البريد الإلكتروني</label><div class="in"><span class="ic">✉️</span><input id="em" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" onkeydown="if(event.key=='Enter')login()"></div></div>
-      <div class="fld"><label for="pw">كلمة المرور</label><div class="in"><span class="ic">🔒</span><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key=='Enter')login()"><button type="button" class="eye" onclick="gdEye('pw',this)" aria-label="إظهار كلمة المرور">👁</button></div></div>
+      <h3>تسجيل الدخول</h3><p class="au-p">سجّل دخولك لمتابعة عملك</p>
+      <div class="fld"><label for="em">البريد الإلكتروني</label><div class="in"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><input id="em" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" onkeydown="if(event.key=='Enter')login()"></div></div>
+      <div class="fld"><label for="pw">كلمة المرور</label><div class="in"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key=='Enter')login()"><button type="button" class="eye" onclick="gdEye('pw',this)" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div class="au-row"><a href="#" class="au-link" onclick="window.forgot&&forgot();return false">نسيت كلمة المرور؟</a></div>
       <div id="er" class="au-err" style="display:none" role="alert"></div>
       <button id="btnLogin" type="button" class="au-btn" onclick="login()">دخول</button>
@@ -159,10 +159,10 @@ if(g){
     </div>
 
     <div id="registerForm" style="display:none">
-      <h3>ابدأ مجاناً 🚀</h3><p class="au-p">أنشئ حسابك واحصل على <b>3 أيام PRO</b> مجاناً</p>
-      <div class="fld"><label for="regName">الاسم</label><div class="in rtl"><span class="ic">👤</span><input id="regName" type="text" autocomplete="name" placeholder="الاسم بالكامل"></div></div>
-      <div class="fld"><label for="regEmail">البريد الإلكتروني</label><div class="in"><span class="ic">✉️</span><input id="regEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div></div>
-      <div class="fld"><label for="regPw">كلمة المرور</label><div class="in"><span class="ic">🔒</span><input id="regPw" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل" onkeydown="if(event.key=='Enter')register()"><button type="button" class="eye" onclick="gdEye('regPw',this)" aria-label="إظهار كلمة المرور">👁</button></div></div>
+      <h3>إنشاء حساب جديد</h3><p class="au-p">أنشئ حسابك واحصل على <b>3 أيام PRO</b> مجانًا</p>
+      <div class="fld"><label for="regName">الاسم</label><div class="in rtl"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/></svg></span><input id="regName" type="text" autocomplete="name" placeholder="الاسم بالكامل"></div></div>
+      <div class="fld"><label for="regEmail">البريد الإلكتروني</label><div class="in"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><input id="regEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div></div>
+      <div class="fld"><label for="regPw">كلمة المرور</label><div class="in"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><input id="regPw" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل" onkeydown="if(event.key=='Enter')register()"><button type="button" class="eye" onclick="gdEye('regPw',this)" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div id="regEr" class="au-err" style="display:none" role="alert"></div>
       <button id="btnReg" type="button" class="au-btn gr" onclick="register()">إنشاء الحساب</button>
       <p class="au-note">هنبعتلك رسالة على بريدك لتفعيل الحساب</p>
@@ -181,7 +181,8 @@ window.toggleAuth=function(reg){
   $("tabL").classList.toggle("on",!reg);$("tabR").classList.toggle("on",!!reg);
   $("er").style.display="none";$("regEr").style.display="none";
 };
-window.gdEye=function(id,b){const i=$(id),s=i.type==="password";i.type=s?"text":"password";b.textContent=s?"🙈":"👁"};
+const EYE=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,EYEOFF=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s4 7 10 7a10 10 0 0 0 4-.8"/></svg>`;
+window.gdEye=function(id,b){const i=$(id),s=i.type==="password";i.type=s?"text":"password";b.innerHTML=s?EYEOFF:EYE};
 
 /* حالة التحميل على زرار الدخول والتسجيل */
 function busy(fn,btn){
