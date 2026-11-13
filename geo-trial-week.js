@@ -1,14 +1,14 @@
 /* ============================================================================
-   GeoDev 7-Day Free Trial & Instant Access Patch v1.0 (geo-trial-week.js)
+   GeoDev 7-Day Free Trial & Instant Access Patch v2.0 (geo-trial-week.js)
    1. إلغاء شرط تفعيل البريد الإلكتروني (emailVerified) في المدرس الذكي والبحث والصور.
-   2. تعديل نص التسجيل من "3 أيام PRO" إلى "أسبوع PRO مجاناً (7 أيام)".
-   3. تفعيل صلاحية PRO تلقائياً لمدة 7 أيام من لحظة إنشاء الحساب، وإغلاقها بعد انتهاء الأسبوع.
+   2. تفعيل أسبوع PRO مجاني (7 أيام كاملة) فور إنشاء الحساب دون إظهار رسالة انتهاء.
+   3. إغلاق أدوات PRO تلقائياً بعد مرور 7 أيام بالضبط من تاريخ إنشاء الحساب.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOTrialWeek) return;
-  window.GEOTrialWeek = true;
+  if (window.GEOTrialWeekV2) return;
+  window.GEOTrialWeekV2 = true;
 
   const WEEK_MS = 7 * 86400000; // 7 أيام بالمللي ثانية
   const DAY_MS = 86400000;
@@ -32,7 +32,6 @@
     const API_URL = window.GEO_API;
     if (!E || !API_URL) return;
 
-    // إعادة تعريف محادثة المدرس الذكي بدون شرط emailVerified
     E.teacherChat = async function (messages, subject) {
       const user = window.firebase?.auth?.().currentUser;
       if (!user) throw new Error("يرجى تسجيل الدخول أولاً.");
@@ -46,7 +45,7 @@
 - ابدأ بإجابة مباشرة ومنظمة عن سؤال الطالب باستخدام عناوين ونقاط واضحة.
 - في مسائل GIS والمساحة، وضّح خطوات الحل والمنطق وراءها.
 - عند شرح البرامج، اذكر أسماء الأدوات والقوائم بالإنجليزية.
-- في البرمجة، اشرح الكود ثم اعرضه في كتلة مستقلة.
+- في البرمجة، اشرح الكود ثم اشرحه في كتلة مستقلة.
 - أجب باللغة العربية مع الاحتفاظ بالمصطلحات التقنية الإنجليزية.`;
 
       const response = await fetch(API_URL + "/chat/completions", {
@@ -77,7 +76,6 @@
       return answer;
     };
 
-    // إعادة تعريف البحث الذكي بدون شرط emailVerified
     if (typeof E.searchWeb === "function") {
       E.searchWeb = async function (query) {
         const user = window.firebase?.auth?.().currentUser;
@@ -96,33 +94,44 @@
   }
 
   /* ==========================================================================
-     3. حساب فترة الأسبوع المجاني (7 أيام من إنشاء الحساب) وإغلاقها بعدها
+     3. حساب فترة الأسبوع المجاني (7 أيام من إنشاء الحساب) بدقة
      ========================================================================== */
   function getTrialEndTimestamp() {
     try {
       const u = window.firebase?.auth?.().currentUser;
+      const email = (u?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
+      const storageKey = email ? "gd_trial_end_" + email : "";
+
+      // 1. إذا كان لدينا تاريخ إنشاء الحساب في Firebase Metadata
       if (u && u.metadata && u.metadata.creationTime) {
         const createdMs = new Date(u.metadata.creationTime).getTime();
         if (!isNaN(createdMs) && createdMs > 0) {
-          return createdMs + WEEK_MS;
+          const endMs = createdMs + WEEK_MS;
+          if (storageKey) localStorage.setItem(storageKey, String(endMs));
+          return endMs;
         }
       }
-      // احتياطي من localStorage في حال عدم توفر metadata لحظياً
-      const email = (sessionStorage.getItem("gd_email") || "").toLowerCase();
-      if (!email) return 0;
-      const key = "gd_trial_start_" + email;
-      let start = parseInt(localStorage.getItem(key) || "0", 10);
-      if (!start && sessionStorage.getItem("gd_auth") === "1") {
-        start = Date.now();
-        localStorage.setItem(key, String(start));
+
+      // 2. إذا كان محفوظاً مسبقاً في localStorage لهذا الحساب
+      if (storageKey) {
+        const saved = parseInt(localStorage.getItem(storageKey) || "0", 10);
+        if (saved > 0) return saved;
       }
-      return start ? start + WEEK_MS : 0;
+
+      // 3. إذا كان المستخدم سجل الدخول للتو ولم تكتمل metadata بعد، نمنحه 7 أيام من الآن مؤقتاً
+      if (sessionStorage.getItem("gd_auth") === "1" && storageKey) {
+        const tempEnd = Date.now() + WEEK_MS;
+        localStorage.setItem(storageKey, String(tempEnd));
+        return tempEnd;
+      }
+
+      return 0;
     } catch (_) {
       return 0;
     }
   }
 
-  // تجاوز دالة proLeft الأصلية لتعتمد على الـ 7 أيام من تاريخ إنشاء الحساب أو الاشتراك المدفوع
+  // تجاوز proLeft لتمنح صلاحية PRO كاملة طوال الـ 7 أيام، وتغلقها بعدها
   window.proLeft = function () {
     if (typeof window.isAdm === "function" && window.isAdm()) return 1e12;
     const now = Date.now();
@@ -132,27 +141,33 @@
     return Math.max(paidUntil, trialUntil) - now;
   };
 
-  // تحديث نافذة PRO لتعرض الأسبوع المجاني (7 أيام) بدلاً من 3 أيام
+  // تحديث نافذة PRO ومنع ظهورها التلقائي المزعج أثناء سريان الأسبوع المجاني
   const _origShowPro = window.showPro;
   window.showPro = function (mode) {
+    const left = window.proLeft();
+    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+
+    // إذا كان الدخول تلقائياً (welcome/periodic) والأسبوع المجاني سارٍ، لا تزعج المستخدم بالنافذة
+    if ((mode === "welcome" || mode === "periodic") && (left > 0 || isAdmin)) {
+      return;
+    }
+
     if (typeof _origShowPro === "function") {
       _origShowPro(mode);
       const trialBox = document.querySelector("#proM .trial");
       if (trialBox) {
-        const left = window.proLeft();
         const m = typeof window.me === "function" ? window.me() : null;
         const paid = m && m.proUntil > Date.now();
-        if (!paid && left > 0 && !(typeof window.isAdm === "function" && window.isAdm())) {
+        if (!paid && left > 0 && !isAdmin) {
           const daysLeft = Math.ceil(left / DAY_MS);
           trialBox.textContent = `تجربة مجانية لمدة أسبوع (7 أيام) — متبقي ${daysLeft} يوم`;
-        } else if (left <= 0 && !(typeof window.isAdm === "function" && window.isAdm())) {
+        } else if (left <= 0 && !isAdmin) {
           trialBox.textContent = "انتهى الأسبوع المجاني — فعّل كود اشتراك لفتح أدوات PRO";
         }
       }
     }
   };
 
-  // تحديث نص انتهاء الاشتراك في صفحة الملف الشخصي
   function syncProfileTrialNote() {
     const pe = $("pfEnd");
     if (!pe || (typeof window.isAdm === "function" && window.isAdm())) return;
@@ -161,7 +176,8 @@
 
     const trialEnd = getTrialEndTimestamp();
     if (trialEnd > Date.now()) {
-      pe.textContent = "فترة أسبوع PRO المجاني تنتهي في: " + new Date(trialEnd).toLocaleString("ar-EG");
+      const days = Math.ceil((trialEnd - Date.now()) / DAY_MS);
+      pe.textContent = `أسبوع PRO المجاني فعّال (متبقي ${days} يوم) — ينتهي في: ` + new Date(trialEnd).toLocaleString("ar-EG");
     } else if (trialEnd > 0) {
       pe.textContent = "انتهت فترة الأسبوع المجاني — أدخل كود الاشتراك لتجديد الصلاحية";
     }
@@ -175,15 +191,24 @@
     patchAcademyEngines();
     syncProfileTrialNote();
 
+    // إغلاق نافذة انتهاء التجربة إذا كانت قد فتحت بالخطأ قبل اكتمال التحميل
+    if (window.proLeft() > 0) {
+      document.getElementById("proM")?.remove();
+    }
+
     if (typeof window.refreshUI === "function") {
       window.refreshUI();
     }
 
     if (window.firebase && firebase.apps.length) {
-      firebase.auth().onAuthStateChanged(() => {
-        patchAcademyEngines();
-        syncProfileTrialNote();
-        if (typeof window.refreshUI === "function") window.refreshUI();
+      firebase.auth().onAuthStateChanged(u => {
+        if (u) {
+          getTrialEndTimestamp();
+          patchAcademyEngines();
+          syncProfileTrialNote();
+          if (window.proLeft() > 0) document.getElementById("proM")?.remove();
+          if (typeof window.refreshUI === "function") window.refreshUI();
+        }
       });
     }
 
