@@ -1,14 +1,16 @@
 /* ============================================================================
-   GeoDev PWA App & Real-Time Admin Notifications v1.0 (geo-pwa-push.js)
-   1. تحويل المنصة إلى تطبيق قابل للتثبيت على Android / iOS / PC.
-   2. لوحة إرسال إشعارات فورية من الإدارة (#s-admin) لجميع المستخدمين عبر Firestore.
-   3. استقبال الإشعارات وعرضها في شريط إشعارات الهاتف + جرس إشعارات داخل التطبيق.
+   GeoDev PWA App, Background Reply Alert & Admin Push Notifications v2.0
+   1. إرسال إشعار لهاتف المستخدم إذا خرج من التطبيق أثناء كتابة الإجابة واكتمل الرد.
+   2. خانة إرسال إشعارات لجميع المستخدمين في لوحة الإدارة (#s-admin) بعبارة واضحة:
+      - عنوان الإشعار
+      - تفاصيل الإشعار
+   3. تحويل المنصة إلى تطبيق قابل للتثبيت على الهاتف (PWA).
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOPWAPush) return;
-  window.GEOPWAPush = true;
+  if (window.GEOPWAPushV2) return;
+  window.GEOPWAPushV2 = true;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
@@ -42,7 +44,7 @@
   }
 
   /* ==========================================================================
-     2. طلب إذن الإشعارات وعرض الإشعار على الهاتف وداخل المنصة
+     2. طلب إذن الإشعارات وعرض الإشعار في شريط إشعارات الهاتف
      ========================================================================== */
   window.GEORequestNotifPermission = async function () {
     if (!("Notification" in window)) {
@@ -53,7 +55,7 @@
       window.toast && window.toast("تم تفعيل إشعارات التطبيق بنجاح!", "success");
       sendSystemNotification("GeoDev Studio Pro", "تم تفعيل الإشعارات الفورية لحسابك بنجاح.");
     } else {
-      window.toast && window.toast("تم رفض إذن الإشعارات من إعدادات المتصفح", "warn");
+      window.toast && window.toast("يرجى السماح بالإشعارات من إعدادات المتصفح", "warn");
     }
   };
 
@@ -90,7 +92,73 @@
   }
 
   /* ==========================================================================
-     3. الاستماع اللحظي للإشعارات من Firestore وعرضها للمستخدمين
+     3. إرسال إشعار تلقائي عند اكتمال إجابة الذكاء الاصطناعي والمستخدم خارج التطبيق
+     ========================================================================== */
+  function hookBackgroundReplyNotifications() {
+    // 1. في المساعد الذكي العام (window.ask)
+    const _origAsk = window.ask;
+    if (typeof _origAsk === "function" && !_origAsk.__bgNotifHooked) {
+      const wrappedAsk = async function (prompt, shown) {
+        const questionPreview = String(shown || prompt || "").slice(0, 65);
+        try {
+          const result = await _origAsk.apply(this, arguments);
+          // إذا كان المستخدم خرج من التطبيق (الشاشة مخفية أو في الخلفية)
+          if (document.hidden || document.visibilityState === "hidden") {
+            sendSystemNotification(
+              "تمت الإجابة على سؤالك • GeoDev AI",
+              questionPreview ? `اكتمل الرد على: "${questionPreview}..."` : "إجابتك جاهزة الآن داخل المنصة."
+            );
+          }
+          return result;
+        } catch (err) {
+          throw err;
+        }
+      };
+      wrappedAsk.__bgNotifHooked = true;
+      window.ask = wrappedAsk;
+    }
+
+    // 2. في شات الجيوماتكس (window.gisSend)
+    const _origGisSend = window.gisSend;
+    if (typeof _origGisSend === "function" && !_origGisSend.__bgNotifHooked) {
+      const wrappedGis = async function () {
+        try {
+          const res = await _origGisSend.apply(this, arguments);
+          if (document.hidden || document.visibilityState === "hidden") {
+            sendSystemNotification(
+              "تمت الإجابة في قسم الجيوماتكس",
+              "اكتمل التحليل والرد على استفسارك الجغرافي، اضغط لعرضه."
+            );
+          }
+          return res;
+        } catch (err) {
+          throw err;
+        }
+      };
+      wrappedGis.__bgNotifHooked = true;
+      window.gisSend = wrappedGis;
+    }
+
+    // 3. في المدرس الذكي (GEOAcademyEngines.teacherChat)
+    if (window.GEOAcademyEngines && typeof window.GEOAcademyEngines.teacherChat === "function" && !window.GEOAcademyEngines.teacherChat.__bgNotifHooked) {
+      const _origTeacher = window.GEOAcademyEngines.teacherChat;
+      const wrappedTeacher = async function () {
+        const res = await _origTeacher.apply(this, arguments);
+        if (document.hidden || document.visibilityState === "hidden") {
+          sendSystemNotification(
+            "تمت الإجابة من المدرس الذكي",
+            "شرح سؤالك جاهز الآن في الأكاديمية، اضغط للمتابعة."
+          );
+        }
+        return res;
+      };
+      wrappedTeacher.__bgNotifHooked = true;
+      window.GEOAcademyEngines.teacherChat = wrappedTeacher;
+    }
+  }
+
+  /* ==========================================================================
+     4. الاستماع اللحظي لإشعارات الإدارة من Firestore وعرضها لجميع المستخدمين
      ========================================================================== */
   function listenForNotifications() {
     if (!window.firebase || !firebase.apps.length) return;
@@ -108,7 +176,6 @@
         const latest = docs[0];
         const lastSeen = localStorage.getItem(seenKey);
 
-        // أول مرة يفتح فيها المستخدم نسجل آخر إشعار بدون إزعاجه بإشعارات قديمة
         if (!lastSeen) {
           localStorage.setItem(seenKey, latest.id);
           return;
@@ -116,9 +183,8 @@
 
         if (latest.id !== lastSeen) {
           localStorage.setItem(seenKey, latest.id);
-          // عرض إشعار داخل المنصة + إشعار نظام الهاتف
           if (typeof window.toast === "function") {
-            window.toast(`إشعار جديد: ${latest.title} — ${latest.body}`, "info");
+            window.toast(`${latest.title}: ${latest.body}`, "info");
           }
           sendSystemNotification(latest.title, latest.body);
         }
@@ -126,7 +192,7 @@
   }
 
   /* ==========================================================================
-     4. إضافة أزرار التثبيت والإشعارات في القائمة الجانبية (☰) ولوحة الإدارة
+     5. إضافة أزرار التثبيت والإشعارات في القائمة الجانبية (☰) وخانة الإرسال في الأدمن
      ========================================================================== */
   function injectDrawerAppControls() {
     const dm = document.querySelector("#drw .dm");
@@ -146,15 +212,16 @@
     const box = $("gdAdminNotifHistory");
     if (!box) return;
     if (!list.length) {
-      box.innerHTML = `<div class="mt">لم يتم إرسال إشعارات بعد.</div>`;
+      box.innerHTML = `<div class="mt">لم يتم إرسال إشعارات للمستخدمين بعد.</div>`;
       return;
     }
-    box.innerHTML = list.slice(0, 5).map(n => `
-      <div style="background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;margin-bottom:6px">
-        <b style="color:var(--bl);font-size:13px;display:block">${esc(n.title)}</b>
-        <span class="mt" style="font-size:12px">${esc(n.body)}</span>
-      </div>
-    `).join("");
+    box.innerHTML = `<b style="display:block;font-size:12px;color:var(--mt);margin:10px 0 6px">آخر الإشعارات المرسلة:</b>` +
+      list.slice(0, 5).map(n => `
+        <div style="background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;margin-bottom:6px">
+          <b style="color:var(--am);font-size:13px;display:block">${esc(n.title)}</b>
+          <span class="mt" style="font-size:12px;line-height:1.6;display:block;margin-top:2px">${esc(n.body)}</span>
+        </div>
+      `).join("");
   }
 
   window.GEOSendBroadcastNotif = async function () {
@@ -162,7 +229,7 @@
     const title = $("admNotifTitle")?.value.trim();
     const body = $("admNotifBody")?.value.trim();
     if (!title || !body) {
-      return window.toast && window.toast("اكتب عنوان الإشعار ونص الرسالة أولاً", "warn");
+      return window.toast && window.toast("اكتب عنوان الإشعار وتفاصيل الإشعار أولاً", "warn");
     }
 
     try {
@@ -185,36 +252,47 @@
 
     const cardHtml = `
       <div class="card" id="gdAdminNotifCard" style="border-color:var(--am)">
-        <h3>إرسال إشعارات فورية للمستخدمين (Push Notifications)</h3>
+        <h3><i data-lucide="bell-ring"></i> إرسال إشعار للمستخدمين</h3>
         <p class="mt" style="line-height:1.7">
-          أرسل تنبيهاً أو إعلاناً عن دورة أو أداة جديدة، وسيصل فوراً إلى هواتف جميع المستخدمين المثبتين للتطبيق.
+          أرسل إشعاراً فورياً يظهر على هواتف وواجهات جميع مستخدمي المنصة.
         </p>
-        <input id="admNotifTitle" placeholder="عنوان الإشعار (مثال: تم إضافة دورة Civil 3D جديدة)">
-        <textarea id="admNotifBody" rows="2" placeholder="نص الإشعار الذي سيظهر على شاشة هاتف المستخدم..."></textarea>
-        <button type="button" class="a" style="width:100%;margin-bottom:10px" onclick="window.GEOSendBroadcastNotif()">
-          إرسال الإشعار للجميع الآن
+        <label style="display:block;font-size:12.5px;font-weight:800;margin:8px 0 4px;color:var(--tx)">عنوان الإشعار</label>
+        <input id="admNotifTitle" placeholder="اكتب عنوان الإشعار هنا (مثال: تحديث جديد في أدوات المساحة)">
+
+        <label style="display:block;font-size:12.5px;font-weight:800;margin:8px 0 4px;color:var(--tx)">التفاصيل</label>
+        <textarea id="admNotifBody" rows="3" placeholder="اكتب تفاصيل الإشعار والرسالة التي ستظهر للمستخدمين..."></textarea>
+
+        <button type="button" class="a" style="width:100%;margin-top:6px" onclick="window.GEOSendBroadcastNotif()">
+          إرسال الإشعار لجميع المستخدمين
         </button>
         <div id="gdAdminNotifHistory"></div>
       </div>
     `;
 
     adminPanel.insertAdjacentHTML("afterbegin", cardHtml);
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons({ root: $("gdAdminNotifCard"), attrs: { "stroke-width": 1.85 } });
+    }
   }
 
   function initPWA() {
     registerPWA();
     injectDrawerAppControls();
     injectAdminNotifCard();
+    hookBackgroundReplyNotifications();
+
+    setTimeout(hookBackgroundReplyNotifications, 600);
 
     if (window.firebase && firebase.apps.length) {
       firebase.auth().onAuthStateChanged(u => {
         if (u) {
           injectDrawerAppControls();
           injectAdminNotifCard();
+          hookBackgroundReplyNotifications();
           listenForNotifications();
-          // طلب إذن الإشعارات بهدوء بعد الدخول بـ 4 ثوانٍ إذا لم يُحدد بعد
+
           if ("Notification" in window && Notification.permission === "default") {
-            setTimeout(() => Notification.requestPermission().catch(() => {}), 4000);
+            setTimeout(() => Notification.requestPermission().catch(() => {}), 3500);
           }
         }
       });
