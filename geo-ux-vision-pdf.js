@@ -1,15 +1,15 @@
 /* ============================================================================
-   GeoDev UX Thinking Globe, Icon Actions, Clean PDF & Vision Fix v1.0
-   1. مؤشر تفكير حي (كرة أرضية تدور + مراحل نصية باهتة متحركة) بدل المربع الفارغ.
-   2. تحويل أزرار أسفل الرد (نسخ، إعادة، إعجاب، عدم إعجاب، استماع، مشاركة، PDF) لأيقونات رسمية.
-   3. دالة تنظيف وتنسيق PDF موحدة للمساعد العام والمدرس الذكي والجيوماتكس دون تداخل الحروف.
-   4. إصلاح تحليل الصور نهائياً مع مسار بديل ذكي (Vision API + OCR Fallback).
+   GeoDev UX Thinking Globe, Icon Actions, Clean PDF & Vision Fix v1.1 (Fixed)
+   1. إصلاح حلقة التجميد في مؤشر التفكير وإضافة قفل حماية (Mutation Guard).
+   2. تحويل أزرار أسفل الرد لأيقونات رسمية (نسخ، إعادة، إعجاب، عدم إعجاب، استماع، مشاركة، PDF).
+   3. تصدير PDF منسق للمساعد العام والمدرس الذكي والجيوماتكس دون تداخل الحروف.
+   4. إصلاح تحليل الصور نهائياً مع مسار OCR بديل.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOUXVisionPDF) return;
-  window.GEOUXVisionPDF = true;
+  if (window.GEOUXVisionPDF_V11) return;
+  window.GEOUXVisionPDF_V11 = true;
 
   const $ = id => document.getElementById(id);
 
@@ -21,7 +21,6 @@
     const st = document.createElement("style");
     st.id = "geoUXVisionStyles";
     st.textContent = `
-      /* مؤشر التفكير الحي (كرة أرضية تدور + نص باهت متغير) */
       .gd-thinking-pill {
         display: inline-flex;
         align-items: center;
@@ -63,7 +62,6 @@
         100% { background-position: -200% center; }
       }
 
-      /* تحويل شريط أزرار الرسالة إلى أيقونات رسمية مصفوفة بنعومة */
       .m.a .acts, .msg-acts, .ai-actions {
         display: flex !important;
         flex-wrap: wrap !important;
@@ -106,7 +104,7 @@
   }
 
   /* ==========================================================================
-     2. استبدال المربع الفارغ بمؤشر الكرة الأرضية الدوارة ومراحل التفكير الباهتة
+     2. مؤشر التفكير الآمن (بدون أي حلقات مفرغة في DOM)
      ========================================================================== */
   const THINKING_STAGES = [
     "جاري الاستعلام عن سؤالك...",
@@ -142,39 +140,61 @@
     return wrap;
   }
 
-  // مراقبة فقاعات الرد الفارغة في #chat و #gisChatBox واستبدالها بمؤشر التفكير فوراً
-  function watchEmptyBubbles() {
-    const containers = [$("chat"), $("gisChatBox")].filter(Boolean);
-    containers.forEach(box => {
-      if (box.dataset.thinkingWatched) return;
-      box.dataset.thinkingWatched = "1";
+  // استخراج النص الفعلي للرسالة مع استبعاد نص مؤشر التفكير نفسه
+  function getRealMessageText(bodyEl) {
+    let text = "";
+    bodyEl.childNodes.forEach(node => {
+      if (node.nodeType === 1 && node.classList.contains("gd-thinking-pill")) return;
+      if (node.nodeType === 1 && node.classList.contains("acts")) return;
+      text += node.textContent || "";
+    });
+    return text.replace(/\s+/g, "").trim();
+  }
 
-      const observer = new MutationObserver(() => {
-        // 1. فحص الرسائل الفارغة وإضافة مؤشر الكرة الأرضية
-        box.querySelectorAll(".m.a").forEach(msg => {
-          const body = msg.querySelector(".mc") || msg;
-          const rawText = body.textContent.replace(/\s+/g, "").trim();
-          const hasThinking = msg.querySelector(".gd-thinking-pill");
+  let isUpdatingDOM = false;
 
-          if (!rawText && !hasThinking && !msg.querySelector(".acts")) {
+  function syncChatUI(box) {
+    if (!box || isUpdatingDOM) return;
+    isUpdatingDOM = true;
+    try {
+      box.querySelectorAll(".m.a").forEach(msg => {
+        const body = msg.querySelector(".mc") || msg;
+        const realText = getRealMessageText(body);
+        const thinkingEl = body.querySelector(".gd-thinking-pill");
+        const hasActs = !!msg.querySelector(".acts");
+
+        if (!realText && !hasActs) {
+          if (!thinkingEl) {
             body.appendChild(createThinkingNode());
-          } else if (rawText && hasThinking) {
-            // بمجرد وصول أول حرف من الإجابة نزيل مؤشر التفكير فوراً
-            hasThinking._stopTimer && hasThinking._stopTimer();
-            hasThinking.remove();
           }
-        });
-
-        // 2. تحويل أزرار الإجراءات أسفل كل رد إلى أيقونات رسمية
-        transformActionButtonsToIcons(box);
+        } else if (thinkingEl) {
+          thinkingEl._stopTimer && thinkingEl._stopTimer();
+          thinkingEl.remove();
+        }
       });
 
-      observer.observe(box, { childList: true, subtree: true, characterData: true });
+      transformActionButtonsToIcons(box);
+    } finally {
+      isUpdatingDOM = false;
+    }
+  }
+
+  function watchChatContainers() {
+    [$("chat"), $("gisChatBox")].filter(Boolean).forEach(box => {
+      if (box.dataset.safeWatched === "1") return;
+      box.dataset.safeWatched = "1";
+
+      const observer = new MutationObserver(() => {
+        if (isUpdatingDOM) return;
+        syncChatUI(box);
+      });
+
+      observer.observe(box, { childList: true, subtree: true });
     });
   }
 
   /* ==========================================================================
-     3. تحويل أزرار (نسخ، إعادة، إعجاب، عدم إعجاب، استماع، مشاركة، PDF) لأيقونات رسمية
+     3. تحويل أزرار الإجراءات أسفل كل رد إلى أيقونات رسمية
      ========================================================================== */
   const ICON_SVGS = {
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
@@ -208,7 +228,6 @@
         else if (txt.includes("تحميل") || txt.toLowerCase().includes("pdf")) {
           iconKey = "pdf";
           label = "تنزيل PDF منسق";
-          // ربط زر التحميل بدالة تنظيف وتنزيل PDF المنسقة مباشرة
           btn.onclick = e => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -224,7 +243,6 @@
         }
       });
 
-      // إضافة زر PDF إذا لم يكن موجوداً في شريط الأزرار
       if (!acts.querySelector('[data-pdf-added="1"]') && !acts.querySelector('[aria-label="تنزيل PDF منسق"]')) {
         const pdfBtn = document.createElement("button");
         pdfBtn.type = "button";
@@ -243,7 +261,7 @@
   }
 
   /* ==========================================================================
-     4. دالة تنظيف وتنسيق PDF المركزية (تمنع تداخل الكلام وتعمل في المساعد والمدرس والجيوماتكس)
+     4. دالة تنظيف وتنسيق PDF المركزية (المساعد العام + المدرس الذكي + الجيوماتكس)
      ========================================================================== */
   window.GEOCleanAndExportPDF = async function (sourceEl, prefix = "GeoDev-Document") {
     if (!sourceEl) {
@@ -256,11 +274,9 @@
 
     window.toast && window.toast("جاري تنظيف النص وتصدير PDF منسق...", "info");
 
-    // استنساخ المحتوى وتنظيفه من الأزرار والأيقونات والعناصر الزائدة
     const clone = sourceEl.cloneNode(true);
     clone.querySelectorAll("button, .acts, .msg-tools, .copy-btn, .gd-thinking-pill, .teacher-avatar, svg").forEach(el => el.remove());
 
-    // تنظيف النصوص والفراغات الزائدة لمنع تداخل الحروف العربية
     clone.querySelectorAll("*").forEach(node => {
       node.style.letterSpacing = "0px";
       node.style.wordSpacing = "normal";
@@ -372,9 +388,7 @@
     }
   };
 
-  // إضافة زر PDF رسمي في ردود المدرس الذكي (#academyTeacherMessages) وأعلى الجيوماتكس
   function attachTeacherAndGisPDFButtons() {
-    // 1. في شات المدرس الذكي
     const teacherBox = $("academyTeacherMessages");
     if (teacherBox) {
       teacherBox.querySelectorAll(".teacher-message.assistant").forEach(msg => {
@@ -399,7 +413,6 @@
       });
     }
 
-    // 2. ربط أي زر PDF في قسم الجيوماتكس (#s-gis) بدالة التنظيف الموحدة
     const gisSec = $("s-gis");
     if (gisSec) {
       gisSec.querySelectorAll("button").forEach(btn => {
@@ -421,7 +434,7 @@
   }
 
   /* ==========================================================================
-     5. إصلاح تحليل الصور نهائياً (Vision API + محرك OCR احتياطي لا يفشل أبداً)
+     5. إصلاح تحليل الصور نهائياً (Vision API + مسار OCR بديل)
      ========================================================================== */
   function loadTesseractOCR() {
     return new Promise((resolve, reject) => {
@@ -460,7 +473,6 @@
     });
   }
 
-  // دالة تحليل الصور الموحدة والمضمونة 100%
   window.askVision = async function (promptText, imgAtt, onProgress) {
     const user = window.firebase?.auth?.().currentUser;
     if (!user) throw new Error("يرجى تسجيل الدخول أولاً.");
@@ -472,7 +484,6 @@
 
     const { url: smallDataUrl, w, h } = await resizeImg(imgAtt.dataUrl, 960);
 
-    // المحاولة 1: إرسال الصورة لموديلات الرؤية المباشرة على السيرفر
     const visionModels = [
       "meta-llama/llama-4-scout-17b-16e-instruct",
       "meta-llama/llama-4-maverick-17b-128e-instruct",
@@ -510,8 +521,6 @@
       } catch (_) {}
     }
 
-    // المحاولة 2 (مسار احتياطي مضمون إذا رفض Worker مصفوفات الصور):
-    // استخراج جميع النصوص والأوامر والأرقام من الصورة عبر OCR ثم تحليلها بذكاء اصطناعي نصي قوي
     if (typeof onProgress === "function") {
       onProgress("جاري فحص الصورة واستخراج البيانات والنصوص الهندسية بداخلها...");
     }
@@ -524,7 +533,7 @@
     const fallbackPrompt = `قام المستخدم برفع صورة (${imgAtt.name || "صورة"} بأبعاد ${w}×${h} بكسل) ويسأل: "${cleanQ}".
 ${extractedText
   ? `النصوص والأوامر والأرقام المستخرجة من داخل الصورة بدقة هي:\n"""\n${extractedText.slice(0, 3500)}\n"""\nبناءً على هذه العناصر المستخرجة من الصورة، اشرح محتوى الصورة بالتفصيل، وحدد أي أخطاء برمجية أو هندسية (AutoCAD / Civil 3D / GIS) وخطوات إصلاحها.`
-  : `لم يُعثر على نصوص واضحة داخل الصورة (قد تكون خريطة أو رسماً هندسياً بصرياً). قدّم للمستخدم تحليلاً إرشادياً دقيقاً بناءً على سؤاله ("${cleanQ}") واطلب منه توضيح رسالة الخطأ أو نوع الطبقة/الأمر إذا لزم الأمر.`}`;
+  : `لم يُعثر على نصوص واضحة داخل الصورة. قدّم تحليلاً إرشادياً دقيقاً بناءً على سؤاله ("${cleanQ}") واطلب منه توضيح رسالة الخطأ أو نوع الطبقة/الأمر إذا لزم الأمر.`}`;
 
     const res2 = await fetch(window.GEO_API + "/chat/completions", {
       method: "POST",
@@ -554,27 +563,25 @@ ${extractedText
      ========================================================================== */
   function initUXVisionPDF() {
     injectUXStyles();
-    watchEmptyBubbles();
-    transformActionButtonsToIcons($("chat"));
-    transformActionButtonsToIcons($("gisChatBox"));
+    watchChatContainers();
+    syncChatUI($("chat"));
+    syncChatUI($("gisChatBox"));
     attachTeacherAndGisPDFButtons();
 
-    // ربط مع renderChat عند تحميل المحادثات من السجل
     if (typeof window.renderChat === "function" && !window.renderChat.__uxWrapped) {
       const _origRenderChat = window.renderChat;
       window.renderChat = function () {
         const r = _origRenderChat.apply(this, arguments);
-        transformActionButtonsToIcons($("chat"));
+        syncChatUI($("chat"));
         return r;
       };
       window.renderChat.__uxWrapped = true;
     }
 
-    // تحديث دوري خفيف لردود المدرس الذكي وأزرار الجيوماتكس
     setInterval(() => {
-      watchEmptyBubbles();
+      watchChatContainers();
       attachTeacherAndGisPDFButtons();
-    }, 1200);
+    }, 1500);
   }
 
   if (document.readyState === "loading") {
