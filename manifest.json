@@ -1,20 +1,26 @@
-
 {
-  "id": "/Ai-samir/",
   "name": "GeoDev Studio Pro",
-  "short_name": "GeoDev",
-  "description": "منصة GeoDev Studio Pro الذكية المتخصصة في الجغرافيا والجيوماتكس والمساحة والاستشعار عن بعد، مع أدوات عملية للتعلم والبرمجة والتحليل المكاني والمساعدة بالذكاء الاصطناعي.",
-  "start_url": "/Ai-samir/",
-  "scope": "/Ai-samir/",
+  "short_name": "GeoDev Pro",
+  "description": "منصة الجيوماتكس والمساحة والبرمجة والذكاء الاصطناعي",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#090d16",
+  "orientation": "portrait",
+  "background_color": "#0b1120",
   "theme_color": "#0f172a",
+  "dir": "rtl",
+  "lang": "ar",
   "icons": [
     {
-      "src": "/Ai-samir/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
