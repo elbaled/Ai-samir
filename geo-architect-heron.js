@@ -1,30 +1,22 @@
 /* ============================================================================
-   GeoDev AI Architect (3-Stage 2D/3D/Furnished + Cost) & Heron Triangles Suite
-   إضافة أداتين هندسيتين متكاملتين إلى قسم المساحة (#surveyGrid):
-   1. الأوتوكاد المعماري الذكي (AutoCAD AI Architect):
-      - AI Agent يفهم وصفك المعماري بالعربية (الغرف، الأبواب، السلم، الشوارع، الارتفاع، سمك الحوائط).
-      - 3 مراحل رسم: (1) مخطط 2D بالمحاور والأعمدة (2) مجسم 3D بالارتفاع (3) مخطط الفرش والتشطيب.
-      - حساب تكلفة البناء حسب الارتفاع (مثلاً 7م) وسمك الحائط (25سم/12سم) + تصدير DXF وصورة.
-   2. حساب ورسم المثلثات بطريقة هيرون (Heron Surveying & Drawing):
-      - جدول مثلثات الرفعة المساحية + رسم هندسي بالأبعاد والزوايا + الإجمالي بالفدان والقيراط والسهم.
+   GeoDev AI Architect v2.0 (True AI Agent + Smart Architectural Proportioning)
+   & Heron Triangles Surveying Suite
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOArchitectHeron) return;
-  window.GEOArchitectHeron = true;
+  if (window.GEOArchitectHeron_V2) return;
+  window.GEOArchitectHeron_V2 = true;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
   const num = id => parseFloat($(id)?.value) || 0;
 
   let currentArchStage = "2d"; // '2d' | '3d' | 'furnished'
-  let heronTriangles = [
-    { a: 30, b: 40, c: 50 }
-  ];
+  let heronTriangles = [{ a: 30, b: 40, c: 50 }];
 
   /* ==========================================================================
-     1. تعريف الأداتين وحقنهما في قسم المساحة (#surveyGrid)
+     1. واجهة الأداتين في قسم المساحة (#surveyGrid)
      ========================================================================== */
   const ARCHITECT_HERON_TOOLS = [
     {
@@ -36,35 +28,35 @@
         <div class="tool-section" style="border-color:var(--am)">
           <h4><i data-lucide="bot"></i> مساعد التصميم المعماري الذكي (AI Architect Agent)</h4>
           <p class="mt" style="line-height:1.7">
-            اكتب مواصفات بيتك بحرية (المساحة، عدد الغرف، اتجاه الباب الرئيسي والخاص، موقع السلم، الشوارع، ارتفاع البناء، وسمك الحوائط) وسيقوم الـ AI بتحليل طلبك وتوزيع الفراغات ورسمها على 3 مراحل:
+            اكتب فكرة تصميم بيتك بحرية (المساحة أو الأبعاد، الغرف، موقع الباب الرئيسي والخاص، موقع السلم، الشوارع، الارتفاع، وسمك الحوائط):
           </p>
-          <textarea id="archPromptText" rows="3" class="c" placeholder="مثال: عاوز أصمم بيت 88 متر (8×11)، أوضتين وريسبشن وصالة وحمام ومطبخ، الباب الرئيسي يفتح على الشارع العمومي والباب الخاص يفتح على الشارع الخاص، والسلم للأدوار العلوية من الشارع الخاص، ارتفاع البناء 7 متر والحائط 25 سم"></textarea>
+          <textarea id="archPromptText" rows="3" class="c" placeholder="مثال: عاوز أصمم بيت 88 متر (8×11)، أوضتين وريسبشن وصالة وحمام ومطبخ، الباب الرئيسي على الشارع العمومي والباب الخاص على الشارع الخاص، والسلم للأدوار العلوية من الشارع الخاص، ارتفاع البناء 7 متر والحائط 25 سم"></textarea>
           <div class="row" style="margin-top:8px">
-            <button type="button" class="a" style="flex:2" onclick="window.GEOArchRunAgent()">تحليل الوصف وتوليد التصميم بالـ AI</button>
+            <button type="button" id="archAgentBtn" class="a" style="flex:2" onclick="window.GEOArchRunAgent()">تحليل الوصف وتصميم اللوحة بالـ AI</button>
             <button type="button" class="k" style="flex:1" onclick="window.GEOArchLoadExample88()">مثال 88 م²</button>
           </div>
-          <div id="archAgentLog" class="mt" style="margin-top:6px;color:var(--gr);font-weight:700"></div>
+          <div id="archAgentLog" style="margin-top:8px;font-size:12.5px;line-height:1.7;color:var(--gr)"></div>
         </div>
 
         <div class="tool-section">
           <h4><i data-lucide="maximize-2"></i> 1. أبعاد قطعة الأرض والحدود (بالمتر)</h4>
           <div class="form-grid">
-            <label>الضلع العلوي (الواجهة / بحري) <input id="archTop" type="number" step="any" value="8" class="c"></label>
-            <label>الضلع السفلي (الخلفي / قبلي) <input id="archBottom" type="number" step="any" value="8" class="c"></label>
-            <label>الضلع الأيمن (شرقي) <input id="archRight" type="number" step="any" value="11" class="c"></label>
-            <label>الضلع الأيسر (غربي) <input id="archLeft" type="number" step="any" value="11" class="c"></label>
+            <label>الضلع العلوي (الواجهة الرئيسية) <input id="archTop" type="number" step="any" value="8" class="c"></label>
+            <label>الضلع السفلي (الواجهة الخلفية) <input id="archBottom" type="number" step="any" value="8" class="c"></label>
+            <label>الضلع الأيمن (يمين) <input id="archRight" type="number" step="any" value="11" class="c"></label>
+            <label>الضلع الأيسر (يسار / الشارع الخاص) <input id="archLeft" type="number" step="any" value="11" class="c"></label>
           </div>
           <div class="form-grid">
-            <label>الشارع الرئيسي (الباب الرئيسي) <input id="archMainStreet" class="c" value="شارع عمومي (بحري)"></label>
-            <label>الشارع الخاص / الجانبي <input id="archPrivStreet" class="c" value="شارع خاص (غربي)"></label>
+            <label>اسم الشارع الرئيسي (العلوي) <input id="archMainStreet" class="c" value="الشارع العمومي (بحري)"></label>
+            <label>اسم الشارع الجانبي (الأيسر) <input id="archPrivStreet" class="c" value="الشارع الخاص (غربي)"></label>
           </div>
         </div>
 
         <div class="tool-section">
           <h4><i data-lucide="sliders"></i> 2. الإعدادات المعمارية والإنشائية</h4>
           <div class="form-grid">
-            <label>عدد غرف النوم <input id="archRooms" type="number" min="1" max="6" value="2" class="c"></label>
-            <label>عدد الحمامات <input id="archBaths" type="number" min="1" max="4" value="1" class="c"></label>
+            <label>عدد غرف النوم <input id="archRooms" type="number" min="1" max="5" value="2" class="c"></label>
+            <label>عدد الحمامات <input id="archBaths" type="number" min="1" max="3" value="1" class="c"></label>
             <label>ارتفاع البناء الكلي (من الأساس للسطح - م) <input id="archHeight" type="number" step="0.5" value="7" class="c"></label>
             <label>سمك الحوائط الخارجية
               <select id="archWallThick" class="c">
@@ -113,7 +105,6 @@
           <button type="button" class="k" style="flex:1" onclick="window.GEOArchSavePNG()">حفظ صورة</button>
         </div>
 
-        <!-- أزرار التبديل بين مراحل الرسم الثلاث -->
         <div class="row" style="margin-bottom:10px;background:var(--bg);padding:6px;border-radius:12px;border:1px solid var(--ln)">
           <button type="button" id="btnStage2D" class="a" style="flex:1;font-size:12px" onclick="window.GEOArchSetStage('2d')">1. مخطط 2D إنشائي</button>
           <button type="button" id="btnStage3D" class="k" style="flex:1;font-size:12px" onclick="window.GEOArchSetStage('3d')">2. مجسم 3D بالارتفاع</button>
@@ -121,7 +112,7 @@
         </div>
 
         <div style="overflow-x:auto">
-          <canvas id="archCanvas" width="840" height="620" style="width:100%;max-width:100%;height:auto;border-radius:14px;border:1px solid var(--ln);background:#08101a"></canvas>
+          <canvas id="archCanvas" width="840" height="640" style="width:100%;max-width:100%;height:auto;border-radius:14px;border:1px solid var(--ln);background:#08101a"></canvas>
         </div>
 
         <div id="archCostReport" class="result-box" style="display:block;margin-top:12px"></div>
@@ -220,13 +211,54 @@
   }
 
   /* ==========================================================================
-     2. AI Architect Agent: تحليل وصف المستخدم وتعبئة الإعدادات المعمارية
+     2. AI Architect Agent (تحليل الوصف بالذكاء الاصطناعي + Fallback محلي)
      ========================================================================== */
   window.GEOArchLoadExample88 = function () {
     $("archPromptText").value =
       "عاوز أصمم بيت مساحته 88 متر (8×11)، أوضتين وريسبشن وصالة وحمام ومطبخ، الباب الرئيسي يفتح على الشارع العمومي والباب الخاص يفتح على الشارع الخاص، والسلم للأدوار العلوية من الشارع الخاص، ارتفاع البناء من الأساس لغاية فوق 7 متر والحائط 25 سم";
     window.GEOArchRunAgent();
   };
+
+  function localParseArchPrompt(raw) {
+    const dimMatch = raw.match(/(\d+(?:\.\d+)?)\s*[×xX*في]\s*(\d+(?:\.\d+)?)/);
+    const areaMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:متر|م²|m2)/i);
+
+    let width = num("archTop") || 8;
+    let length = num("archRight") || 11;
+
+    if (dimMatch) {
+      width = parseFloat(dimMatch[1]);
+      length = parseFloat(dimMatch[2]);
+    } else if (areaMatch) {
+      const area = parseFloat(areaMatch[1]);
+      if (area >= 25 && area <= 2000) {
+        width = Math.abs(area - 88) < 1 ? 8 : Math.round(Math.sqrt(area * 0.75));
+        length = +(area / width).toFixed(2);
+      }
+    }
+
+    let rooms = 2;
+    if (/اوضتين|أوضتين|غرفتين|2\s*غرف|2\s*اوض/.test(raw)) rooms = 2;
+    else if (/3\s*غرف|ثلاث\s*غرف|تلت\s*اوض|تلات\s*اوض/.test(raw)) rooms = 3;
+    else if (/4\s*غرف|اربع\s*غرف|أربع\s*غرف/.test(raw)) rooms = 4;
+    else if (/غرفه\s*واحد|أوضة\s*واحد|1\s*غرف/.test(raw)) rooms = 1;
+
+    let baths = /حمامين|2\s*حمام/.test(raw) ? 2 : 1;
+    const hMatch = raw.match(/ارتفاع[^0-9]*(\d+(?:\.\d+)?)/) || raw.match(/(\d+(?:\.\d+)?)\s*متر\s*(?:ارتفاع|فوق|لغاية)/);
+    const height = hMatch ? parseFloat(hMatch[1]) : (num("archHeight") || 7);
+    const wallThick = /12\s*سم|نصف\s*طوب/.test(raw) ? "12" : "25";
+
+    const mainStreet = raw.includes("الشارع العمومي") || raw.includes("شارع عمومي")
+      ? "الشارع العمومي (الواجهة الرئيسية)"
+      : ($("archMainStreet")?.value || "الشارع العمومي");
+    const privStreet = raw.includes("الشارع الخاص") || raw.includes("شارع خاص")
+      ? "الشارع الخاص (مدخل السلم العلوي)"
+      : ($("archPrivStreet")?.value || "الشارع الخاص");
+
+    const stairPos = raw.includes("اليمين") || raw.includes("شرقي") ? "right" : "left";
+
+    return { width, length, rooms, baths, height, wallThick, mainStreet, privStreet, stairPos, note: "" };
+  }
 
   window.GEOArchRunAgent = async function () {
     const raw = ($("archPromptText")?.value || "").trim();
@@ -235,67 +267,75 @@
     }
 
     const logEl = $("archAgentLog");
-    if (logEl) logEl.textContent = "جاري تحليل المواصفات المعمارية وتوزيع الفراغات...";
+    const btn = $("archAgentBtn");
+    if (btn) btn.disabled = true;
+    if (logEl) {
+      logEl.style.color = "var(--am)";
+      logEl.textContent = "جاري تحليل المواصفات المعمارية بواسطة المهندس الذكي...";
+    }
 
-    // 1. استخراج الأبعاد أو المساحة الكلية
-    const dimMatch = raw.match(/(\d+(?:\.\d+)?)\s*[×xX*في]\s*(\d+(?:\.\d+)?)/);
-    const areaMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:متر|م²|m2)/i);
+    let parsed = localParseArchPrompt(raw);
 
-    if (dimMatch) {
-      const w = parseFloat(dimMatch[1]);
-      const h = parseFloat(dimMatch[2]);
-      if (w > 2 && h > 2) {
-        $("archTop").value = w;
-        $("archBottom").value = w;
-        $("archRight").value = h;
-        $("archLeft").value = h;
+    // محاولة استخراج JSON من محرك الـ AI الحقيقي في المنصة لفهم أدق تفاصيل الوصف
+    try {
+      const user = window.firebase?.auth?.().currentUser;
+      if (user && typeof window.geoToken === "function" && window.GEO_API) {
+        const token = await window.geoToken();
+        const sys = `أنت مهندس معماري مصري خبير. استخرج من وصف المستخدم البيانات التالية بصيغة JSON فقط بدون أي نص إضافي:
+{"width": رقم عرض الواجهة بالمتر, "length": رقم العمق بالمتر, "rooms": عدد غرف النوم (1-5), "baths": عدد الحمامات (1-3), "height": ارتفاع المبنى الكلي بالمتر, "wallThick": "25" أو "12", "mainStreet": "اسم الشارع الرئيسي", "privStreet": "اسم الشارع الخاص", "stairPos": "left" أو "right", "advice": "ملاحظة معمارية قصيرة أو سؤال استكمالي للمستخدم"}`;
+
+        const res = await fetch(window.GEO_API + "/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({
+            model: "openai/gpt-oss-120b",
+            messages: [
+              { role: "system", content: sys },
+              { role: "user", content: raw }
+            ],
+            temperature: 0.2,
+            max_tokens: 600
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        const content = data.choices?.[0]?.message?.content || "";
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const aiObj = JSON.parse(jsonMatch[0]);
+          if (aiObj.width > 2) parsed.width = Number(aiObj.width);
+          if (aiObj.length > 2) parsed.length = Number(aiObj.length);
+          if (aiObj.rooms >= 1) parsed.rooms = Number(aiObj.rooms);
+          if (aiObj.baths >= 1) parsed.baths = Number(aiObj.baths);
+          if (aiObj.height >= 2.5) parsed.height = Number(aiObj.height);
+          if (aiObj.wallThick === "12" || aiObj.wallThick === "25") parsed.wallThick = String(aiObj.wallThick);
+          if (aiObj.mainStreet) parsed.mainStreet = String(aiObj.mainStreet);
+          if (aiObj.privStreet) parsed.privStreet = String(aiObj.privStreet);
+          if (aiObj.stairPos === "left" || aiObj.stairPos === "right") parsed.stairPos = aiObj.stairPos;
+          if (aiObj.advice) parsed.note = String(aiObj.advice);
+        }
       }
-    } else if (areaMatch) {
-      const area = parseFloat(areaMatch[1]);
-      if (area >= 25 && area <= 2000) {
-        // اختيار أبعاد متناسقة (مثلاً 88 م² -> 8 × 11)
-        let bestW = Math.round(Math.sqrt(area * 0.75));
-        if (Math.abs(area - 88) < 1) bestW = 8;
-        const bestH = +(area / bestW).toFixed(2);
-        $("archTop").value = bestW;
-        $("archBottom").value = bestW;
-        $("archRight").value = bestH;
-        $("archLeft").value = bestH;
-      }
-    }
+    } catch (_) {}
 
-    // 2. استخراج عدد الغرف والحمامات
-    if (/اوضتين|أوضتين|غرفتين|2\s*غرف|2\s*اوض/.test(raw)) $("archRooms").value = 2;
-    else if (/3\s*غرف|ثلاث\s*غرف|تلت\s*اوض|تلات\s*اوض/.test(raw)) $("archRooms").value = 3;
-    else if (/4\s*غرف|اربع\s*غرف|أربع\s*غرف/.test(raw)) $("archRooms").value = 4;
-    else if (/غرفه\s*واحد|أوضة\s*واحد|1\s*غرف/.test(raw)) $("archRooms").value = 1;
-
-    if (/حمامين|2\s*حمام/.test(raw)) $("archBaths").value = 2;
-    else if (/3\s*حمام/.test(raw)) $("archBaths").value = 3;
-    else if (/حمام/.test(raw)) $("archBaths").value = 1;
-
-    // 3. استخراج ارتفاع البناء وسمك الحوائط
-    const heightMatch = raw.match(/ارتفاع[^0-9]*(\d+(?:\.\d+)?)/) || raw.match(/(\d+(?:\.\d+)?)\s*متر\s*(?:ارتفاع|فوق|لغاية)/);
-    if (heightMatch) {
-      $("archHeight").value = parseFloat(heightMatch[1]);
-    }
-
-    if (/12\s*سم|نصف\s*طوب/.test(raw)) $("archWallThick").value = "12";
-    else if (/25\s*سم|طوب\s*كامل/.test(raw)) $("archWallThick").value = "25";
-
-    // 4. استخراج الشوارع ومواقع الأبواب والسلم
-    if (raw.includes("الشارع العمومي") || raw.includes("شارع عمومي")) {
-      $("archMainStreet").value = "الشارع العمومي (واجهة رئيسية)";
-      $("archMainDoorPos").value = "top";
-    }
-    if (raw.includes("الشارع الخاص") || raw.includes("شارع خاص")) {
-      $("archPrivStreet").value = "الشارع الخاص (مدخل جانبي وسلالم)";
-      $("archStairPos").value = "left";
-    }
+    // تعبئة الحقول بالقيم المستخرجة
+    $("archTop").value = parsed.width;
+    $("archBottom").value = parsed.width;
+    $("archRight").value = parsed.length;
+    $("archLeft").value = parsed.length;
+    $("archRooms").value = parsed.rooms;
+    $("archBaths").value = parsed.baths;
+    $("archHeight").value = parsed.height;
+    $("archWallThick").value = parsed.wallThick;
+    $("archMainStreet").value = parsed.mainStreet;
+    $("archPrivStreet").value = parsed.privStreet;
+    $("archStairPos").value = parsed.stairPos;
 
     window.GEOArchRenderAll();
+
+    if (btn) btn.disabled = false;
     if (logEl) {
-      logEl.textContent = "✓ تم تحليل التصميم وتوزيع الغرف والأبواب والسلم وحساب تكلفة البناء بنجاح!";
+      logEl.style.color = "var(--gr)";
+      logEl.innerHTML = `✓ تم تصميم المخطط (${parsed.width}×${parsed.length} م = ${(parsed.width * parsed.length).toFixed(1)} م² | ارتفاع ${parsed.height} م | حوائط ${parsed.wallThick} سم).` +
+        (parsed.note ? `<br><span style="color:var(--bl)">ملاحظة المهندس الذكي: ${esc(parsed.note)}</span>` : "");
     }
   };
 
@@ -308,7 +348,7 @@
   };
 
   /* ==========================================================================
-     3. محرك الرسم المعماري (3 مراحل: 2D إنشائي، 3D بالارتفاع، التشطيب والفرش) + التكلفة
+     3. محرك التوزيع المعماري الذكي (يتكيف تلقائياً مع الأرض الطولية أو العرضية)
      ========================================================================== */
   function getArchSpecs() {
     const top = Math.max(3, num("archTop"));
@@ -322,16 +362,16 @@
     const wallM = wallThickCm / 100;
     const perim = top + bottom + right + left;
     const netArea = Math.max(10, grossArea - perim * wallM * 0.85);
-    const rooms = Math.max(1, Math.min(6, Math.floor(num("archRooms"))));
-    const baths = Math.max(1, Math.min(4, Math.floor(num("archBaths"))));
+    const rooms = Math.max(1, Math.min(5, Math.floor(num("archRooms"))));
+    const baths = Math.max(1, Math.min(3, Math.floor(num("archBaths"))));
     const heightM = Math.max(3, num("archHeight") || 7);
     const floors = Math.max(1, Math.round(heightM / 3.3));
     const mainDoorPos = $("archMainDoorPos")?.value || "top";
     const stairPos = $("archStairPos")?.value || "left";
     const showAxes = $("archShowAxes")?.value === "1";
     const hasShaft = $("archShaft")?.value === "1";
-    const mainStreet = $("archMainStreet")?.value || "شارع عمومي";
-    const privStreet = $("archPrivStreet")?.value || "شارع خاص";
+    const mainStreet = $("archMainStreet")?.value || "الشارع العمومي";
+    const privStreet = $("archPrivStreet")?.value || "الشارع الخاص";
 
     return {
       top, bottom, right, left, W, L, grossArea, netArea,
@@ -340,48 +380,84 @@
     };
   }
 
-  // حساب توزيع الغرف النسبي داخل قطعة الأرض (0..1)
   function computeRoomLayout(spec) {
     const zones = [];
     const stairOnLeft = spec.stairPos === "left";
+    const isWide = spec.W > spec.L * 1.15; // هل الأرض عريضة على الواجهة أم عميقة للداخل؟
 
-    // 1. الجزء الأمامي (الواجهة الرئيسية - بحري): سلم ومدخل خاص + ريسبشن واستقبال
-    const frontH = 0.36;
-    const stairW = 0.28;
-    if (stairOnLeft) {
-      zones.push({ id: "stair", name: "سلم علوي ومدخل خاص", x: 0, y: 0, w: stairW, h: frontH, color: "#a855f7" });
-      zones.push({ id: "reception", name: "ريسبشن واستقبال", x: stairW, y: 0, w: 1 - stairW, h: frontH, color: "#14b8a6" });
+    if (isWide) {
+      // توزيع للأرض العريضة: قسم الاستقبال يمين/يسار وقسم النوم والخدمات في النصف الآخر
+      const recW = 0.48;
+      const privW = 1 - recW;
+      const recX = stairOnLeft ? privW : 0;
+      const privX = stairOnLeft ? 0 : recW;
+
+      // السلم والباب الخاص على الشارع الخاص + الريسبشن على الواجهة
+      zones.push({ id: "stair", name: "سلم علوي ومدخل خاص", x: stairOnLeft ? 0 : 0.72, y: 0, w: 0.28, h: 0.42, color: "#a855f7", door: "left" });
+      zones.push({ id: "reception", name: "ريسبشن واستقبال", x: recX, y: 0, w: recW, h: 0.56, color: "#14b8a6", door: "top" });
+      zones.push({ id: "hall", name: "صالة توزيع", x: recX, y: 0.56, w: recW * 0.55, h: 0.44, color: "#38bdf8", door: "top" });
+      zones.push({ id: "kitchen", name: "مطبخ", x: recX + recW * 0.55, y: 0.56, w: recW * 0.45, h: 0.44, color: "#f59e0b", door: "left" });
+
+      // الحمام والمنور + غرف النوم
+      const bathH = 0.34;
+      zones.push({ id: "bath", name: "حمام", x: stairOnLeft ? 0.28 : recW, y: 0, w: privW - 0.28, h: spec.hasShaft ? bathH * 0.68 : bathH, color: "#06b6d4", door: "bottom" });
+      if (spec.hasShaft) {
+        zones.push({ id: "shaft", name: "منور", x: stairOnLeft ? 0.28 : recW, y: bathH * 0.68, w: privW - 0.28, h: bathH * 0.32, color: "#64748b" });
+      }
+
+      const backY = 0.42;
+      const backH = 1 - backY;
+      const rw = privW / spec.rooms;
+      for (let i = 0; i < spec.rooms; i++) {
+        zones.push({
+          id: `room_${i + 1}`,
+          name: `غرفة نوم (${i + 1})`,
+          x: privX + i * rw,
+          y: backY,
+          w: rw,
+          h: backH,
+          color: "#22d3ee",
+          door: "top"
+        });
+      }
     } else {
-      zones.push({ id: "reception", name: "ريسبشن واستقبال", x: 0, y: 0, w: 1 - stairW, h: frontH, color: "#14b8a6" });
-      zones.push({ id: "stair", name: "سلم علوي ومدخل خاص", x: 1 - stairW, y: 0, w: stairW, h: frontH, color: "#a855f7" });
-    }
+      // توزيع للأرض الطولية القياسية (مثل 8 × 11 م = 88 م²)
+      const frontH = 0.35;
+      const stairW = 0.30;
+      if (stairOnLeft) {
+        zones.push({ id: "stair", name: "سلم علوي ومدخل خاص", x: 0, y: 0, w: stairW, h: frontH, color: "#a855f7", door: "left" });
+        zones.push({ id: "reception", name: "ريسبشن واستقبال", x: stairW, y: 0, w: 1 - stairW, h: frontH, color: "#14b8a6", door: "top" });
+      } else {
+        zones.push({ id: "reception", name: "ريسبشن واستقبال", x: 0, y: 0, w: 1 - stairW, h: frontH, color: "#14b8a6", door: "top" });
+        zones.push({ id: "stair", name: "سلم علوي ومدخل خاص", x: 1 - stairW, y: 0, w: stairW, h: frontH, color: "#a855f7", door: "right" });
+      }
 
-    // 2. الجزء الأوسط: صالة توزيع + مطبخ + حمام + منور
-    const midY = frontH;
-    const midH = 0.28;
-    zones.push({ id: "hall", name: "صالة توزيع", x: 0, y: midY, w: 0.46, h: midH, color: "#38bdf8" });
-    zones.push({ id: "kitchen", name: "مطبخ", x: 0.46, y: midY, w: 0.27, h: midH, color: "#f59e0b" });
-    if (spec.hasShaft) {
-      zones.push({ id: "bath", name: "حمام", x: 0.73, y: midY, w: 0.27, h: midH * 0.65, color: "#06b6d4" });
-      zones.push({ id: "shaft", name: "منور", x: 0.73, y: midY + midH * 0.65, w: 0.27, h: midH * 0.35, color: "#64748b" });
-    } else {
-      zones.push({ id: "bath", name: "حمام", x: 0.73, y: midY, w: 0.27, h: midH, color: "#06b6d4" });
-    }
+      const midY = frontH;
+      const midH = 0.28;
+      zones.push({ id: "hall", name: "صالة توزيع", x: 0, y: midY, w: 0.44, h: midH, color: "#38bdf8", door: "top" });
+      zones.push({ id: "kitchen", name: "مطبخ", x: 0.44, y: midY, w: 0.28, h: midH, color: "#f59e0b", door: "left" });
+      if (spec.hasShaft) {
+        zones.push({ id: "bath", name: "حمام", x: 0.72, y: midY, w: 0.28, h: midH * 0.65, color: "#06b6d4", door: "left" });
+        zones.push({ id: "shaft", name: "منور", x: 0.72, y: midY + midH * 0.65, w: 0.28, h: midH * 0.35, color: "#64748b" });
+      } else {
+        zones.push({ id: "bath", name: "حمام", x: 0.72, y: midY, w: 0.28, h: midH, color: "#06b6d4", door: "left" });
+      }
 
-    // 3. الجزء الخلفي (الهادئ - قبلي): غرف النوم
-    const backY = frontH + midH;
-    const backH = 1 - backY;
-    const rw = 1 / spec.rooms;
-    for (let i = 0; i < spec.rooms; i++) {
-      zones.push({
-        id: `room_${i + 1}`,
-        name: `غرفة نوم (${i + 1})`,
-        x: i * rw,
-        y: backY,
-        w: rw,
-        h: backH,
-        color: "#22d3ee"
-      });
+      const backY = frontH + midH;
+      const backH = 1 - backY;
+      const rw = 1 / spec.rooms;
+      for (let i = 0; i < spec.rooms; i++) {
+        zones.push({
+          id: `room_${i + 1}`,
+          name: `غرفة نوم (${i + 1})`,
+          x: i * rw,
+          y: backY,
+          w: rw,
+          h: backH,
+          color: "#22d3ee",
+          door: "top"
+        });
+      }
     }
 
     return zones;
@@ -395,7 +471,6 @@
     const ctx = cv.getContext("2d");
     const CW = cv.width, CH = cv.height;
 
-    // مسح الخلفية ورسم شبكة هندسية
     ctx.fillStyle = "#08101a";
     ctx.fillRect(0, 0, CW, CH);
     ctx.strokeStyle = "#111f30";
@@ -408,7 +483,7 @@
     ctx.font = "bold 15px Cairo, sans-serif";
     ctx.textAlign = "right";
     const stageTitles = {
-      "2d": "المرحلة (1): مخطط أوتوكاد إنشائي 2D (محاور + أعمدة + أبعاد)",
+      "2d": "المرحلة (1): مخطط أوتوكاد إنشائي 2D (محاور + أعمدة + أبواب + أبعاد)",
       "3d": `المرحلة (2): مجسم هيكلي ثلاثي الأبعاد 3D (ارتفاع ${spec.heightM} م / ${spec.floors} أدوار)`,
       "furnished": "المرحلة (3): مخطط التشطيب والفرش المعماري النهائي"
     };
@@ -425,19 +500,41 @@
       render2DOrFurnishedPlan(ctx, CW, CH, spec, zones, currentArchStage === "furnished");
     }
 
-    // تحديث تقرير التكلفة والمقايسة
     renderArchCostReport(spec, zones);
   };
 
+  function drawDoorSwing(ctx, x, y, side, color = "#10b981") {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    const r = 14;
+    ctx.beginPath();
+    if (side === "top") {
+      ctx.moveTo(x, y); ctx.lineTo(x, y + r);
+      ctx.arc(x, y, r, 0, Math.PI / 2);
+    } else if (side === "left") {
+      ctx.moveTo(x, y); ctx.lineTo(x + r, y);
+      ctx.arc(x, y, r, -Math.PI / 2, 0);
+    } else if (side === "right") {
+      ctx.moveTo(x, y); ctx.lineTo(x - r, y);
+      ctx.arc(x, y, r, Math.PI, Math.PI * 1.5);
+    } else {
+      ctx.moveTo(x, y); ctx.lineTo(x, y - r);
+      ctx.arc(x, y, r, -Math.PI / 2, 0);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function render2DOrFurnishedPlan(ctx, CW, CH, spec, zones, isFurnished) {
-    const maxW = 460, maxH = 380;
+    const maxW = 470, maxH = 390;
     const scale = Math.min(maxW / spec.W, maxH / spec.L);
     const pw = spec.W * scale;
     const ph = spec.L * scale;
     const ox = (CW - pw) / 2;
     const oy = 95 + (maxH - ph) / 2;
 
-    // أسماء الشوارع المحيطة
+    // أسماء الشوارع المحيطة متوافقة تماماً مع المدخلات
     ctx.textAlign = "center";
     ctx.fillStyle = "#f59e0b";
     ctx.font = "bold 13px Cairo, sans-serif";
@@ -452,7 +549,7 @@
 
     ctx.fillStyle = "#94a3b8";
     ctx.font = "12px Cairo, sans-serif";
-    ctx.fillText(`الواجهة الخلفية (${spec.bottom} م)`, ox + pw / 2, oy + ph + 38);
+    ctx.fillText(`الحد الخلفي (${spec.bottom} م)`, ox + pw / 2, oy + ph + 36);
 
     // المحاور الإنشائية (Axes)
     if (spec.showAxes) {
@@ -460,16 +557,13 @@
       ctx.setLineDash([6, 4]);
       ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
       ctx.lineWidth = 1;
-      const xTicks = [0, 0.28, 0.5, 0.73, 1];
-      const yTicks = [0, 0.36, 0.64, 1];
-
-      xTicks.forEach((t, i) => {
+      [0, 0.30, 0.72, 1].forEach((t, i) => {
         const ax = ox + t * pw;
         ctx.beginPath(); ctx.moveTo(ax, oy - 18); ctx.lineTo(ax, oy + ph + 18); ctx.stroke();
         ctx.fillStyle = "#64748b"; ctx.font = "10px monospace";
         ctx.fillText(String(i + 1), ax, oy - 21);
       });
-      yTicks.forEach((t, i) => {
+      [0, 0.35, 0.63, 1].forEach((t, i) => {
         const ay = oy + t * ph;
         ctx.beginPath(); ctx.moveTo(ox - 18, ay); ctx.lineTo(ox + pw + 18, ay); ctx.stroke();
         ctx.fillStyle = "#64748b"; ctx.font = "10px monospace";
@@ -487,7 +581,6 @@
       const realW = (z.w * spec.W).toFixed(2);
       const realH = (z.h * spec.L).toFixed(2);
 
-      // أرضية الغرفة
       if (isFurnished) {
         ctx.fillStyle = z.id === "bath" || z.id === "kitchen"
           ? "rgba(6, 182, 212, 0.16)"
@@ -495,21 +588,24 @@
             ? "rgba(168, 85, 247, 0.18)"
             : "rgba(245, 158, 11, 0.12)";
       } else {
-        ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+        ctx.fillStyle = "rgba(15, 23, 42, 0.78)";
       }
       ctx.fillRect(rx, ry, rw, rh);
 
-      // رسم الأثاث في المرحلة الثالثة (التشطيب والفرش)
       if (isFurnished) {
         drawFurnitureInZone(ctx, z, rx, ry, rw, rh);
       }
 
-      // الحوائط
       ctx.strokeStyle = z.color;
       ctx.lineWidth = spec.wallThickCm === 25 ? 3 : 2;
       ctx.strokeRect(rx, ry, rw, rh);
 
-      // اسم الفراغ وأبعاده بالمتر
+      // رسم قوس فتح الباب لكل غرفة
+      if (z.door === "top") drawDoorSwing(ctx, rx + rw * 0.35, ry, "top", z.color);
+      else if (z.door === "left") drawDoorSwing(ctx, rx, ry + rh * 0.45, "left", z.color);
+      else if (z.door === "right") drawDoorSwing(ctx, rx + rw, ry + rh * 0.45, "right", z.color);
+
+      // كتابة اسم الغرفة وأبعادها بالمتر
       ctx.textAlign = "center";
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 11.5px Cairo, sans-serif";
@@ -519,37 +615,25 @@
       ctx.fillText(`${realW}×${realH}م`, rx + rw / 2, ry + rh / 2 + 12);
     });
 
-    // رسم الأعمدة الخرسانية عند التقاطعات
+    // رسم الأعمدة الخرسانية
     if (spec.showAxes) {
       ctx.fillStyle = "#f59e0b";
-      const colsX = [0, 0.28, 0.73, 1];
-      const colsY = [0, 0.36, 0.64, 1];
-      colsX.forEach(cx => {
-        colsY.forEach(cy => {
+      [0, 0.30, 0.72, 1].forEach(cx => {
+        [0, 0.35, 0.63, 1].forEach(cy => {
           ctx.fillRect(ox + cx * pw - 4, oy + cy * ph - 4, 8, 8);
         });
       });
     }
 
-    // رسم الباب الرئيسي (قوس فتح الباب) والباب الخاص
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 2.5;
-    const mainDoorX = spec.stairPos === "left" ? ox + pw * 0.45 : ox + pw * 0.25;
-    ctx.beginPath();
-    ctx.arc(mainDoorX, oy, 18, 0, Math.PI / 2);
-    ctx.stroke();
+    // تسمية الباب الرئيسي والباب الخاص بوضوح
+    const mainDoorX = spec.stairPos === "left" ? ox + pw * 0.52 : ox + pw * 0.25;
     ctx.fillStyle = "#10b981";
-    ctx.font = "bold 10px Cairo, sans-serif";
-    ctx.fillText("باب رئيسي", mainDoorX + 12, oy + 14);
+    ctx.font = "bold 11px Cairo, sans-serif";
+    ctx.fillText("▼ الباب الرئيسي", mainDoorX, oy - 6);
 
-    // الباب الخاص على الشارع الخاص (للسلم العلوي)
     const privDoorY = oy + ph * 0.16;
-    ctx.strokeStyle = "#a855f7";
-    ctx.beginPath();
-    ctx.arc(ox, privDoorY, 15, -Math.PI / 2, 0);
-    ctx.stroke();
     ctx.fillStyle = "#d8b4fe";
-    ctx.fillText("باب خاص", ox + 28, privDoorY + 4);
+    ctx.fillText("باب خاص ◄", ox - 28, privDoorY);
   }
 
   function drawFurnitureInZone(ctx, z, rx, ry, rw, rh) {
@@ -559,24 +643,19 @@
     ctx.lineWidth = 1.2;
 
     if (z.id.startsWith("room_")) {
-      // سرير مزدوج + دولاب
       const bw = Math.min(rw * 0.55, 48), bh = Math.min(rh * 0.52, 56);
-      ctx.fillRect(rx + (rw - bw) / 2, ry + 10, bw, bh);
-      ctx.strokeRect(rx + (rw - bw) / 2, ry + 10, bw, bh);
-      // مخدات
-      ctx.strokeRect(rx + (rw - bw) / 2 + 4, ry + 13, bw / 2 - 6, 10);
-      ctx.strokeRect(rx + rw / 2 + 2, ry + 13, bw / 2 - 6, 10);
+      ctx.fillRect(rx + (rw - bw) / 2, ry + 12, bw, bh);
+      ctx.strokeRect(rx + (rw - bw) / 2, ry + 12, bw, bh);
+      ctx.strokeRect(rx + (rw - bw) / 2 + 4, ry + 15, bw / 2 - 6, 9);
+      ctx.strokeRect(rx + rw / 2 + 2, ry + 15, bw / 2 - 6, 9);
     } else if (z.id === "reception") {
-      // طقم كنب + طاولة وسط
       ctx.strokeRect(rx + 12, ry + 14, rw - 24, 14);
       ctx.strokeRect(rx + 12, ry + 32, 14, rh - 48);
       ctx.fillRect(rx + rw / 2 - 18, ry + rh / 2 - 8, 36, 18);
     } else if (z.id === "kitchen") {
-      // كاونتر المطبخ حرف L
       ctx.fillRect(rx + 4, ry + 4, rw - 8, 12);
       ctx.fillRect(rx + rw - 16, ry + 4, 12, rh - 12);
     } else if (z.id === "stair") {
-      // درجات السلم
       const steps = 8;
       for (let s = 1; s < steps; s++) {
         const sy = ry + (rh / steps) * s;
@@ -587,8 +666,7 @@
   }
 
   function render3DIsometricHouse(ctx, CW, CH, spec, zones) {
-    // رسم منظور أيزومتري 3D يوضح ارتفاع البناء (مثلاً 7 متر) والحوائط والتقسيم الداخلي
-    const isoScale = Math.min(26, 260 / Math.max(spec.W, spec.L));
+    const isoScale = Math.min(25, 250 / Math.max(spec.W, spec.L));
     const wallHpx = Math.min(130, spec.heightM * 16);
     const cx = CW / 2;
     const cy = CH / 2 + 55;
@@ -599,12 +677,7 @@
     });
 
     const hw = spec.W / 2, hl = spec.L / 2;
-
-    // 1. قاعدة الأرضية (الأساس)
-    const p0 = toIso(-hw, -hl, 0);
-    const p1 = toIso(hw, -hl, 0);
-    const p2 = toIso(hw, hl, 0);
-    const p3 = toIso(-hw, hl, 0);
+    const p0 = toIso(-hw, -hl, 0), p1 = toIso(hw, -hl, 0), p2 = toIso(hw, hl, 0), p3 = toIso(-hw, hl, 0);
 
     ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
     ctx.strokeStyle = "#10b981";
@@ -613,21 +686,17 @@
     ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y);
     ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    // 2. رسم جدران الغرف الداخلية بارتفاع نصف شفاف لإظهار التقسيم من الداخل
     zones.forEach(z => {
-      const x1 = -hw + z.x * spec.W;
-      const y1 = -hl + z.y * spec.L;
-      const x2 = x1 + z.w * spec.W;
-      const y2 = y1 + z.h * spec.L;
+      const x1 = -hw + z.x * spec.W, y1 = -hl + z.y * spec.L;
+      const x2 = x1 + z.w * spec.W, y2 = y1 + z.h * spec.L;
 
-      const b1 = toIso(x1, y1, 0), b2 = toIso(x2, y1, 0), b3 = toIso(x2, y2, 0), b4 = toIso(x1, y2, 0);
-      const t1 = toIso(x1, y1, wallHpx), t2 = toIso(x2, y1, wallHpx), t3 = toIso(x2, y2, wallHpx), t4 = toIso(x1, y2, wallHpx);
+      const b1 = toIso(x1, y1, 0), b2 = toIso(x2, y1, 0), b3 = toIso(x2, y2, 0);
+      const t1 = toIso(x1, y1, wallHpx), t2 = toIso(x2, y1, wallHpx), t3 = toIso(x2, y2, wallHpx);
 
       ctx.strokeStyle = z.color;
       ctx.fillStyle = "rgba(56, 189, 248, 0.08)";
       ctx.lineWidth = 1.5;
 
-      // رسم الجدار الخلفي والأيمن للغرفة
       ctx.beginPath();
       ctx.moveTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(t2.x, t2.y); ctx.lineTo(t1.x, t1.y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -636,7 +705,6 @@
       ctx.moveTo(b2.x, b2.y); ctx.lineTo(b3.x, b3.y); ctx.lineTo(t3.x, t3.y); ctx.lineTo(t2.x, t2.y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
 
-      // تسمية الغرفة داخل الـ 3D
       const center = toIso((x1 + x2) / 2, (y1 + y2) / 2, 12);
       ctx.fillStyle = "#f8fafc";
       ctx.font = "bold 10px Cairo, sans-serif";
@@ -644,29 +712,21 @@
       ctx.fillText(z.name, center.x, center.y);
     });
 
-    // 3. الحواف الخارجية العلوية (السقف) وخط قياس الارتفاع (7 متر)
-    const u0 = toIso(-hw, -hl, wallHpx);
-    const u1 = toIso(hw, -hl, wallHpx);
-    const u2 = toIso(hw, hl, wallHpx);
-    const u3 = toIso(-hw, hl, wallHpx);
-
+    const u0 = toIso(-hw, -hl, wallHpx), u1 = toIso(hw, -hl, wallHpx), u2 = toIso(hw, hl, wallHpx), u3 = toIso(-hw, hl, wallHpx);
     ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(u0.x, u0.y); ctx.lineTo(u1.x, u1.y); ctx.lineTo(u2.x, u2.y); ctx.lineTo(u3.x, u3.y);
     ctx.closePath(); ctx.stroke();
 
-    // أعمدة الزوايا
     [[p0, u0], [p1, u1], [p2, u2], [p3, u3]].forEach(([b, t]) => {
       ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(t.x, t.y); ctx.stroke();
     });
 
-    // خط بيان الارتفاع (من الأساس للسطح)
     ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(p1.x + 22, p1.y);
-    ctx.lineTo(u1.x + 22, u1.y);
+    ctx.moveTo(p1.x + 22, p1.y); ctx.lineTo(u1.x + 22, u1.y);
     ctx.stroke();
     ctx.fillStyle = "#fca5a5";
     ctx.font = "bold 12px Cairo, sans-serif";
@@ -675,30 +735,26 @@
   }
 
   function renderArchCostReport(spec, zones) {
-    // حساب كميات وتكلفة البناء التقديرية بناءً على المساحة والارتفاع (7م) وسمك الحائط (25سم/12سم)
-    const totalSlabArea = spec.grossArea * spec.floors; // إجمالي مسطح الأسقف والأساسات
-    const totalWallsLength = spec.perim * 2.2; // الحوائط الخارجية + القواطيع الداخلية
+    const totalSlabArea = spec.grossArea * spec.floors;
+    const totalWallsLength = spec.perim * 2.2;
     const totalWallArea = totalWallsLength * spec.heightM;
 
-    // الطوب: حائط 25 سم يحتاج ~110 طوبة/م² ، حائط 12 سم يحتاج ~55 طوبة/م²
     const bricksPerM2 = spec.wallThickCm === 25 ? 110 : 55;
     const totalBricks = Math.ceil(totalWallArea * bricksPerM2);
 
-    // الخرسانة المسلحة (أساسات + أعمدة + أسقف): ~0.32 م³ لكل متر مسطح من الأدوار
     const rcVolume = totalSlabArea * 0.32;
     const cementTons = +(rcVolume * 0.35 + (totalBricks / 1000) * 0.15).toFixed(2);
     const steelTons = +(rcVolume * 0.095).toFixed(2);
     const sandM3 = +(rcVolume * 0.45 + totalWallArea * 0.03).toFixed(1);
     const gravelM3 = +(rcVolume * 0.8).toFixed(1);
 
-    // متوسط أسعار السوق التقديرية في مصر
     const estCost = Math.round(
       cementTons * 3200 +
       steelTons * 38500 +
       (totalBricks / 1000) * 1800 +
       sandM3 * 180 +
       gravelM3 * 320 +
-      totalSlabArea * 950 // مصنعيات وتشطيب أساسي
+      totalSlabArea * 950
     );
 
     const roomsList = zones.map(z =>
@@ -760,17 +816,13 @@
   };
 
   /* ==========================================================================
-     4. منطق حساب ورسم المثلثات بطريقة هيرون (Heron Surveying & Canvas Plot)
+     4. حساب ورسم المثلثات بطريقة هيرون (Heron Surveying & Canvas Plot)
      ========================================================================== */
   function calcHeronMetrics(a, b, c) {
     if (a <= 0 || b <= 0 || c <= 0 || a + b <= c || a + c <= b || b + c <= a) return null;
     const s = (a + b + c) / 2;
     const area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
-    // حساب الزوايا بقانون جيب التمام
-    const angC = (Math.acos(Math.max(-1, Math.min(1, (a * a + b * b - c * c) / (2 * a * b)))) * 180) / Math.PI;
-    const angB = (Math.acos(Math.max(-1, Math.min(1, (a * a + c * c - b * b) / (2 * a * c)))) * 180) / Math.PI;
-    const angA = 180 - angB - angC;
-    return { a, b, c, area, angA, angB, angC };
+    return { a, b, c, area };
   }
 
   function m2ToEgyptianUnits(m2) {
@@ -786,7 +838,7 @@
   window.GEOHeronAdd = function () {
     const a = num("hrA"), b = num("hrB"), c = num("hrC");
     if (!calcHeronMetrics(a, b, c)) {
-      return window.toast && window.toast("أطوال الأضلاع لا تكوّن مثلثاً صحيحاً (مجموع أي ضلعين يجب أن يكون أكبر من الثالث)", "warn");
+      return window.toast && window.toast("أطوال الأضلاع لا تكوّن مثلثاً صحيحاً", "warn");
     }
     heronTriangles.push({ a, b, c });
     window.GEOHeronRender();
@@ -831,13 +883,11 @@
       `;
     }
 
-    // رسم المثلثات بمقياس رسم دقيق على Canvas
     const ctx = cv.getContext("2d");
     const CW = cv.width, CH = cv.height;
     ctx.fillStyle = "#08101a";
     ctx.fillRect(0, 0, CW, CH);
 
-    // شبكة هندسية
     ctx.strokeStyle = "#111f30";
     ctx.lineWidth = 1;
     for (let x = 0; x < CW; x += 25) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
@@ -856,41 +906,31 @@
       const cx = col * cellW + cellW / 2;
       const cy = row * cellH + cellH / 2 + 12;
 
-      // حساب إحداثيات رؤوس المثلث (P1 عند 0,0 و P2 عند c,0 و P3 من تقاطع الدائرتين)
       const x3 = (t.b * t.b + t.c * t.c - t.a * t.a) / (2 * t.c);
       const y3 = Math.sqrt(Math.max(0, t.b * t.b - x3 * x3));
 
       const minX = Math.min(0, t.c, x3), maxX = Math.max(0, t.c, x3);
-      const minY = 0, maxY = y3;
       const triW = maxX - minX || 1;
-      const triH = maxY - minY || 1;
+      const triH = y3 || 1;
 
       const scale = Math.min((cellW - 90) / triW, (cellH - 85) / triH);
       const midX = (minX + maxX) / 2;
-      const midY = (minY + maxY) / 2;
+      const midY = y3 / 2;
 
       const toScreen = (px, py) => ({
         x: cx + (px - midX) * scale,
         y: cy - (py - midY) * scale
       });
 
-      const S1 = toScreen(0, 0);
-      const S2 = toScreen(t.c, 0);
-      const S3 = toScreen(x3, y3);
+      const S1 = toScreen(0, 0), S2 = toScreen(t.c, 0), S3 = toScreen(x3, y3);
 
-      // تعبئة ورسم أضلاع المثلث
       ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
       ctx.strokeStyle = "#f59e0b";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(S1.x, S1.y);
-      ctx.lineTo(S2.x, S2.y);
-      ctx.lineTo(S3.x, S3.y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      ctx.moveTo(S1.x, S1.y); ctx.lineTo(S2.x, S2.y); ctx.lineTo(S3.x, S3.y);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
 
-      // كتابة أطوال الأضلاع على منتصف كل ضلع
       ctx.fillStyle = "#38bdf8";
       ctx.font = "bold 12px Cairo, sans-serif";
       ctx.textAlign = "center";
@@ -898,9 +938,7 @@
       ctx.fillText(`B = ${t.b} م`, (S1.x + S3.x) / 2 - 22, (S1.y + S3.y) / 2 - 4);
       ctx.fillText(`A = ${t.a} م`, (S2.x + S3.x) / 2 + 22, (S2.y + S3.y) / 2 - 4);
 
-      // كتابة اسم المثلث ومساحته في المركز
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 12px Cairo, sans-serif";
       ctx.fillText(`مثلث (${i + 1})`, (S1.x + S2.x + S3.x) / 3, (S1.y + S2.y + S3.y) / 3 - 4);
       ctx.fillStyle = "#10b981";
       ctx.fillText(`${t.area.toFixed(2)} م²`, (S1.x + S2.x + S3.x) / 3, (S1.y + S2.y + S3.y) / 3 + 12);
