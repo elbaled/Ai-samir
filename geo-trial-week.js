@@ -1,21 +1,73 @@
 /* ============================================================================
-   GeoDev 7-Day Free Trial & Instant Access Patch v2.0 (geo-trial-week.js)
-   1. إلغاء شرط تفعيل البريد الإلكتروني (emailVerified) في المدرس الذكي والبحث والصور.
-   2. تفعيل أسبوع PRO مجاني (7 أيام كاملة) فور إنشاء الحساب دون إظهار رسالة انتهاء.
-   3. إغلاق أدوات PRO تلقائياً بعد مرور 7 أيام بالضبط من تاريخ إنشاء الحساب.
+   GeoDev 7-Day Free Trial, Engine Access & Instant Auth Patch v3.0
+   1. جعل محرك GEO 2.9 هو المحرك الأساسي الافتراضي للمستخدمين العاديين والجدد.
+   2. قصر محركي GEO 3.8 FLASH و GEO 5.2 ULTRA على أصحاب صلاحية PRO فقط.
+   3. إلغاء شرط تفعيل البريد الإلكتروني (emailVerified) في المدرس الذكي والبحث.
+   4. تفعيل أسبوع PRO مجاني (7 أيام) للحسابات الجديدة من تاريخ إنشائها.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOTrialWeekV2) return;
-  window.GEOTrialWeekV2 = true;
+  if (window.GEOTrialWeekV3) return;
+  window.GEOTrialWeekV3 = true;
 
   const WEEK_MS = 7 * 86400000; // 7 أيام بالمللي ثانية
   const DAY_MS = 86400000;
   const $ = id => document.getElementById(id);
 
   /* ==========================================================================
-     1. تحديث نص شاشة إنشاء الحساب من "3 أيام" إلى "أسبوع"
+     1. فرض المحرك الأساسي GEO 2.9 للمستخدمين غير المشتركين في PRO
+     ========================================================================== */
+  function enforceEngineTier() {
+    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+    const hasPro = isAdmin || window.proLeft() > 0;
+
+    // التأكد في إعدادات التحكم أن g29 مجاني، و g38 و g52 مقفولين على PRO
+    try {
+      const ctl = JSON.parse(localStorage.getItem("gd_ctl") || "{}");
+      let changed = false;
+      if (ctl["e:g29"] !== "free") { ctl["e:g29"] = "free"; changed = true; }
+      if (!ctl["e:g38"]) { ctl["e:g38"] = "pro"; changed = true; }
+      if (!ctl["e:g52"]) { ctl["e:g52"] = "pro"; changed = true; }
+      if (changed) localStorage.setItem("gd_ctl", JSON.stringify(ctl));
+    } catch (_) {}
+
+    // إذا كان المستخدم عادياً (بدون PRO) والمحرك المختار حالياً هو 3.8 أو 5.2، نرجعه فوراً لـ GEO 2.9
+    if (!hasPro) {
+      if (window.eng && window.eng !== "g29") {
+        if (typeof window.setEng === "function") {
+          window.setEng("g29");
+        } else {
+          window.eng = "g29";
+          localStorage.setItem("gd_eng", "g29");
+        }
+      }
+      const engLbl = $("engLbl");
+      if (engLbl && engLbl.textContent !== "GEO 2.9") {
+        engLbl.textContent = "GEO 2.9";
+      }
+      document.querySelectorAll("#engMenu .eng-opt").forEach(btn => {
+        btn.classList.toggle("on", btn.dataset.e === "g29");
+      });
+    }
+  }
+
+  // اعتراض اختيار المحرك لمنع تشغيل 3.8 أو 5.2 بدون PRO
+  const _origSetEng = window.setEng;
+  window.setEng = function (e) {
+    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+    const hasPro = isAdmin || window.proLeft() > 0;
+    if ((e === "g38" || e === "g52") && !hasPro) {
+      if (typeof window.showPro === "function") window.showPro();
+      return;
+    }
+    if (typeof _origSetEng === "function") {
+      return _origSetEng.apply(this, arguments);
+    }
+  };
+
+  /* ==========================================================================
+     2. تحديث نص شاشة إنشاء الحساب من "3 أيام" إلى "أسبوع"
      ========================================================================== */
   function updateSignupText() {
     const regP = document.querySelector("#registerForm .au-p");
@@ -25,7 +77,7 @@
   }
 
   /* ==========================================================================
-     2. إلغاء شرط التحقق من البريد الإلكتروني في المدرس الذكي والبحث الذكي
+     3. إلغاء شرط التحقق من البريد الإلكتروني في المدرس الذكي والبحث الذكي
      ========================================================================== */
   function patchAcademyEngines() {
     const E = window.GEOAcademyEngines;
@@ -45,7 +97,7 @@
 - ابدأ بإجابة مباشرة ومنظمة عن سؤال الطالب باستخدام عناوين ونقاط واضحة.
 - في مسائل GIS والمساحة، وضّح خطوات الحل والمنطق وراءها.
 - عند شرح البرامج، اذكر أسماء الأدوات والقوائم بالإنجليزية.
-- في البرمجة، اشرح الكود ثم اشرحه في كتلة مستقلة.
+- في البرمجة، اشرح الكود ثم اعرضه في كتلة مستقلة.
 - أجب باللغة العربية مع الاحتفاظ بالمصطلحات التقنية الإنجليزية.`;
 
       const response = await fetch(API_URL + "/chat/completions", {
@@ -94,22 +146,18 @@
   }
 
   /* ==========================================================================
-     3. حساب فترة الأسبوع المجاني (7 أيام من إنشاء الحساب) بدقة
+     4. حساب فترة الأسبوع المجاني (7 أيام من إنشاء الحساب) بدقة
      ========================================================================== */
-    function getTrialEndTimestamp() {
+  function getTrialEndTimestamp() {
     try {
       const u = window.firebase?.auth?.().currentUser;
       const email = (u?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
       const storageKey = email ? "gd_trial_end_" + email : "";
-      // تاريخ إطلاق نظام الأسبوع المجاني (أي حساب أقدم من التاريخ ده ياخد أسبوع من أول دخول جديد)
-      const SYSTEM_LAUNCH_MS = new Date("2026-11-13T00:00:00Z").getTime();
 
       if (u && u.metadata && u.metadata.creationTime) {
         const createdMs = new Date(u.metadata.creationTime).getTime();
         if (!isNaN(createdMs) && createdMs > 0) {
-          // لو الحساب قديم قبل التحديث، نبدأ له الـ 7 أيام من تاريخ إطلاق التحديث
-          const baseStart = Math.max(createdMs, SYSTEM_LAUNCH_MS);
-          const endMs = baseStart + WEEK_MS;
+          const endMs = createdMs + WEEK_MS;
           if (storageKey) localStorage.setItem(storageKey, String(endMs));
           return endMs;
         }
@@ -120,20 +168,12 @@
         if (saved > 0) return saved;
       }
 
-      if (sessionStorage.getItem("gd_auth") === "1" && storageKey) {
-        const tempEnd = Date.now() + WEEK_MS;
-        localStorage.setItem(storageKey, String(tempEnd));
-        return tempEnd;
-      }
-
       return 0;
     } catch (_) {
       return 0;
     }
   }
 
-
-  // تجاوز proLeft لتمنح صلاحية PRO كاملة طوال الـ 7 أيام، وتغلقها بعدها
   window.proLeft = function () {
     if (typeof window.isAdm === "function" && window.isAdm()) return 1e12;
     const now = Date.now();
@@ -143,13 +183,11 @@
     return Math.max(paidUntil, trialUntil) - now;
   };
 
-  // تحديث نافذة PRO ومنع ظهورها التلقائي المزعج أثناء سريان الأسبوع المجاني
   const _origShowPro = window.showPro;
   window.showPro = function (mode) {
     const left = window.proLeft();
     const isAdmin = typeof window.isAdm === "function" && window.isAdm();
 
-    // إذا كان الدخول تلقائياً (welcome/periodic) والأسبوع المجاني سارٍ، لا تزعج المستخدم بالنافذة
     if ((mode === "welcome" || mode === "periodic") && (left > 0 || isAdmin)) {
       return;
     }
@@ -186,17 +224,13 @@
   }
 
   /* ==========================================================================
-     4. التشغيل والمراقبة
+     5. التشغيل والمراقبة المستمرة
      ========================================================================== */
   function initTrialPatch() {
     updateSignupText();
     patchAcademyEngines();
+    enforceEngineTier();
     syncProfileTrialNote();
-
-    // إغلاق نافذة انتهاء التجربة إذا كانت قد فتحت بالخطأ قبل اكتمال التحميل
-    if (window.proLeft() > 0) {
-      document.getElementById("proM")?.remove();
-    }
 
     if (typeof window.refreshUI === "function") {
       window.refreshUI();
@@ -207,6 +241,7 @@
         if (u) {
           getTrialEndTimestamp();
           patchAcademyEngines();
+          enforceEngineTier();
           syncProfileTrialNote();
           if (window.proLeft() > 0) document.getElementById("proM")?.remove();
           if (typeof window.refreshUI === "function") window.refreshUI();
@@ -214,7 +249,10 @@
       });
     }
 
-    setInterval(syncProfileTrialNote, 3000);
+    setInterval(() => {
+      enforceEngineTier();
+      syncProfileTrialNote();
+    }, 2000);
   }
 
   if (document.readyState === "loading") {
