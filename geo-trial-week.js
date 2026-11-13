@@ -96,29 +96,30 @@
   /* ==========================================================================
      3. حساب فترة الأسبوع المجاني (7 أيام من إنشاء الحساب) بدقة
      ========================================================================== */
-  function getTrialEndTimestamp() {
+    function getTrialEndTimestamp() {
     try {
       const u = window.firebase?.auth?.().currentUser;
       const email = (u?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
       const storageKey = email ? "gd_trial_end_" + email : "";
+      // تاريخ إطلاق نظام الأسبوع المجاني (أي حساب أقدم من التاريخ ده ياخد أسبوع من أول دخول جديد)
+      const SYSTEM_LAUNCH_MS = new Date("2026-11-13T00:00:00Z").getTime();
 
-      // 1. إذا كان لدينا تاريخ إنشاء الحساب في Firebase Metadata
       if (u && u.metadata && u.metadata.creationTime) {
         const createdMs = new Date(u.metadata.creationTime).getTime();
         if (!isNaN(createdMs) && createdMs > 0) {
-          const endMs = createdMs + WEEK_MS;
+          // لو الحساب قديم قبل التحديث، نبدأ له الـ 7 أيام من تاريخ إطلاق التحديث
+          const baseStart = Math.max(createdMs, SYSTEM_LAUNCH_MS);
+          const endMs = baseStart + WEEK_MS;
           if (storageKey) localStorage.setItem(storageKey, String(endMs));
           return endMs;
         }
       }
 
-      // 2. إذا كان محفوظاً مسبقاً في localStorage لهذا الحساب
       if (storageKey) {
         const saved = parseInt(localStorage.getItem(storageKey) || "0", 10);
         if (saved > 0) return saved;
       }
 
-      // 3. إذا كان المستخدم سجل الدخول للتو ولم تكتمل metadata بعد، نمنحه 7 أيام من الآن مؤقتاً
       if (sessionStorage.getItem("gd_auth") === "1" && storageKey) {
         const tempEnd = Date.now() + WEEK_MS;
         localStorage.setItem(storageKey, String(tempEnd));
@@ -130,6 +131,7 @@
       return 0;
     }
   }
+
 
   // تجاوز proLeft لتمنح صلاحية PRO كاملة طوال الـ 7 أيام، وتغلقها بعدها
   window.proLeft = function () {
