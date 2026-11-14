@@ -1,15 +1,15 @@
 /* ============================================================================
-   GeoDev Specialized Archive & Dr. Gomaa Dawod Bulk Link Classifier v1.0
-   1. إضافة تبويبات التخصصات في الأكاديمية (GIS، المساحة، الاستشعار عن بعد، الكتب، قواعد البيانات).
-   2. تصنيف تلقائي لكل دورة أو رابط حسب تخصصه الدقيق وعرضه داخل قسمه.
-   3. أداة في لوحة الإدارة (#s-admin) لاستيراد ملف د. جمعة داود (PDF/TXT/نص) واستخراج
-      مئات/آلاف الروابط وتصنيفها تلقائياً حسب التخصص ونشرها أو تصديرها كملف JS ثابت.
+   GeoDev Specialized Archive & Dr. Gomaa Dawod Bulk Link Classifier v2.0
+   1. تبويبات التخصصات في الأكاديمية (GIS، المساحة، الاستشعار، قواعد البيانات، الكتب PDF).
+   2. محرك PDF.js لفك ضغط صفحات الـ PDF واستخراج النص + جميع الروابط التفاعلية (Annotations).
+   3. تصنيف تلقائي للمئات/الآلاف من الروابط وتوزيع كل رابط في تخصصه الصحيح.
+   4. نشر فوري في Firestore + إمكانية تحميل ملف geo-dawod-data.js ثابت للرفع على GitHub.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEODawodArchive) return;
-  window.GEODawodArchive = true;
+  if (window.GEODawodArchiveV2) return;
+  window.GEODawodArchiveV2 = true;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
@@ -35,43 +35,38 @@
     if (/مساحة|مساحي|جيوديسيا|geodesy|gps|gnss|ميزانية|ترافرس|توتال|total station|autocad|civil|إحداثيات|إسقاط|خرائط طبوغرافية|رفع مساحي/.test(t)) return "survey";
     if (/gis|arcgis|qgis|نظم المعلومات|خرائط رقمية|جغرافيا|معلومات جغرافية/.test(t)) return "gis";
 
-    return "gis"; // الافتراضي في مكتبة د. جمعة داود
+    return "gis";
   }
 
   /* ==========================================================================
-     2. قاعدة روابط د. جمعة داود الأساسية المصنفة (تُدمج مع أي روابط مستوردة)
+     2. قاعدة روابط د. جمعة داود الأساسية المصنفة
      ========================================================================== */
   const BUILTIN_DAWOD_ITEMS = [
-    // --- تخصص GIS ونظم المعلومات الجغرافية ---
     { title: "دورة ArcGIS العملية — المستوى الأول (عمل الخرائط الرقمية)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "مبتدئ", url: "https://www.youtube.com/playlist?list=PL_C6L2vB2S_5N8y4L1K2xJ1g5b9r0W2qA", dataUrl: "" },
     { title: "دورة ArcGIS العملية — المستوى الثاني (تحليل البيانات والتحليل المكاني)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "متوسط", url: "https://www.youtube.com/playlist?list=PL_C6L2vB2S_6P9z5M2L3yK2h6c0s1X3rB", dataUrl: "" },
     { title: "دورة نظرية شاملة في علم نظم المعلومات الجغرافية (GIS)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "أكاديمي", url: "https://www.youtube.com/results?search_query=%D8%AF%D9%88%D8%B1%D8%A9+%D9%86%D8%B8%D8%B1%D9%8A%D8%A9+%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+GIS", dataUrl: "" },
     { title: "دورة نظم المعلومات الجغرافية مفتوحة المصدر QGIS", author: "أ.د. جمعة محمد داود", spec: "gis", level: "عملي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+QGIS", dataUrl: "" },
     { title: "دورة تطبيقات نظم المعلومات الجغرافية في التخطيط الحضري والبيئي", author: "أ.د. جمعة محمد داود", spec: "gis", level: "متقدم", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%D8%A7%D8%AA+GIS", dataUrl: "" },
 
-    // --- تخصص قواعد البيانات والتحليل المكاني ---
     { title: "دورة ArcGIS العملية — المستوى الثالث (3D ونماذج الارتفاعات و ModelBuilder)", author: "أ.د. جمعة محمد داود", spec: "db", level: "متقدم", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+ModelBuilder+3D", dataUrl: "" },
     { title: "دورة قواعد البيانات ونظم المعلومات الجغرافية (Geodatabase)", author: "أ.د. جمعة محمد داود", spec: "db", level: "متوسط", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+Geodatabase", dataUrl: "" },
     { title: "دورة التحليل الهيدرولوجي وبناء نماذج الارتفاعات الرقمية DEM", author: "أ.د. جمعة محمد داود", spec: "db", level: "تطبيقي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%A7%D9%84%D8%AA%D8%AD%D9%84%D9%8A%D9%84+%D8%A7%D9%84%D9%87%D9%8A%D8%AF%D8%B1%D9%88%D9%84%D9%88%D8%AC%D9%8A", dataUrl: "" },
     { title: "دورة التحليل الإحصائي المكاني (Spatial Statistics) في ArcGIS", author: "أ.د. جمعة محمد داود", spec: "db", level: "متقدم", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%A7%D9%84%D8%AA%D8%AD%D9%84%D9%8A%D9%84+%D8%A7%D9%84%D8%A5%D8%AD%D8%B5%D8%A7%D8%A6%D9%8A+%D8%A7%D9%84%D9%85%D9%83%D8%A7%D9%86%D9%8A", dataUrl: "" },
 
-    // --- تخصص المساحة والجيوديسيا ---
     { title: "دورة الجيوديسيا الهندسية ونظم الإحداثيات والإسقاط", author: "أ.د. جمعة محمد داود", spec: "survey", level: "أكاديمي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%A7%D9%84%D8%AC%D9%8A%D9%88%D8%AF%D9%8A%D8%B3%D9%8A%D8%A7", dataUrl: "" },
     { title: "دورة النظام العالمي لتحديد المواقع GPS / GNSS وتطبيقاته المساحية", author: "أ.د. جمعة محمد داود", spec: "survey", level: "عملي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+GPS", dataUrl: "" },
     { title: "دورة المساحة المستوية والطبوغرافية والميزانية الشبكية", author: "أ.د. جمعة محمد داود", spec: "survey", level: "أساسي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%A7%D9%84%D9%85%D8%B3%D8%A7%D8%AD%D8%A9", dataUrl: "" },
 
-    // --- تخصص الاستشعار عن بعد ---
     { title: "دورة مبادئ وتطبيقات الاستشعار عن بعد ومعالجة المرئيات الفضائية", author: "أ.د. جمعة محمد داود", spec: "rs", level: "شامل", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D8%B4%D8%B9%D8%A7%D8%B1+%D8%B9%D9%86+%D8%A8%D8%B9%D8%AF", dataUrl: "" },
     { title: "دورة تحميل وتحليل مرئيات Sentinel و Landsat المجانية", author: "أ.د. جمعة محمد داود", spec: "rs", level: "تطبيقي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+Sentinel+Landsat", dataUrl: "" },
 
-    // --- تخصص الكتب والمراجع PDF ---
     { title: "مكتبة كتب أ.د. جمعة داود المجانية الكاملة (GIS، GPS، الجيوديسيا، المساحة)", author: "أ.د. جمعة محمد داود", spec: "books", level: "PDF مجاني", url: "https://www.academia.edu/Documents/in/Gomaa_Dawod", dataUrl: "" },
     { title: "كتاب أسس نظم المعلومات الجغرافية — أ.د. جمعة داود (PDF)", author: "أ.د. جمعة محمد داود", spec: "books", level: "كتاب PDF", url: "https://www.google.com/search?q=%D9%83%D8%AA%D8%A7%D8%A8+%D8%A3%D8%B3%D8%B3+%D9%86%D8%B8%D9%85+%D8%A7%D9%84%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA+%D8%A7%D9%84%D8%AC%D8%BA%D8%B1%D8%A7%D9%81%D9%8A%D8%A9+%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+pdf", dataUrl: "" },
     { title: "كتاب التحليل المكاني في إطار نظم المعلومات الجغرافية — أ.د. جمعة داود (PDF)", author: "أ.د. جمعة محمد داود", spec: "books", level: "كتاب PDF", url: "https://www.google.com/search?q=%D9%83%D8%AA%D8%A7%D8%A8+%D8%A7%D9%84%D8%AA%D8%AD%D9%84%D9%8A%D9%84+%D8%A7%D9%84%D9%85%D9%83%D8%A7%D9%86%D9%8A+%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+pdf", dataUrl: "" }
   ];
 
   let activeSpec = "all";
-  let extraLinks = []; // الروابط المستوردة من ملف د. جمعة داود أو Firestore
+  let extraLinks = [];
 
   try {
     const saved = JSON.parse(localStorage.getItem("gd_dawod_extra_links") || "[]");
@@ -81,7 +76,6 @@
   function getAllArchiveItems() {
     const externalStatic = Array.isArray(window.GEODAWOD_STATIC_DATA) ? window.GEODAWOD_STATIC_DATA : [];
     const merged = [...externalStatic, ...extraLinks, ...BUILTIN_DAWOD_ITEMS];
-    // إزالة التكرار بناءً على الرابط
     const seen = new Set();
     return merged.filter(item => {
       if (!item || !item.url) return false;
@@ -113,7 +107,6 @@
         <span id="gdArchiveCountBadge" class="plan-b pro">0 رابط</span>
       </div>
 
-      <!-- أزرار التخصصات -->
       <div id="gdSpecTabs" class="row" style="overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;margin-bottom:8px">
         ${SPECIALTIES.map(s => `
           <button type="button" class="${s.id === activeSpec ? "a" : "k"}" data-spec="${s.id}"
@@ -130,7 +123,6 @@
       <div id="gdArchiveGrid" class="g2" style="max-height:540px;overflow-y:auto;padding-left:4px"></div>
     `;
 
-    // إدراج البطاقة في مكان بارز داخل الأكاديمية
     const firstCard = acadSec.querySelector(".card");
     if (firstCard) {
       firstCard.insertAdjacentElement("afterend", card);
@@ -172,7 +164,7 @@
     const specNames = Object.fromEntries(SPECIALTIES.map(s => [s.id, s.label]));
 
     grid.innerHTML = filtered.length
-      ? filtered.slice(0, 150).map(item => `
+      ? filtered.slice(0, 200).map(item => `
           <div style="background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px">
             <div>
               <div class="row" style="justify-content:space-between;margin-bottom:4px">
@@ -202,8 +194,23 @@
   };
 
   /* ==========================================================================
-     4. أداة لوحة الإدارة (#s-admin): استيراد وتصنيف ملف د. جمعة داود (1200+ رابط)
+     4. محرك PDF.js لقراءة وفك ضغط ملفات الـ PDF واستخراج كل الروابط والعناوين
      ========================================================================== */
+  function loadPdfJsLib() {
+    return new Promise((resolve, reject) => {
+      if (window.pdfjsLib) return resolve(window.pdfjsLib);
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload = () => {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = () => reject(new Error("تعذر تحميل محرك قراءة PDF"));
+      document.head.appendChild(s);
+    });
+  }
+
   function extractLinksFromRawText(rawText) {
     const lines = String(rawText || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     const extracted = [];
@@ -216,7 +223,6 @@
       const urls = line.match(urlRegex);
 
       if (urls && urls.length) {
-        // استخراج النص المصاحب في نفس السطر (إن وجد) أو السطر الذي قبله كعنوان للرابط
         const inlineTitle = line.replace(urlRegex, "").replace(/^[-•*:\d.)\s]+/, "").trim();
         const title = inlineTitle.length >= 4
           ? inlineTitle
@@ -233,10 +239,9 @@
         });
         lastTitleBuffer = "";
       } else {
-        // حفظ السطر كعنوان محتمل للرابط الذي يليه
         const cleanLine = line.replace(/^[-•*:\d.)\s]+/, "").trim();
         if (cleanLine.length >= 4 && !/^صفحة\s*\d+$/i.test(cleanLine)) {
-          lastTitleBuffer = cleanLine.slice(0, 140);
+          lastTitleBuffer = cleanLine.slice(0, 150);
         }
       }
     }
@@ -255,54 +260,92 @@
       return window.toast && window.toast("لم يتم العثور على روابط (http/https) داخل النص", "warn");
     }
 
-    // دمج وحفظ في التخزين المحلي
-    extraLinks = [...items, ...extraLinks];
+    // إزالة التكرار ودمج الجديد
+    const seen = new Set(extraLinks.map(x => x.url));
+    const uniqueNew = items.filter(x => {
+      if (seen.has(x.url)) return false;
+      seen.add(x.url);
+      return true;
+    });
+
+    extraLinks = [...uniqueNew, ...extraLinks];
     localStorage.setItem("gd_dawod_extra_links", JSON.stringify(extraLinks));
     window.GEORenderArchiveList();
 
-    // إحصاء التوزيع حسب التخصص
     const counts = { gis: 0, survey: 0, rs: 0, db: 0, books: 0 };
-    items.forEach(it => { counts[it.spec] = (counts[it.spec] || 0) + 1; });
+    uniqueNew.forEach(it => { counts[it.spec] = (counts[it.spec] || 0) + 1; });
 
     const statusEl = $("admDawodImportStatus");
     if (statusEl) {
+      statusEl.style.color = "var(--tx)";
       statusEl.innerHTML = `
-        <b style="color:var(--gr)">✓ تم استخراج وتصنيف ${items.length} رابط بنجاح!</b><br>
+        <b style="color:var(--gr)">✓ تم استخراج وتصنيف ${uniqueNew.length} رابط جديد بنجاح (الإجمالي المحفوظ: ${extraLinks.length})!</b><br>
         • GIS ونظم المعلومات: <b>${counts.gis}</b> | المساحة: <b>${counts.survey}</b> | الاستشعار: <b>${counts.rs}</b> | قواعد البيانات: <b>${counts.db}</b> | الكتب PDF: <b>${counts.books}</b>
       `;
     }
 
-    // محاولة الحفظ السحابي في Firestore ليظهر لجميع المستخدمين فوراً
     try {
       if (window.firebase && firebase.apps.length) {
         await firebase.firestore().collection("geodev_courses").doc("dawod_master_archive").set({
-          items: extraLinks.slice(0, 1500),
+          items: extraLinks.slice(0, 2000),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        if (window.toast) window.toast(`تم نشر ${items.length} رابط مصنف لجميع المستخدمين!`, "success");
+        if (window.toast) window.toast(`تم نشر ${uniqueNew.length} رابط مصنف لجميع المستخدمين!`, "success");
       }
     } catch (e) {
-      if (window.toast) window.toast("تم الحفظ محلياً (استخدم زر تحميل ملف JS لرفعه على GitHub)", "info");
+      if (window.toast) window.toast("تم الحفظ محلياً (يمكنك تحميل ملف JS لرفعه على GitHub)", "info");
     }
   };
 
   window.GEOHandleDawodFileUpload = async function (file) {
     if (!file) return;
     const statusEl = $("admDawodImportStatus");
-    if (statusEl) statusEl.textContent = `جاري قراءة الملف (${file.name}) واستخراج الروابط...`;
+    if (statusEl) {
+      statusEl.style.color = "var(--am)";
+      statusEl.textContent = `جاري فك ضغط وقراءة ملف (${file.name})...`;
+    }
 
     try {
-      let text = "";
-      if (typeof window.readFileText === "function") {
-        const res = await window.readFileText(file);
-        text = typeof res === "string" ? res : (res?.text || "");
+      const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+      let fullExtractedLines = [];
+
+      if (isPdf) {
+        const pdfjs = await loadPdfJsLib();
+        const arrayBuf = await file.arrayBuffer();
+        const pdfDoc = await pdfjs.getDocument({ data: arrayBuf }).promise;
+        const totalPages = pdfDoc.numPages;
+
+        for (let p = 1; p <= totalPages; p++) {
+          if (statusEl && (p === 1 || p % 5 === 0 || p === totalPages)) {
+            statusEl.textContent = `جاري فك ضغط واستخراج الروابط من صفحة ${p} من ${totalPages}...`;
+          }
+          const page = await pdfDoc.getPage(p);
+
+          // 1. استخراج النص المقروء من الصفحة
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(it => it.str).join(" ").replace(/\s+/g, " ").trim();
+          if (pageText) fullExtractedLines.push(pageText);
+
+          // 2. استخراج الروابط التفاعلية المخفية (Hyperlinks / Annotations) داخل الصفحة
+          const annots = await page.getAnnotations();
+          annots.forEach((an, idx) => {
+            if (an.url && /^https?:\/\//i.test(an.url)) {
+              const titleHint = (an.title || an.contents || pageText.slice(0, 120) || `مرجع د. جمعة داود — صفحة ${p} (#${idx + 1})`).trim();
+              fullExtractedLines.push(`${titleHint}\n${an.url}`);
+            }
+          });
+        }
       } else {
-        text = await file.text();
+        fullExtractedLines.push(await file.text());
       }
-      $("admDawodBulkText").value = text;
+
+      $("admDawodBulkText").value = fullExtractedLines.join("\n");
       await window.GEOParseAndImportDawod();
     } catch (e) {
-      if (statusEl) statusEl.textContent = "تعذر قراءة الملف: " + e.message;
+      if (statusEl) {
+        statusEl.style.color = "#f87171";
+        statusEl.textContent = "تعذر قراءة الملف: " + e.message;
+      }
     }
   };
 
@@ -315,6 +358,9 @@
     if (window.toast) window.toast("تم تحميل ملف geo-dawod-data.js جاهزاً للرفع في GitHub", "success");
   };
 
+  /* ==========================================================================
+     5. حقن لوحة الاستيراد في الإدارة (#s-admin)
+     ========================================================================== */
   function injectAdminBulkImporter() {
     const adminPanel = $("adminPanel");
     if (!adminPanel || $("gdAdminDawodImporter")) return;
@@ -323,7 +369,7 @@
       <div class="card" id="gdAdminDawodImporter" style="border-color:var(--gr)">
         <h3>استيراد وتصنيف أرشيف د. جمعة داود (1200+ رابط حسب التخصص)</h3>
         <p class="mt" style="line-height:1.7">
-          ارفع ملف د. جمعة داود (PDF أو TXT) أو الصق قائمة الروابط هنا، وسيقوم النظام باستخراج كل رابط وتصنيفه تلقائياً في تخصصه (GIS / المساحة / الاستشعار / الكتب) ونشره في الأكاديمية.
+          ارفع ملف د. جمعة داود (PDF أو TXT) وسيفك النظام ضغط الصفحات ويستخرج جميع الروابط المخفية والنصية ويوزعها تلقائياً حسب التخصص (GIS / المساحة / الاستشعار / الكتب).
         </p>
         <div class="row" style="margin:8px 0">
           <button type="button" class="a" onclick="$('admDawodFile').click()">رفع ملف الروابط (PDF / TXT)</button>
@@ -340,7 +386,7 @@
   }
 
   /* ==========================================================================
-     5. مزامنة الأرشيف السحابي من Firestore عند فتح المنصة
+     6. مزامنة الأرشيف السحابي من Firestore عند فتح المنصة
      ========================================================================== */
   async function syncCloudDawodArchive() {
     try {
