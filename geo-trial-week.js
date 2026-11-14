@@ -1,23 +1,23 @@
 /* ============================================================================
-   GeoDev 7-Day Countdown & Zero-Popup Trial System v5.0
-   1. منع ظهور نافذة الاشتراك (#proM) تلقائياً نهائياً (تظهر فقط عند الضغط على أداة PRO).
-   2. حساب دقيق للأيام المتبقية (7 أيام -> 6 أيام -> 5 أيام...) من تاريخ تسجيل الحساب.
-   3. عرض شريط عدّاد هادئ للأيام المتبقية بدل النوافذ المنبثقة المزعجة.
+   GeoDev 7-Day Unified Trial & Zero-Popup System v5.1
+   1. توحيد الحساب بين شارة الهيدر (PRO) وشريط العدّاد (7 أيام -> 6 أيام -> مقفول).
+   2. تقليص الفترة التجريبية الافتراضية (30 يوماً عند التسجيل) إلى 7 أيام تلقائياً.
+   3. منع ظهور نافذة الاشتراك (#proM) تلقائياً نهائياً (تظهر فقط عند الضغط على أداة PRO).
    4. إبقاء المحرك الأساسي GEO 2.9 مجانياً وقصر 3.8 / 5.2 على PRO.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOTrialWeekV5) return;
-  window.GEOTrialWeekV5 = true;
+  if (window.GEOTrialWeekV51) return;
+  window.GEOTrialWeekV51 = true;
 
-  const WEEK_MS = 7 * 86400000; // 7 أيام
+  const WEEK_MS = 7 * 86400000;   // 7 أيام
+  const MONTH_MS = 30 * 86400000; // 30 يوماً (الفترة الافتراضية القديمة للسيرفر)
   const DAY_MS = 86400000;
   const $ = id => document.getElementById(id);
 
   let userClickedProTrigger = false;
 
-  // رصد ضغطة المستخدم الفعلية على أي عنصر PRO أو زر تفعيل الكود
   document.addEventListener("click", e => {
     const target = e.target.closest && e.target.closest("button, .dash-card, .eng-opt, [onclick*='showPro'], [onclick*='openTool']");
     if (target) {
@@ -27,42 +27,54 @@
   }, true);
 
   /* ==========================================================================
-     1. حساب نهاية الأسبوع المجاني (7 أيام) بدقة من بيانات الحساب
+     1. توحيد نهاية الصلاحية (7 أيام للتجربة، أو المدة الممنوحة من الأدمن/الكود)
      ========================================================================== */
-  function getTrialEndTimestamp() {
+  function getAccountCreationMs() {
+    const u = window.firebase?.auth?.().currentUser;
+    if (u && u.metadata && u.metadata.creationTime) {
+      const ms = new Date(u.metadata.creationTime).getTime();
+      if (!isNaN(ms) && ms > 0) return ms;
+    }
+    const m = typeof window.me === "function" ? window.me() : null;
+    if (m && m.createdAt) {
+      const fsMs = m.createdAt.toMillis ? m.createdAt.toMillis() : new Date(m.createdAt).getTime();
+      if (!isNaN(fsMs) && fsMs > 0) return fsMs;
+    }
+    return 0;
+  }
+
+  function getUnifiedEndTimestamp() {
     try {
       const u = window.firebase?.auth?.().currentUser;
       const m = typeof window.me === "function" ? window.me() : null;
       const email = (u?.email || m?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
-      const storageKey = email ? "gd_trial_end_v5_" + email : "";
+      const storageKey = email ? "gd_trial_end_v51_" + email : "";
 
-      // 1. من تاريخ إنشاء الحساب في Firebase Auth
-      if (u && u.metadata && u.metadata.creationTime) {
-        const createdMs = new Date(u.metadata.creationTime).getTime();
-        if (!isNaN(createdMs) && createdMs > 0) {
-          const endMs = createdMs + WEEK_MS;
-          if (storageKey) localStorage.setItem(storageKey, String(endMs));
-          return endMs;
-        }
+      const createdMs = getAccountCreationMs();
+      const rawServerEnd = Number(m?.proUntil || m?.pro_until || m?.trial_end || 0);
+
+      // إذا كان السيرفر قد أعطى 30 يوماً تلقائياً لحظة إنشاء الحساب، نقلصها إلى 7 أيام من الإنشاء
+      if (createdMs > 0 && rawServerEnd > 0) {
+        const isDefaultSignupMonth = Math.abs(rawServerEnd - (createdMs + MONTH_MS)) < 3600000;
+        const effectiveEnd = isDefaultSignupMonth ? (createdMs + WEEK_MS) : rawServerEnd;
+        if (storageKey) localStorage.setItem(storageKey, String(effectiveEnd));
+        return effectiveEnd;
       }
 
-      // 2. من وثيقة المستخدم في Firestore إذا توفرت
-      if (m && m.createdAt) {
-        const fsMs = m.createdAt.toMillis ? m.createdAt.toMillis() : new Date(m.createdAt).getTime();
-        if (!isNaN(fsMs) && fsMs > 0) {
-          const endMs = fsMs + WEEK_MS;
-          if (storageKey) localStorage.setItem(storageKey, String(endMs));
-          return endMs;
-        }
+      if (createdMs > 0) {
+        const endMs = createdMs + WEEK_MS;
+        if (storageKey) localStorage.setItem(storageKey, String(endMs));
+        return endMs;
       }
 
-      // 3. من التخزين المحلي الخاص بهذا الإيميل
+      if (rawServerEnd > 0) return rawServerEnd;
+
       if (storageKey) {
         const saved = parseInt(localStorage.getItem(storageKey) || "0", 10);
         if (saved > 0) return saved;
       }
 
-      return null; // لم تكتمل قراءة بيانات الحساب بعد
+      return null;
     } catch (_) {
       return null;
     }
@@ -70,28 +82,21 @@
 
   window.proLeft = function () {
     if (typeof window.isAdm === "function" && window.isAdm()) return 1e12;
-    const now = Date.now();
-    const m = typeof window.me === "function" ? window.me() : null;
-    const paidUntil = (m && m.proUntil) ? Number(m.proUntil) : 0;
-    const trialUntil = getTrialEndTimestamp();
-
-    // إذا لم تُحمّل بيانات الحساب بعد لا نعتبره منتهياً بشكل خاطئ
-    if (paidUntil === 0 && trialUntil === null) {
+    const endMs = getUnifiedEndTimestamp();
+    if (endMs === null) {
       return sessionStorage.getItem("gd_auth") === "1" ? WEEK_MS : 0;
     }
-
-    return Math.max(paidUntil, trialUntil || 0) - now;
+    return endMs - Date.now();
   };
 
   /* ==========================================================================
-     2. منع ظهور نافذة الاشتراك (#proM) تلقائياً — تظهر فقط عند ضغط المستخدم
+     2. منع ظهور نافذة الاشتراك (#proM) تلقائياً
      ========================================================================== */
   const _origShowPro = window.showPro;
   window.showPro = function (mode) {
     const left = window.proLeft();
     const isAdmin = typeof window.isAdm === "function" && window.isAdm();
 
-    // منع أي استدعاء تلقائي (welcome / periodic / عند فتح الصفحة بدون ضغطة مستخدم)
     if (!userClickedProTrigger || mode === "welcome" || mode === "periodic") {
       return;
     }
@@ -100,9 +105,7 @@
       _origShowPro(mode);
       const trialBox = document.querySelector("#proM .trial");
       if (trialBox) {
-        const m = typeof window.me === "function" ? window.me() : null;
-        const paid = m && m.proUntil > Date.now();
-        if (!paid && left > 0 && !isAdmin) {
+        if (left > 0 && !isAdmin) {
           const daysLeft = Math.max(1, Math.ceil(left / DAY_MS));
           trialBox.textContent = `معك ${daysLeft} ${daysLeft === 1 ? "يوم" : "أيام"} متبقية في تجربة PRO المجانية`;
         } else if (left <= 0 && !isAdmin) {
@@ -113,7 +116,7 @@
   };
 
   /* ==========================================================================
-     3. شريط العدّاد التنازلي الهادئ للأيام المتبقية (7 أيام -> 6 -> 5 -> مقفول)
+     3. شريط العدّاد التنازلي المتطابق مع شارة الهيدر
      ========================================================================== */
   function updateTrialCountdownBanner() {
     const isAdmin = typeof window.isAdm === "function" && window.isAdm();
@@ -123,16 +126,10 @@
       return;
     }
 
-    const m = typeof window.me === "function" ? window.me() : null;
-    if (m && m.proUntil > Date.now()) {
-      $("gdTrialStrip")?.remove();
-      return;
-    }
+    const endMs = getUnifiedEndTimestamp();
+    if (endMs === null) return;
 
-    const trialEnd = getTrialEndTimestamp();
-    if (trialEnd === null) return;
-
-    const leftMs = trialEnd - Date.now();
+    const leftMs = endMs - Date.now();
     const daysLeft = Math.ceil(leftMs / DAY_MS);
 
     let strip = $("gdTrialStrip");
@@ -274,24 +271,24 @@
   /* ==========================================================================
      6. التشغيل والمراقبة
      ========================================================================== */
-  function initTrialWeekV5() {
+  function initTrialWeekV51() {
     const regP = document.querySelector("#registerForm .au-p");
     if (regP) {
       regP.innerHTML = "أنشئ حسابك واحصل على <b>7 أيام PRO</b> مجانًا وبعدها يُقفل الـ PRO تلقائياً";
     }
 
-    // إغلاق أي نافذة PRO فُتحت تلقائياً قبل تحميل هذا الملف
     document.getElementById("proM")?.remove();
 
     enforceEngineTier();
     updateTrialCountdownBanner();
     patchAdminAccountsUI();
+    if (typeof window.refreshUI === "function") window.refreshUI();
 
     if (window.firebase && firebase.apps.length) {
       firebase.auth().onAuthStateChanged(u => {
         if (u) {
           document.getElementById("proM")?.remove();
-          getTrialEndTimestamp();
+          getUnifiedEndTimestamp();
           enforceEngineTier();
           updateTrialCountdownBanner();
           patchAdminAccountsUI();
@@ -304,12 +301,13 @@
       enforceEngineTier();
       updateTrialCountdownBanner();
       patchAdminAccountsUI();
+      if (typeof window.refreshUI === "function") window.refreshUI();
     }, 2000);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initTrialWeekV5);
+    document.addEventListener("DOMContentLoaded", initTrialWeekV51);
   } else {
-    initTrialWeekV5();
+    initTrialWeekV51();
   }
 })();
