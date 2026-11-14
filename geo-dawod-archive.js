@@ -1,14 +1,14 @@
 /* ============================================================================
-   GeoDev Specialized Archive (GIS + AutoCAD + Civil 3D Only) v4.0
-   1. استخراج وإضافة محتوى GIS و AutoCAD و Civil 3D فقط وتجاهل أي روابط أخرى.
-   2. تخزين غير محدود عبر IndexedDB + مزامنة سحابية في Firestore.
-   3. محرك PDF.js لفك ضغط صفحات الـ PDF وفك تشفير العناوين العربية من الروابط.
+   GeoDev Specialized Archive (GIS + AutoCAD + Civil 3D Only) v4.1
+   1. بحث ذكي مرن يتجاهل المسافات (Arc gis pro == ArcGIS Pro) ويوحد الحروف العربية.
+   2. استخراج وإضافة محتوى GIS و AutoCAD و Civil 3D فقط وتجاهل أي روابط أخرى.
+   3. تخزين غير محدود عبر IndexedDB + مزامنة سحابية في Firestore.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEODawodArchiveV4) return;
-  window.GEODawodArchiveV4 = true;
+  if (window.GEODawodArchiveV41) return;
+  window.GEODawodArchiveV41 = true;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
@@ -61,8 +61,23 @@
   }
 
   /* ==========================================================================
-     2. الفلتر والمصنف الصارم: يقبل (GIS / AutoCAD / Civil 3D) فقط
+     2. تطبيع النصوص للبحث الذكي والفلترة الصارمة (GIS / AutoCAD / Civil 3D)
      ========================================================================== */
+  function normalizeForSearch(str) {
+    return String(str || "")
+      .toLowerCase()
+      .replace(/[\u064B-\u065F]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/arc\s*gis/g, "arcgis")
+      .replace(/auto\s*cad/g, "autocad")
+      .replace(/civil\s*3d/g, "civil3d")
+      .replace(/model\s*builder/g, "modelbuilder")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   const SPECIALTIES = [
     { id: "all", label: "الكل (GIS & CAD & Civil 3D)" },
     { id: "gis", label: "GIS ونظم المعلومات الجغرافية" },
@@ -76,7 +91,7 @@
     const t = String(text || "").toLowerCase();
     if (CAD_CIVIL_REGEX.test(t)) return "cad";
     if (GIS_REGEX.test(t)) return "gis";
-    return null; // خارج نطاق GIS و AutoCAD و Civil 3D -> يتم استبعاده
+    return null;
   }
 
   function extractReadableTitleFromUrl(url) {
@@ -93,17 +108,19 @@
   }
 
   /* ==========================================================================
-     3. الروابط الأساسية المعتمدة في (GIS + AutoCAD + Civil 3D)
+     3. الروابط الأساسية المعتمدة في (ArcGIS Pro + ArcMap + QGIS + AutoCAD + Civil 3D)
      ========================================================================== */
   const BUILTIN_ITEMS = [
+    { title: "دورة ArcGIS Pro الشاملة من الصفر للاحتراف (إعداد الخرائط والتحليل المكاني)", author: "أ.د. جمعة داود / م. حاتم طارق", spec: "gis", level: "ArcGIS Pro", url: "https://www.youtube.com/results?search_query=%D8%AF%D9%88%D8%B1%D8%A9+ArcGIS+Pro+%D8%B4%D8%A7%D9%85%D9%84%D8%A9+%D8%B9%D8%B1%D8%A8%D9%8A" },
+    { title: "دورة ArcGIS Pro المتقدمة — التحليل الثلاثي الأبعاد والنمذجة (3D & Spatial Analyst)", author: "Esri Academy & GeoDev", spec: "gis", level: "ArcGIS Pro", url: "https://www.esri.com/training/catalog/search/" },
     { title: "دورة ArcGIS العملية — المستوى الأول (عمل الخرائط الرقمية)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "مبتدئ", url: "https://www.youtube.com/playlist?list=PL_C6L2vB2S_5N8y4L1K2xJ1g5b9r0W2qA" },
     { title: "دورة ArcGIS العملية — المستوى الثاني (تحليل البيانات والتحليل المكاني)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "متوسط", url: "https://www.youtube.com/playlist?list=PL_C6L2vB2S_6P9z5M2L3yK2h6c0s1X3rB" },
     { title: "دورة ArcGIS العملية — المستوى الثالث (3D ونماذج الارتفاعات و ModelBuilder)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "متقدم", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+ModelBuilder+3D" },
     { title: "دورة قواعد البيانات ونظم المعلومات الجغرافية (Geodatabase)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "متوسط", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+Geodatabase" },
     { title: "دورة نظرية شاملة في علم نظم المعلومات الجغرافية (GIS)", author: "أ.د. جمعة محمد داود", spec: "gis", level: "أكاديمي", url: "https://www.youtube.com/results?search_query=%D8%AF%D9%88%D8%B1%D8%A9+%D9%86%D8%B8%D8%B1%D9%8A%D8%A9+%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+GIS" },
-    { title: "دورة نظم المعلومات الجغرافية مفتوحة المصدر QGIS", author: "أ.د. جمعة محمد داود", spec: "gis", level: "عملي", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+QGIS" },
-    { title: "كورس Civil 3D الكامل للمساحة وتصميم الطرق والكميات", author: "م. هشام فوزي", spec: "cad", level: "تطبيقي", url: "https://www.youtube.com/results?search_query=%D9%83%D9%88%D8%B1%D8%B3+Civil+3D+%D9%87%D8%B4%D8%A7%D9%85+%D9%81%D9%88%D8%B2%D9%8A" },
-    { title: "كورس AutoCAD الاحترافي للمهندسين والمساحين", author: "م. هشام فوزي", spec: "cad", level: "أساسي", url: "https://www.youtube.com/results?search_query=%D9%83%D9%88%D8%B1%D8%B3+AutoCAD+%D9%87%D8%B4%D8%A7%D9%85+%D9%81%D9%88%D8%B2%D9%8A" }
+    { title: "دورة نظم المعلومات الجغرافية مفتوحة المصدر QGIS", author: "أ.د. جمعة محمد داود", spec: "gis", level: "QGIS", url: "https://www.youtube.com/results?search_query=%D8%AC%D9%85%D8%B9%D8%A9+%D8%AF%D8%A7%D9%88%D8%AF+QGIS" },
+    { title: "كورس Civil 3D الكامل للمساحة وتصميم الطرق وحساب الكميات", author: "م. هشام فوزي", spec: "cad", level: "Civil 3D", url: "https://www.youtube.com/results?search_query=%D9%83%D9%88%D8%B1%D8%B3+Civil+3D+%D9%87%D8%B4%D8%A7%D9%85+%D9%81%D9%88%D8%B2%D9%8A" },
+    { title: "كورس AutoCAD الاحترافي للمهندسين والمساحين والمكتب الفني", author: "م. هشام فوزي", spec: "cad", level: "AutoCAD", url: "https://www.youtube.com/results?search_query=%D9%83%D9%88%D8%B1%D8%B3+AutoCAD+%D9%87%D8%B4%D8%A7%D9%85+%D9%81%D9%88%D8%B2%D9%8A" }
   ];
 
   let activeSpec = "all";
@@ -138,7 +155,6 @@
       const key = item.url.trim();
       if (seen.has(key)) return false;
 
-      // التأكد من أن العنصر ينتمي لـ GIS أو AutoCAD أو Civil 3D فقط
       const detected = item.spec === "cad" || item.spec === "gis"
         ? item.spec
         : detectAllowedSpecialty(item.title + " " + item.url);
@@ -180,7 +196,7 @@
         `).join("")}
       </div>
 
-      <input id="gdArchiveSearchInput" type="search" placeholder="ابحث داخل GIS أو AutoCAD أو Civil 3D (مثال: ArcGIS، QGIS، Civil 3D، طرق، كميات...)"
+      <input id="gdArchiveSearchInput" type="search" placeholder="ابحث داخل GIS أو AutoCAD أو Civil 3D (مثال: ArcGIS Pro، QGIS، Civil 3D...)"
         oninput="window.GEORenderArchiveList()" style="margin-bottom:10px">
 
       <div id="gdArchiveGrid" class="g2" style="max-height:540px;overflow-y:auto;padding-left:4px"></div>
@@ -209,15 +225,17 @@
     const badge = $("gdArchiveCountBadge");
     if (!grid) return;
 
-    const q = ($("gdArchiveSearchInput")?.value || "").trim().toLowerCase();
+    const normQ = normalizeForSearch($("gdArchiveSearchInput")?.value || "");
+    const qTokens = normQ ? normQ.split(" ").filter(Boolean) : [];
     const all = getAllArchiveItems();
 
     const filtered = all.filter(item => {
       const matchSpec = activeSpec === "all" || item.spec === activeSpec;
-      const matchQuery = !q ||
-        (item.title || "").toLowerCase().includes(q) ||
-        (item.author || "").toLowerCase().includes(q);
-      return matchSpec && matchQuery;
+      if (!matchSpec) return false;
+      if (!qTokens.length) return true;
+
+      const haystack = normalizeForSearch(`${item.title || ""} ${item.author || ""} ${item.level || ""}`);
+      return qTokens.every(tok => haystack.includes(tok));
     });
 
     if (badge) badge.textContent = `${filtered.length} رابط`;
@@ -288,7 +306,6 @@
                 ? lastTitleBuffer
                 : (decodedFromUrl || ""));
 
-          // فحص: هل الرابط أو عنوانه يخص GIS أو AutoCAD أو Civil 3D؟
           const spec = detectAllowedSpecialty(title + " " + decodedFromUrl + " " + cleanUrl);
           if (!spec) {
             skippedCount++;
@@ -327,24 +344,25 @@
     }
 
     const seen = new Set(extraLinks.map(x => x.url));
-    const uniqueNew = extracted.filter(x => {
+    const uniqueNew = items => items.filter(x => {
       if (seen.has(x.url)) return false;
       seen.add(x.url);
       return true;
     });
+    const added = uniqueNew(extracted);
 
-    extraLinks = [...uniqueNew, ...extraLinks];
+    extraLinks = [...added, ...extraLinks];
     await idbSaveLinks(extraLinks);
     window.GEORenderArchiveList();
 
-    const gisCount = uniqueNew.filter(x => x.spec === "gis").length;
-    const cadCount = uniqueNew.filter(x => x.spec === "cad").length;
+    const gisCount = added.filter(x => x.spec === "gis").length;
+    const cadCount = added.filter(x => x.spec === "cad").length;
 
     const statusEl = $("admDawodImportStatus");
     if (statusEl) {
       statusEl.style.color = "var(--tx)";
       statusEl.innerHTML = `
-        <b style="color:var(--gr)">✓ تم استخراج وإضافة ${uniqueNew.length} رابط متخصص بنجاح!</b><br>
+        <b style="color:var(--gr)">✓ تم استخراج وإضافة ${added.length} رابط متخصص بنجاح!</b><br>
         • قسم <b>GIS ونظم المعلومات</b>: <b>${gisCount}</b> رابط | قسم <b>AutoCAD & Civil 3D</b>: <b>${cadCount}</b> رابط<br>
         <span class="mt">(تم استبعاد ${skippedCount} رابط من التخصصات الأخرى تلقائياً)</span>
       `;
@@ -357,7 +375,7 @@
           packed,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        if (window.toast) window.toast(`تم نشر ${uniqueNew.length} رابط (GIS / AutoCAD / Civil 3D) للجميع!`, "success");
+        if (window.toast) window.toast(`تم نشر ${added.length} رابط (GIS / AutoCAD / Civil 3D) للجميع!`, "success");
       }
     } catch (_) {
       if (window.toast) window.toast("تم الحفظ في ذاكرة المنصة بنجاح", "success");
