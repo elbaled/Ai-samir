@@ -1,18 +1,18 @@
 /* ============================================================================
-   GeoDev 7-Day Unified Trial & Zero-Popup System v5.1
-   1. توحيد الحساب بين شارة الهيدر (PRO) وشريط العدّاد (7 أيام -> 6 أيام -> مقفول).
-   2. تقليص الفترة التجريبية الافتراضية (30 يوماً عند التسجيل) إلى 7 أيام تلقائياً.
-   3. منع ظهور نافذة الاشتراك (#proM) تلقائياً نهائياً (تظهر فقط عند الضغط على أداة PRO).
+   GeoDev 7-Day Unified Trial & Zero-Popup System v5.2
+   1. إخفاء شريط التجربة المجانية (#gdTrialStrip) وعداد الأيام (364d) تماماً عن حساب الإدارة.
+   2. توحيد الحساب بين شارة الهيدر (PRO) وشريط العدّاد للمستخدمين (7 أيام -> 6 أيام -> مقفول).
+   3. منع ظهور نافذة الاشتراك (#proM) تلقائياً نهائياً.
    4. إبقاء المحرك الأساسي GEO 2.9 مجانياً وقصر 3.8 / 5.2 على PRO.
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOTrialWeekV51) return;
-  window.GEOTrialWeekV51 = true;
+  if (window.GEOTrialWeekV52) return;
+  window.GEOTrialWeekV52 = true;
 
   const WEEK_MS = 7 * 86400000;   // 7 أيام
-  const MONTH_MS = 30 * 86400000; // 30 يوماً (الفترة الافتراضية القديمة للسيرفر)
+  const MONTH_MS = 30 * 86400000; // 30 يوماً
   const DAY_MS = 86400000;
   const $ = id => document.getElementById(id);
 
@@ -26,8 +26,33 @@
     }
   }, true);
 
+  // التحقق الفوري من حساب الإدارة سواء من البريد الإلكتروني أو الدور
+  function isAdminAccount() {
+    const adminMail = (typeof window.ADMIN_EMAIL === "string" ? window.ADMIN_EMAIL : "eng.ahmedsamir.gis@gmail.com").toLowerCase();
+    const u = window.firebase?.auth?.().currentUser;
+    const currentMail = (u?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
+    return (typeof window.isAdm === "function" && window.isAdm()) ||
+           sessionStorage.getItem("gd_role") === "admin" ||
+           (currentMail && currentMail === adminMail);
+  }
+
+  // إزالة أي عداد أو شريط تجربة من واجهة الأدمن فوراً
+  function cleanAdminCountdownUI() {
+    if (!isAdminAccount()) return;
+    $("gdTrialStrip")?.remove();
+    ["gdCd", "dCd", "pfCd"].forEach(id => {
+      const el = $(id);
+      if (el) {
+        el.textContent = "";
+        el.style.display = "none";
+      }
+    });
+    const pe = $("pfEnd");
+    if (pe) pe.textContent = "حساب الإدارة — صلاحية دائمة بدون انتهاء";
+  }
+
   /* ==========================================================================
-     1. توحيد نهاية الصلاحية (7 أيام للتجربة، أو المدة الممنوحة من الأدمن/الكود)
+     1. توحيد نهاية الصلاحية للمستخدمين (7 أيام للتجربة)
      ========================================================================== */
   function getAccountCreationMs() {
     const u = window.firebase?.auth?.().currentUser;
@@ -48,12 +73,11 @@
       const u = window.firebase?.auth?.().currentUser;
       const m = typeof window.me === "function" ? window.me() : null;
       const email = (u?.email || m?.email || sessionStorage.getItem("gd_email") || "").toLowerCase();
-      const storageKey = email ? "gd_trial_end_v51_" + email : "";
+      const storageKey = email ? "gd_trial_end_v52_" + email : "";
 
       const createdMs = getAccountCreationMs();
       const rawServerEnd = Number(m?.proUntil || m?.pro_until || m?.trial_end || 0);
 
-      // إذا كان السيرفر قد أعطى 30 يوماً تلقائياً لحظة إنشاء الحساب، نقلصها إلى 7 أيام من الإنشاء
       if (createdMs > 0 && rawServerEnd > 0) {
         const isDefaultSignupMonth = Math.abs(rawServerEnd - (createdMs + MONTH_MS)) < 3600000;
         const effectiveEnd = isDefaultSignupMonth ? (createdMs + WEEK_MS) : rawServerEnd;
@@ -81,7 +105,7 @@
   }
 
   window.proLeft = function () {
-    if (typeof window.isAdm === "function" && window.isAdm()) return 1e12;
+    if (isAdminAccount()) return 1e12;
     const endMs = getUnifiedEndTimestamp();
     if (endMs === null) {
       return sessionStorage.getItem("gd_auth") === "1" ? WEEK_MS : 0;
@@ -95,7 +119,7 @@
   const _origShowPro = window.showPro;
   window.showPro = function (mode) {
     const left = window.proLeft();
-    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+    const isAdmin = isAdminAccount();
 
     if (!userClickedProTrigger || mode === "welcome" || mode === "periodic") {
       return;
@@ -116,13 +140,13 @@
   };
 
   /* ==========================================================================
-     3. شريط العدّاد التنازلي المتطابق مع شارة الهيدر
+     3. شريط العدّاد التنازلي للمستخدمين فقط (يُخفى تماماً عن الإدارة)
      ========================================================================== */
   function updateTrialCountdownBanner() {
-    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
     const u = window.firebase?.auth?.().currentUser;
-    if (!u || isAdmin) {
+    if (!u || isAdminAccount()) {
       $("gdTrialStrip")?.remove();
+      cleanAdminCountdownUI();
       return;
     }
 
@@ -174,7 +198,7 @@
      4. فرض المحرك الأساسي GEO 2.9 لغير المشتركين في PRO
      ========================================================================== */
   function enforceEngineTier() {
-    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+    const isAdmin = isAdminAccount();
     const hasPro = isAdmin || window.proLeft() > 0;
 
     try {
@@ -205,7 +229,7 @@
 
   const _origSetEng = window.setEng;
   window.setEng = function (e) {
-    const isAdmin = typeof window.isAdm === "function" && window.isAdm();
+    const isAdmin = isAdminAccount();
     const hasPro = isAdmin || window.proLeft() > 0;
     if ((e === "g38" || e === "g52") && !hasPro) {
       userClickedProTrigger = true;
@@ -271,14 +295,14 @@
   /* ==========================================================================
      6. التشغيل والمراقبة
      ========================================================================== */
-  function initTrialWeekV51() {
+  function initTrialWeekV52() {
     const regP = document.querySelector("#registerForm .au-p");
     if (regP) {
       regP.innerHTML = "أنشئ حسابك واحصل على <b>7 أيام PRO</b> مجانًا وبعدها يُقفل الـ PRO تلقائياً";
     }
 
     document.getElementById("proM")?.remove();
-
+    cleanAdminCountdownUI();
     enforceEngineTier();
     updateTrialCountdownBanner();
     patchAdminAccountsUI();
@@ -288,6 +312,7 @@
       firebase.auth().onAuthStateChanged(u => {
         if (u) {
           document.getElementById("proM")?.remove();
+          cleanAdminCountdownUI();
           getUnifiedEndTimestamp();
           enforceEngineTier();
           updateTrialCountdownBanner();
@@ -297,17 +322,18 @@
       });
     }
 
+    // إخفاء العداد فوراً كل ثانية إذا كان الحساب للإدارة
     setInterval(() => {
+      cleanAdminCountdownUI();
       enforceEngineTier();
       updateTrialCountdownBanner();
       patchAdminAccountsUI();
-      if (typeof window.refreshUI === "function") window.refreshUI();
-    }, 2000);
+    }, 1000);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initTrialWeekV51);
+    document.addEventListener("DOMContentLoaded", initTrialWeekV52);
   } else {
-    initTrialWeekV51();
+    initTrialWeekV52();
   }
 })();
