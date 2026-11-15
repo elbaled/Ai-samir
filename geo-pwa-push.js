@@ -1,5 +1,5 @@
 /* ============================================================================
-   GeoDev PWA App, OneSignal Push Broadcast & Background AI Reply Alert v4.0
+   GeoDev PWA App, OneSignal Push Broadcast & Background AI Reply Alert v4.1
    ============================================================================ */
 
 (function () {
@@ -7,8 +7,8 @@
   if (window.GEOPWAPushV4) return;
   window.GEOPWAPushV4 = true;
 
-  // ⚠️ ضع بيانات تطبيقك من لوحة تحكم OneSignal (Settings > Keys & IDs) هنا:
   const ONESIGNAL_APP_ID = "105d6a7a-9b6d-4033-ba38-f26abb556cc8";
+  // ملاحظة: ضع مفتاح REST API Key الجديد هنا (بعد إلغاء القديم من OneSignal للأمان)
   const ONESIGNAL_REST_KEY = "os_v2_app_cbowu6u3nvadhory6jvlwvlmzazbt76te3cusf5qa3oboq6v5d5gabz3wl2gchnyyaxuqfskk4tt32yykl5racfwl35xt6faymfhyfi";
 
   const $ = id => document.getElementById(id);
@@ -128,14 +128,14 @@
         console.warn("Median LocalNotif Error:", e);
       }
 
-      // 2. إرسال إشعار Push حقيقي للجهاز نفسه عبر OneSignal لضمان وصوله حتى لو جمد النظام الخلفية
+      // 2. إرسال إشعار Push عبر رابط OneSignal API المحدث (v2)
       const myPlayerId = localStorage.getItem("geodev_onesignal_id");
-      if (myPlayerId && ONESIGNAL_APP_ID !== "ضع_هنا_ONESIGNAL_APP_ID" && ONESIGNAL_REST_KEY !== "ضع_هنا_REST_API_KEY") {
-        fetch("https://onesignal.com/api/v1/notifications", {
+      if (myPlayerId && ONESIGNAL_REST_KEY && !ONESIGNAL_REST_KEY.includes("ضع_هنا")) {
+        fetch("https://api.onesignal.com/notifications", {
           method: "POST",
           headers: {
             "Content-Type": "application/json; charset=utf-8",
-            "Authorization": "Basic " + ONESIGNAL_REST_KEY
+            "Authorization": "Key " + ONESIGNAL_REST_KEY
           },
           body: JSON.stringify({
             app_id: ONESIGNAL_APP_ID,
@@ -165,7 +165,6 @@
     let wasGenerating = false;
     let lastQuestion = "";
 
-    // حفظ آخر سؤال أرسله المستخدم
     document.addEventListener("click", e => {
       if (e.target.closest("button")?.textContent?.includes("نفّذ") || e.target.closest("button")?.textContent?.includes("إرسال")) {
         const q = $("ui")?.value.trim() || $("gisInput")?.value.trim();
@@ -180,7 +179,6 @@
       }
     });
 
-    // مراقبة حالة التوليد كل ثانية (تعمل حتى لو تم استبدال دوال AI من ملفات أخرى)
     setInterval(() => {
       const stText = ($("st")?.textContent || "").trim();
       const isGenerating = stText === "..." || stText.includes("يكتب") || stText.includes("استكمال") ||
@@ -190,7 +188,6 @@
         wasGenerating = true;
       } else if (wasGenerating && !isGenerating) {
         wasGenerating = false;
-        // إذا اكتملت الإجابة والمستخدم خارج التطبيق أو في تبويب آخر
         if (document.hidden || document.visibilityState === "hidden") {
           const msg = lastQuestion
             ? `اكتملت الإجابة على سؤالك: "${lastQuestion}..."`
@@ -202,7 +199,7 @@
   }
 
   /* ==========================================================================
-     6. إرسال إشعارات الإدارة (Firestore + OneSignal Push لجميع المستخدمين)
+     6. إرسال إشعارات الإدارة (Firestore + OneSignal API المحدث)
      ========================================================================== */
   window.GEOSendBroadcastNotif = async function () {
     const title = $("admNotifTitle")?.value.trim();
@@ -212,7 +209,7 @@
     }
 
     try {
-      // 1. حفظ الإشعار في Firestore ليظهر داخل التطبيق
+      // 1. حفظ الإشعار في Firestore ليظهر في السجل وداخل التطبيق
       if (window.firebase && firebase.apps.length) {
         await firebase.firestore().collection("geodev_notifications").add({
           title,
@@ -221,27 +218,29 @@
         });
       }
 
-      // 2. إرسال الإشعار عبر OneSignal Push لجميع هواتف المستخدمين (حتى لو التطبيق مغلق)
-      if (ONESIGNAL_APP_ID !== "ضع_هنا_ONESIGNAL_APP_ID" && ONESIGNAL_REST_KEY !== "ضع_هنا_REST_API_KEY") {
-        const res = await fetch("https://onesignal.com/api/v1/notifications", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": "Basic " + ONESIGNAL_REST_KEY
-          },
-          body: JSON.stringify({
-            app_id: ONESIGNAL_APP_ID,
-            included_segments: ["Subscribed Users", "Total Subscriptions"],
-            headings: { en: title, ar: title },
-            contents: { en: body, ar: body }
-          })
-        });
-        const data = await res.json();
-        if (data.errors) {
-          console.warn("OneSignal Broadcast Warning:", data.errors);
+      // 2. إرسال الإشعار عبر OneSignal API المحدث (v2)
+      if (ONESIGNAL_REST_KEY && !ONESIGNAL_REST_KEY.includes("ضع_هنا")) {
+        try {
+          const res = await fetch("https://api.onesignal.com/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Authorization": "Key " + ONESIGNAL_REST_KEY
+            },
+            body: JSON.stringify({
+              app_id: ONESIGNAL_APP_ID,
+              included_segments: ["Total Subscriptions"],
+              headings: { en: title, ar: title },
+              contents: { en: body, ar: body }
+            })
+          });
+          const data = await res.json();
+          if (data.errors) console.warn("OneSignal Errors:", data.errors);
+        } catch (fetchErr) {
+          console.warn("OneSignal Fetch Blocked by CORS:", fetchErr);
+          window.toast && window.toast("تم الحفظ في قاعدة البيانات، لكن المتصفح حظر الاتصال المباشر بـ OneSignal", "warn");
+          return;
         }
-      } else {
-        window.toast && window.toast("تم الحفظ في قاعدة البيانات، لكن يرجى وضع مفاتيح OneSignal في الكود ليصل للهواتف المغلقة", "warn");
       }
 
       $("admNotifTitle").value = "";
@@ -281,7 +280,6 @@
           if (typeof window.toast === "function") {
             window.toast(`${latest.title}: ${latest.body}`, "info");
           }
-          // إظهار إشعار في شريط النظام إذا كان المستخدم خارج التطبيق
           if (document.hidden || document.visibilityState === "hidden") {
             sendSystemNotification(latest.title, latest.body);
           }
