@@ -564,17 +564,17 @@
   }
 })();
 /* ============================================================================
-   رسالة السحب العائمة (مسابقة الفوز بحسابين PRO مجاناً)
+   بانر التواصل عبر واتساب للحصول على عرض اشتراك PRO
    ============================================================================ */
 (function () {
   "use strict";
   if (window.GEOGiveawayBannerInit) return;
   window.GEOGiveawayBannerInit = true;
 
-  const GIVEAWAY_URL = "‏مراسلة Eng-Ahmed Samir عبر واتساب. https://wa.me/201015912371";
+  const WHATSAPP_PRO_URL = "https://wa.me/201015912371";
 
   function injectGiveawayBanner() {
-    if (sessionStorage.getItem("gd_giveaway_closed") === "1") return;
+    if (sessionStorage.getItem("gd_pro_offer_closed") === "1") return;
     if (document.getElementById("gdGiveawayFloatingCard")) return;
 
     const style = document.createElement("style");
@@ -605,8 +605,8 @@
         to { opacity: 1; transform: translateY(0); }
       }
       .gd-gw-badge {
-        background: #e09f24;
-        color: #11151c;
+        background: #25D366;
+        color: #ffffff;
         font-size: 18px;
         width: 38px;
         height: 38px;
@@ -634,7 +634,7 @@
         line-height: 1.4;
       }
       .gd-gw-btn {
-        background: #e09f24;
+        background: #25D366;
         color: #11151c;
         text-decoration: none;
         padding: 7px 12px;
@@ -658,12 +658,12 @@
 
     const html = `
       <div id="gdGiveawayFloatingCard">
-        <div class="gd-gw-badge">🎁</div>
+        <div class="gd-gw-badge">💬</div>
         <div class="gd-gw-info">
-          <h4>اشتركت في عرض البرو  ؟ لسة كلمنا بسرعة و شوف عرض هديتك في البرو!</h4>
-          <p>كلمنا بسرعة والحق عرض ضعف الاشتراك او مفتاحين لحسابين مخلتلفين .</p>
+          <h4>عرض خاص على باقة PRO!</h4>
+          <p>تواصل معنا الآن عبر واتساب للاستفادة من عرض اشتراك البرو وليك ضعفين  المدة .</p>
         </div>
-        <a href="${GIVEAWAY_URL}" target="_blank" rel="noopener" class="gd-gw-btn">كلمنا الآن</a>
+        <a href="${WHATSAPP_PRO_URL}" target="_blank" rel="noopener" class="gd-gw-btn">تواصل معنا</a>
         <button type="button" class="gd-gw-close" id="gdCloseGiveawayBtn" title="إغلاق">×</button>
       </div>
     `;
@@ -671,7 +671,7 @@
     document.body.insertAdjacentHTML("beforeend", html);
 
     document.getElementById("gdCloseGiveawayBtn").onclick = () => {
-      sessionStorage.setItem("gd_giveaway_closed", "1");
+      sessionStorage.setItem("gd_pro_offer_closed", "1");
       document.getElementById("gdGiveawayFloatingCard").remove();
     };
   }
