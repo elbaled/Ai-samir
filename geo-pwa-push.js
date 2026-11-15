@@ -985,3 +985,174 @@
     initPrepGuideObserver();
   }
 })();
+/* ============================================================================
+   تحميل ملف الكود جاهزاً بضغطة زر (.lsp / .py / .js) + تحديث خطوات الرفع المباشر
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEOLabDirectFileDownloadInit) return;
+  window.GEOLabDirectFileDownloadInit = true;
+
+  function detectFileMeta(codeText) {
+    const t = (codeText || "").toLowerCase();
+
+    if (t.includes("(defun ") || t.includes("autolisp") || t.includes("vl-load-com")) {
+      const cmdMatch = codeText.match(/\(defun\s+c:([a-zA-Z0-9_-]+)/i);
+      const baseName = cmdMatch ? cmdMatch[1] : "GeoDev_Lisp";
+      return {
+        ext: "lsp",
+        fileName: `${baseName}.lsp`,
+        program: "AutoCAD / Civil 3D",
+        steps: [
+          `اضغط على زر <b>«تحميل ${baseName}.lsp جاهز»</b> في أعلى الصندوق الأسود أعلاه ليتم تنزيل الملف على جهازك فوراً.`,
+          `افتح برنامج <b>AutoCAD</b> أو <b>Civil 3D</b> واكتب في سطر الأوامر <code>APPLOAD</code> ثم اضغط <b>Enter</b>.`,
+          `اختر ملف <code>${baseName}.lsp</code> من مجلد التنزيلات (Downloads) واضغط <b>Load</b> ثم <b>Close</b>.`,
+          `لتشغيل الأداة الآن اكتب الأمر <code>${baseName.toUpperCase()}</code> في سطر الأوامر واضغط <b>Enter</b>.`
+        ]
+      };
+    }
+
+    if (t.includes("arcpy") || t.includes("qgis") || t.includes("import ") || t.includes("def ")) {
+      return {
+        ext: "py",
+        fileName: "GeoDev_Script.py",
+        program: "ArcGIS / QGIS",
+        steps: [
+          `اضغط على زر <b>«تحميل GeoDev_Script.py جاهز»</b> في أعلى الصندوق الأسود أعلاه لتنزيل الملف مباشرة.`,
+          `افتح <b>ArcGIS Pro</b> أو <b>QGIS</b> وانتقل إلى نافذة تشغيل سكريبتات Python.`,
+          `قم باستيراد أو تشغيل ملف <code>GeoDev_Script.py</code> مباشرة من مجلد التنزيلات واتبع تعليمات التنفيذ أدناه:`
+        ]
+      };
+    }
+
+    return {
+      ext: "txt",
+      fileName: "GeoDev_Code.txt",
+      program: "البرنامج المستهدف",
+      steps: [
+        `اضغط على زر <b>«تحميل الملف جاهز»</b> في أعلى الصندوق الأسود أعلاه لتنزيل الكود كملف جاهز على جهازك.`,
+        `ارفع الملف مباشرة في البرنامج المستهدف واتبع خطوات التشغيل الموضحة أدناه:`
+      ]
+    };
+  }
+
+  function triggerDirectDownload(fileName, content) {
+    // إضافة BOM UTF-8 لضمان دعم النصوص العربية داخل AutoCAD و المحررات بدون رموز غريبة
+    const blob = new Blob(["\uFEFF" + content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function attachDownloadButtonsAndGuides() {
+    const codeBoxes = document.querySelectorAll(".gd-code-box");
+    codeBoxes.forEach(box => {
+      if (box.dataset.directDownloadReady === "1") return;
+      box.dataset.directDownloadReady = "1";
+
+      const pre = box.querySelector("pre");
+      const header = box.querySelector(".gd-code-header");
+      if (!pre || !header) return;
+
+      const rawCode = pre.innerText || "";
+      const meta = detectFileMeta(rawCode);
+
+      // إنشاء حاوية للأزرار في الشريط العلوي للصندوق
+      let btnGroup = header.querySelector(".gd-code-btn-group");
+      if (!btnGroup) {
+        btnGroup = document.createElement("div");
+        btnGroup.className = "gd-code-btn-group";
+        btnGroup.style.cssText = "display:flex;align-items:center;gap:6px;";
+        const existingCopy = header.querySelector(".gd-code-copy-btn");
+        if (existingCopy) btnGroup.appendChild(existingCopy);
+        header.appendChild(btnGroup);
+      }
+
+      // زر التحميل المباشر للملف الجاهز
+      const dlBtn = document.createElement("button");
+      dlBtn.type = "button";
+      dlBtn.className = "gd-code-dl-btn";
+      dlBtn.style.cssText = `
+        background: #e09f24 !important;
+        color: #11151c !important;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 4px 10px !important;
+        font-size: 11.5px !important;
+        font-weight: 900 !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        font-family: inherit !important;
+      `;
+      dlBtn.innerHTML = `<span>⬇</span><span>تحميل ${meta.fileName}</span>`;
+
+      dlBtn.onclick = () => {
+        const latestCode = pre.innerText || "";
+        triggerDirectDownload(meta.fileName, latestCode);
+        if (typeof window.toast === "function") {
+          window.toast(`تم تحميل ملف ${meta.fileName} جاهزاً للرفع!`, "success");
+        }
+      };
+
+      btnGroup.insertBefore(dlBtn, btnGroup.firstChild);
+
+      // تحديث أو إضافة بطاقة خطوات الرفع المباشر أسفل الصندوق
+      const nextEl = box.nextElementSibling;
+      const guideCard = (nextEl && nextEl.dataset.isPrepCard === "1") ? nextEl : document.createElement("div");
+      guideCard.dataset.isPrepCard = "1";
+      guideCard.style.cssText = `
+        background: rgba(224, 159, 36, 0.08);
+        border: 1px solid rgba(224, 159, 36, 0.45);
+        border-right: 4px solid #e09f24;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin: 14px 0;
+        direction: rtl;
+        text-align: right;
+        font-size: 13px;
+        line-height: 1.75;
+        color: #f3f6fa;
+      `;
+
+      const listHtml = meta.steps.map((s, idx) => `
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px">
+          <span style="background:#e09f24;color:#11151c;font-weight:900;font-size:11.5px;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px">${idx + 1}</span>
+          <span>${s}</span>
+        </div>
+      `).join("");
+
+      guideCard.innerHTML = `
+        <div style="color:#e09f24;font-weight:800;font-size:13.5px;margin-bottom:4px">
+          🚀 خطوات تحميل ورفع الملف مباشرة (${meta.program}):
+        </div>
+        ${listHtml}
+      `;
+
+      if (!guideCard.parentNode) {
+        box.insertAdjacentElement("afterend", guideCard);
+      }
+    });
+  }
+
+  function initDirectDownloadObserver() {
+    attachDownloadButtonsAndGuides();
+    const observer = new MutationObserver(() => attachDownloadButtonsAndGuides());
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initDirectDownloadObserver);
+  } else {
+    initDirectDownloadObserver();
+  }
+})();
+
