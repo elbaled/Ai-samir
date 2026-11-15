@@ -1,10 +1,9 @@
 /* ============================================================================
-   GeoDev PWA App, Background Reply Alert & Admin Push Notifications v2.0
-   1. إرسال إشعار لهاتف المستخدم إذا خرج من التطبيق أثناء كتابة الإجابة واكتمل الرد.
-   2. خانة إرسال إشعارات لجميع المستخدمين في لوحة الإدارة (#s-admin) بعبارة واضحة:
-      - عنوان الإشعار
-      - تفاصيل الإشعار
-   3. تحويل المنصة إلى تطبيق قابل للتثبيت على الهاتف (PWA).
+   GeoDev PWA App, Median OneSignal Bridge, Background Reply Alert & Admin Push v3.0
+   1. دعم إشعارات OneSignal الأصلية داخل تطبيق Median (Android / iOS) ومزامنتها مع Firestore.
+   2. إرسال إشعار لهاتف المستخدم (في شريط الإشعارات) إذا خرج من التطبيق أثناء كتابة الإجابة واكتمل الرد.
+   3. خانة إرسال إشعارات لجميع المستخدمين في لوحة الإدارة (#s-admin).
+   4. تحويل المنصة إلى تطبيق قابل للتثبيت على الهاتف (PWA) في متصفحات الويب.
    ============================================================================ */
 
 (function () {
@@ -15,11 +14,19 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 
+  // التحقق هل التطبيق يعمل داخل بيئة Median (GoNative سابقاً)
+  const isMedianApp = () => {
+    const ua = (navigator.userAgent || "").toLowerCase();
+    return ua.includes("median") || ua.includes("gonative") || typeof window.median !== "undefined" || typeof window.gonative !== "undefined";
+  };
+
+  const getMedianBridge = () => window.median || window.gonative || null;
+
   let deferredInstallPrompt = null;
   let swRegistration = null;
 
   /* ==========================================================================
-     1. ربط manifest.json وتسجيل Service Worker
+     1. ربط manifest.json وتسجيل Service Worker (للمتصفح)
      ========================================================================== */
   function registerPWA() {
     if (!document.querySelector('link[rel="manifest"]')) {
@@ -39,14 +46,61 @@
       e.preventDefault();
       deferredInstallPrompt = e;
       const btn = $("gdInstallAppBtn");
-      if (btn) btn.style.display = "flex";
+      if (btn && !isMedianApp()) btn.style.display = "flex";
     });
   }
 
   /* ==========================================================================
-     2. طلب إذن الإشعارات وعرض الإشعار في شريط إشعارات الهاتف
+     2. مزامنة معرّف OneSignal مع Firestore وحفظه في مستند المستخدم
+     ========================================================================== */
+  async function syncOneSignalPlayerId() {
+    if (!isMedianApp()) return;
+    try {
+      const bridge = getMedianBridge();
+      if (!bridge || !bridge.onesignal || !bridge.onesignal.info) return;
+
+      const info = await bridge.onesignal.info();
+      const playerId = info?.oneSignalId || info?.oneSignalUserId;
+
+      if (playerId) {
+        localStorage.setItem("geodev_onesignal_id", playerId);
+        if (window.firebase && firebase.apps.length && firebase.auth().currentUser) {
+          const uid = firebase.auth().currentUser.uid;
+          await firebase.firestore().collection("users").doc(uid).set({
+            oneSignalPlayerId: playerId,
+            platform: "median_app",
+            notificationsUpdatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      }
+    } catch (e) {
+      console.warn("OneSignal Sync Info:", e);
+    }
+  }
+
+  /* ==========================================================================
+     3. طلب إذن الإشعارات (يدعم Median OneSignal + متصفحات الويب PWA)
      ========================================================================== */
   window.GEORequestNotifPermission = async function () {
+    // أولاً: في حالة تطبيق Median للأندرويد / iOS
+    if (isMedianApp()) {
+      try {
+        const bridge = getMedianBridge();
+        if (bridge && bridge.onesignal && typeof bridge.onesignal.register === "function") {
+          bridge.onesignal.register();
+          window.toast && window.toast("تم تفعيل إشعارات التطبيق بنجاح!", "success");
+          setTimeout(syncOneSignalPlayerId, 2500);
+        } else {
+          window.toast && window.toast("يرجى تفعيل إضافة OneSignal في إعدادات التطبيق", "warn");
+        }
+      } catch (e) {
+        console.error("Median OneSignal Error:", e);
+        window.toast && window.toast("حدث خطأ أثناء تفعيل إشعارات التطبيق", "error");
+      }
+      return;
+    }
+
+    // ثانياً: في حالة متصفح الويب العادي
     if (!("Notification" in window)) {
       return window.toast && window.toast("متصفحك لا يدعم الإشعارات", "warn");
     }
@@ -72,7 +126,29 @@
     }
   };
 
+  /* ==========================================================================
+     4. إرسال إشعار لنظام الهاتف (Median Native أو Web Push)
+     ========================================================================== */
   function sendSystemNotification(title, body) {
+    // إذا كان داخل تطبيق Median، نرسل إشعار نظام أصلي للهاتف
+    if (isMedianApp()) {
+      try {
+        const bridge = getMedianBridge();
+        if (bridge && bridge.localNotifications && typeof bridge.localNotifications.create === "function") {
+          bridge.localNotifications.create({
+            title: title,
+            message: body,
+            text: body
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn("Median Local Notification Error:", e);
+      }
+      return;
+    }
+
+    // في حالة المتصفح العادي
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     if (swRegistration && swRegistration.active) {
@@ -92,7 +168,7 @@
   }
 
   /* ==========================================================================
-     3. إرسال إشعار تلقائي عند اكتمال إجابة الذكاء الاصطناعي والمستخدم خارج التطبيق
+     5. إرسال إشعار تلقائي عند اكتمال إجابة الذكاء الاصطناعي والمستخدم خارج التطبيق
      ========================================================================== */
   function hookBackgroundReplyNotifications() {
     // 1. في المساعد الذكي العام (window.ask)
@@ -102,7 +178,6 @@
         const questionPreview = String(shown || prompt || "").slice(0, 65);
         try {
           const result = await _origAsk.apply(this, arguments);
-          // إذا كان المستخدم خرج من التطبيق (الشاشة مخفية أو في الخلفية)
           if (document.hidden || document.visibilityState === "hidden") {
             sendSystemNotification(
               "تمت الإجابة على سؤالك • GeoDev AI",
@@ -158,7 +233,7 @@
   }
 
   /* ==========================================================================
-     4. الاستماع اللحظي لإشعارات الإدارة من Firestore وعرضها لجميع المستخدمين
+     6. الاستماع اللحظي لإشعارات الإدارة من Firestore وعرضها لجميع المستخدمين
      ========================================================================== */
   function listenForNotifications() {
     if (!window.firebase || !firebase.apps.length) return;
@@ -192,16 +267,21 @@
   }
 
   /* ==========================================================================
-     5. إضافة أزرار التثبيت والإشعارات في القائمة الجانبية (☰) وخانة الإرسال في الأدمن
+     7. إضافة أزرار التثبيت والإشعارات في القائمة الجانبية (☰) وخانة الإرسال في الأدمن
      ========================================================================== */
   function injectDrawerAppControls() {
     const dm = document.querySelector("#drw .dm");
-    if (!dm || $("gdInstallAppBtn")) return;
+    if (!dm || $("gdEnableNotifBtn")) return;
 
-    dm.insertAdjacentHTML("afterbegin", `
+    // إخفاء زر تثبيت التطبيق إذا كان المستخدم يفتحه من داخل تطبيق Median بالفعل
+    const installBtnHtml = isMedianApp() ? "" : `
       <button id="gdInstallAppBtn" onclick="toggleDrawer();window.GEOInstallApp()">
         تثبيت التطبيق على الهاتف
       </button>
+    `;
+
+    dm.insertAdjacentHTML("afterbegin", `
+      ${installBtnHtml}
       <button id="gdEnableNotifBtn" onclick="toggleDrawer();window.GEORequestNotifPermission()">
         تفعيل إشعارات التطبيق
       </button>
@@ -283,6 +363,17 @@
 
     setTimeout(hookBackgroundReplyNotifications, 600);
 
+    // تفعيل ومزامنة OneSignal تلقائياً عند فتح تطبيق Median
+    if (isMedianApp()) {
+      setTimeout(() => {
+        const bridge = getMedianBridge();
+        if (bridge && bridge.onesignal && typeof bridge.onesignal.register === "function") {
+          bridge.onesignal.register();
+        }
+        syncOneSignalPlayerId();
+      }, 2500);
+    }
+
     if (window.firebase && firebase.apps.length) {
       firebase.auth().onAuthStateChanged(u => {
         if (u) {
@@ -291,7 +382,9 @@
           hookBackgroundReplyNotifications();
           listenForNotifications();
 
-          if ("Notification" in window && Notification.permission === "default") {
+          if (isMedianApp()) {
+            setTimeout(syncOneSignalPlayerId, 2000);
+          } else if ("Notification" in window && Notification.permission === "default") {
             setTimeout(() => Notification.requestPermission().catch(() => {}), 3500);
           }
         }
