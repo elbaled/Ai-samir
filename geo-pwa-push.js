@@ -320,7 +320,7 @@
   if (window.GEODownloadBannerInit) return;
   window.GEODownloadBannerInit = true;
 
-  const APK_DOWNLOAD_URL = "https://www.mediafire.com/file/eb2xkp5foz4294v/app-release.apk/file";
+  const APK_DOWNLOAD_URL = "https://www.mediafire.com/file/3tljcf6jlglju06/app-release+(1).apk/file";
 
   // عدم إظهار البانر إذا كان المستخدم يفتح المنصة من داخل تطبيق الأندرويد نفسه
   const isInsideAndroidApp = () => {
@@ -467,7 +467,7 @@
         <div class="gd-apk-icon">⬇</div>
         <div class="gd-apk-text">
           <h4>تثبيت تطبيق GeoDev Studio</h4>
-          <p>حمّل تطبيق الأندرويد الرسمي على هاتفك بضغطة واحدة</p>
+          <p>حمّل تطبيق الأندرويد الرسمي الجديد على هاتفك بضغطة واحدة</p>
         </div>
         <div class="gd-apk-actions">
           <button type="button" class="gd-apk-btn-install" id="gdOpenApkGuideBtn">تثبيت<br>الآن</button>
@@ -486,7 +486,7 @@
             <div class="gd-step-num">1</div>
             <div style="font-size:12.5px;line-height:1.6">
               <strong style="color:#fff">تنزيل وفتح الملف:</strong><br>
-              بعد انتهاء التحميل من MediaFire، افتح قائمة التنزيلات في هاتفك واضغط على ملف <code style="color:#e09f24">app-release.apk</code>.
+              بعد انتهاء التحميل من MediaFire، افتح قائمة التنزيلات في هاتفك واضغط على ملف <code style="color:#e09f24">app-release (1).apk</code>.
             </div>
           </div>
 
@@ -517,7 +517,7 @@
           <div style="display:flex;gap:8px;margin-top:14px">
             <a href="${APK_DOWNLOAD_URL}" target="_blank" rel="noopener"
                style="flex:1;background:#e09f24;color:#11151c;text-decoration:none;text-align:center;padding:11px;border-radius:11px;font-weight:900;font-size:13.5px">
-              بدء تحميل التطبيق الآن (9.57 MB)
+              بدء تحميل التطبيق الآن
             </a>
             <button type="button" id="gdCloseGuideModalBtn"
                style="background:#262e3d;color:#fff;border:none;padding:11px 14px;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer">
@@ -563,6 +563,9 @@
     initForAllLoggedUsers();
   }
 })();
+
+
+
 /* ============================================================================
    بانر التواصل عبر واتساب للحصول على عرض اشتراك PRO
    ============================================================================ */
