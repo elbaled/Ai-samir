@@ -663,7 +663,7 @@
           <h4>اشتركت في عرض البرو  ؟ لسة كلمنا بسرعة و شوف عرض هديتك في البرو!</h4>
           <p>كلمنا بسرعة والحق عرض ضعف الاشتراك او مفتاحين لحسابين مخلتلفين .</p>
         </div>
-        <a href="${GIVEAWAY_URL}" target="_blank" rel="noopener" class="gd-gw-btn">سجّل الآن</a>
+        <a href="${GIVEAWAY_URL}" target="_blank" rel="noopener" class="gd-gw-btn">كلمنا الآن</a>
         <button type="button" class="gd-gw-close" id="gdCloseGiveawayBtn" title="إغلاق">×</button>
       </div>
     `;
