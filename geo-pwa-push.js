@@ -563,3 +563,122 @@
     initForAllLoggedUsers();
   }
 })();
+/* ============================================================================
+   رسالة السحب العائمة (مسابقة الفوز بحسابين PRO مجاناً)
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEOGiveawayBannerInit) return;
+  window.GEOGiveawayBannerInit = true;
+
+  const GIVEAWAY_URL = "https://docs.google.com/forms/d/e/1FAIpQLScFA1nsJRwq3TP1NGvwLunIahy3MDsmQBNd5doazTfuzoLNEg/viewform?usp=publish-editor";
+
+  function injectGiveawayBanner() {
+    if (sessionStorage.getItem("gd_giveaway_closed") === "1") return;
+    if (document.getElementById("gdGiveawayFloatingCard")) return;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #gdGiveawayFloatingCard {
+        position: fixed;
+        top: 66px;
+        left: 12px;
+        right: 12px;
+        max-width: 520px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #1b2230 0%, #131822 100%);
+        border: 1.5px solid #e09f24;
+        border-radius: 14px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        z-index: 9995;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+        direction: rtl;
+        font-family: inherit;
+        animation: gdSlideDown 0.35s ease;
+      }
+      @keyframes gdSlideDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .gd-gw-badge {
+        background: #e09f24;
+        color: #11151c;
+        font-size: 18px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-weight: 900;
+      }
+      .gd-gw-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .gd-gw-info h4 {
+        margin: 0 0 2px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .gd-gw-info p {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 11.5px;
+        line-height: 1.4;
+      }
+      .gd-gw-btn {
+        background: #e09f24;
+        color: #11151c;
+        text-decoration: none;
+        padding: 7px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .gd-gw-close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 2px 6px;
+        line-height: 1;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+      <div id="gdGiveawayFloatingCard">
+        <div class="gd-gw-badge">🎁</div>
+        <div class="gd-gw-info">
+          <h4>سحب مجاني على حسابين PRO!</h4>
+          <p>سجّل اسمك الآن للدخول في السحب العشوائي على اشتراك PRO مجاني.</p>
+        </div>
+        <a href="${GIVEAWAY_URL}" target="_blank" rel="noopener" class="gd-gw-btn">سجّل الآن</a>
+        <button type="button" class="gd-gw-close" id="gdCloseGiveawayBtn" title="إغلاق">×</button>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", html);
+
+    document.getElementById("gdCloseGiveawayBtn").onclick = () => {
+      sessionStorage.setItem("gd_giveaway_closed", "1");
+      document.getElementById("gdGiveawayFloatingCard").remove();
+    };
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectGiveawayBanner);
+  } else {
+    injectGiveawayBanner();
+  }
+})();
