@@ -886,3 +886,102 @@
     initLabFormatter();
   }
 })();
+/* ============================================================================
+   إضافة دليل البدء من المنصة (نسخ الكود -> حفظ الملف -> التشغيل) في المختبر
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEOLabPrepGuideInit) return;
+  window.GEOLabPrepGuideInit = true;
+
+  function getPrepStepsByCode(codeText) {
+    const t = (codeText || "").toLowerCase();
+
+    if (t.includes("(defun ") || t.includes("autolisp") || t.includes("vl-load-com")) {
+      return {
+        title: "خطوات تجهيز وحفظ الكود من المنصة (AutoCAD / Civil 3D):",
+        steps: [
+          "اضغط على زر <b>«نسخ الكود»</b> الموجود في أعلى الصندوق الأسود أعلاه.",
+          "افتح برنامج <b>المفكرة (Notepad)</b> على جهازك والصق الكود بداخله (<code>Ctrl + V</code>).",
+          "من قائمة <b>File</b> اختر <b>Save As</b>، واكتب اسم الملف متبوعاً بامتداد الليسب مثل: <code>GeoDev_Tool.lsp</code>، وغير خيار Save as type إلى <b>All Files</b> ثم احفظه على سطح المكتب.",
+          "انتقل الآن إلى برنامج <b>AutoCAD / Civil 3D</b> واتبع خطوات التحميل والتشغيل الموضحة في الجدول أدناه:"
+        ]
+      };
+    }
+
+    if (t.includes("arcpy") || t.includes("qgis") || t.includes("import ") || t.includes("def ")) {
+      return {
+        title: "خطوات تجهيز الكود من المنصة وتشغيله (Python / ArcGIS / QGIS):",
+        steps: [
+          "اضغط على زر <b>«نسخ الكود»</b> الموجود في أعلى الصندوق الأسود أعلاه.",
+          "افتح نافذة <b>Python Window</b> داخل ArcGIS Pro / ArcMap (أو <b>Python Console</b> داخل QGIS).",
+          "الصق الكود مباشرة في محرر السكريبت واضغط <b>Run</b> (أو احفظه في ملف بامتداد <code>.py</code> لتشغيله في أي وقت).",
+          "تابع تفاصيل الضبط والتنفيذ الموضحة في الخطوات أدناه:"
+        ]
+      };
+    }
+
+    return {
+      title: "خطوات تجهيز الكود من المنصة قبل التشغيل:",
+      steps: [
+        "اضغط على زر <b>«نسخ الكود»</b> في أعلى الصندوق الأسود أعلاه لنسخ الكود بالكامل.",
+        "افتح محرر النصوص أو بيئة البرمجة الخاصة بالبرنامج المستهدف والصق الكود.",
+        "احفظ الملف بالامتداد المناسب للغة البرمجة ثم اتبع خطوات التشغيل التالية:"
+      ]
+    };
+  }
+
+  function injectPrepGuides() {
+    const codeBoxes = document.querySelectorAll(".gd-code-box");
+    codeBoxes.forEach(box => {
+      if (box.dataset.hasPrepGuide === "1") return;
+      box.dataset.hasPrepGuide = "1";
+
+      const codeText = box.querySelector("pre")?.innerText || "";
+      const info = getPrepStepsByCode(codeText);
+
+      const guideCard = document.createElement("div");
+      guideCard.style.cssText = `
+        background: rgba(224, 159, 36, 0.08);
+        border: 1px solid rgba(224, 159, 36, 0.45);
+        border-right: 4px solid #e09f24;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin: 14px 0;
+        direction: rtl;
+        text-align: right;
+        font-size: 13px;
+        line-height: 1.75;
+        color: #f3f6fa;
+      `;
+
+      const listHtml = info.steps.map((s, idx) => `
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px">
+          <span style="background:#e09f24;color:#11151c;font-weight:900;font-size:11.5px;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px">${idx + 1}</span>
+          <span>${s}</span>
+        </div>
+      `).join("");
+
+      guideCard.innerHTML = `
+        <div style="color:#e09f24;font-weight:800;font-size:13.5px;margin-bottom:4px">
+          📌 ${info.title}
+        </div>
+        ${listHtml}
+      `;
+
+      box.insertAdjacentElement("afterend", guideCard);
+    });
+  }
+
+  function initPrepGuideObserver() {
+    injectPrepGuides();
+    const observer = new MutationObserver(() => injectPrepGuides());
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPrepGuideObserver);
+  } else {
+    initPrepGuideObserver();
+  }
+})();
