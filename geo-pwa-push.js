@@ -1,45 +1,36 @@
 /* ============================================================================
-   GeoDev PWA App, Median OneSignal Bridge, Background Reply Alert & Admin Push v3.0
-   1. دعم إشعارات OneSignal الأصلية داخل تطبيق Median (Android / iOS) ومزامنتها مع Firestore.
-   2. إرسال إشعار لهاتف المستخدم (في شريط الإشعارات) إذا خرج من التطبيق أثناء كتابة الإجابة واكتمل الرد.
-   3. خانة إرسال إشعارات لجميع المستخدمين في لوحة الإدارة (#s-admin).
-   4. تحويل المنصة إلى تطبيق قابل للتثبيت على الهاتف (PWA) في متصفحات الويب.
+   GeoDev PWA App, OneSignal Push Broadcast & Background AI Reply Alert v4.0
    ============================================================================ */
 
 (function () {
   "use strict";
-  if (window.GEOPWAPushV2) return;
-  window.GEOPWAPushV2 = true;
+  if (window.GEOPWAPushV4) return;
+  window.GEOPWAPushV4 = true;
+
+  // ⚠️ ضع بيانات تطبيقك من لوحة تحكم OneSignal (Settings > Keys & IDs) هنا:
+  const ONESIGNAL_APP_ID = "105d6a7a-9b6d-4033-ba38-f26abb556cc8";
+  const ONESIGNAL_REST_KEY = "os_v2_app_cbowu6u3nvadhory6jvlwvlmzazbt76te3cusf5qa3oboq6v5d5gabz3wl2gchnyyaxuqfskk4tt32yykl5racfwl35xt6faymfhyfi";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 
-  // التحقق هل التطبيق يعمل داخل بيئة Median (GoNative سابقاً)
   const isMedianApp = () => {
     const ua = (navigator.userAgent || "").toLowerCase();
     return ua.includes("median") || ua.includes("gonative") || typeof window.median !== "undefined" || typeof window.gonative !== "undefined";
   };
 
   const getMedianBridge = () => window.median || window.gonative || null;
-
   let deferredInstallPrompt = null;
   let swRegistration = null;
 
   /* ==========================================================================
-     1. ربط manifest.json وتسجيل Service Worker (للمتصفح)
+     1. تسجيل PWA و Service Worker
      ========================================================================== */
   function registerPWA() {
-    if (!document.querySelector('link[rel="manifest"]')) {
-      const link = document.createElement("link");
-      link.rel = "manifest";
-      link.href = "manifest.json";
-      document.head.appendChild(link);
-    }
-
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").then(reg => {
         swRegistration = reg;
-      }).catch(err => console.warn("SW Error:", err));
+      }).catch(() => {});
     }
 
     window.addEventListener("beforeinstallprompt", e => {
@@ -51,7 +42,7 @@
   }
 
   /* ==========================================================================
-     2. مزامنة معرّف OneSignal مع Firestore وحفظه في مستند المستخدم
+     2. مزامنة معرّف OneSignal مع Firestore
      ========================================================================== */
   async function syncOneSignalPlayerId() {
     if (!isMedianApp()) return;
@@ -74,15 +65,14 @@
         }
       }
     } catch (e) {
-      console.warn("OneSignal Sync Info:", e);
+      console.warn("OneSignal Sync:", e);
     }
   }
 
   /* ==========================================================================
-     3. طلب إذن الإشعارات (يدعم Median OneSignal + متصفحات الويب PWA)
+     3. تفعيل الإشعارات (Median OneSignal + Web Push)
      ========================================================================== */
   window.GEORequestNotifPermission = async function () {
-    // أولاً: في حالة تطبيق Median للأندرويد / iOS
     if (isMedianApp()) {
       try {
         const bridge = getMedianBridge();
@@ -91,46 +81,38 @@
           window.toast && window.toast("تم تفعيل إشعارات التطبيق بنجاح!", "success");
           setTimeout(syncOneSignalPlayerId, 2500);
         } else {
-          window.toast && window.toast("يرجى تفعيل إضافة OneSignal في إعدادات التطبيق", "warn");
+          window.toast && window.toast("تأكد من تفعيل إضافة OneSignal في Median", "warn");
         }
       } catch (e) {
-        console.error("Median OneSignal Error:", e);
-        window.toast && window.toast("حدث خطأ أثناء تفعيل إشعارات التطبيق", "error");
+        window.toast && window.toast("حدث خطأ أثناء تفعيل الإشعارات", "error");
       }
       return;
     }
 
-    // ثانياً: في حالة متصفح الويب العادي
     if (!("Notification" in window)) {
       return window.toast && window.toast("متصفحك لا يدعم الإشعارات", "warn");
     }
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
-      window.toast && window.toast("تم تفعيل إشعارات التطبيق بنجاح!", "success");
-      sendSystemNotification("GeoDev Studio Pro", "تم تفعيل الإشعارات الفورية لحسابك بنجاح.");
-    } else {
-      window.toast && window.toast("يرجى السماح بالإشعارات من إعدادات المتصفح", "warn");
+      window.toast && window.toast("تم تفعيل إشعارات المتصفح بنجاح!", "success");
+      sendSystemNotification("GeoDev Studio Pro", "تم تفعيل الإشعارات الفورية بنجاح.");
     }
   };
 
   window.GEOInstallApp = async function () {
     if (deferredInstallPrompt) {
       deferredInstallPrompt.prompt();
-      const choice = await deferredInstallPrompt.userChoice;
-      if (choice.outcome === "accepted") {
-        window.toast && window.toast("جاري تثبيت التطبيق على جهازك...", "success");
-      }
       deferredInstallPrompt = null;
     } else {
-      window.toast && window.toast("من قائمة المتصفح (⋮ أو مشاركة) اختر: الإضافة إلى الشاشة الرئيسية", "info");
+      window.toast && window.toast("من قائمة المتصفح اختر: الإضافة إلى الشاشة الرئيسية", "info");
     }
   };
 
   /* ==========================================================================
-     4. إرسال إشعار لنظام الهاتف (Median Native أو Web Push)
+     4. إرسال إشعار فوري يظهر في شريط إشعارات الهاتف (حتى في الخلفية)
      ========================================================================== */
   function sendSystemNotification(title, body) {
-    // إذا كان داخل تطبيق Median، نرسل إشعار نظام أصلي للهاتف
+    // 1. داخل تطبيق Median: استخدام الإشعارات المحلية الأصلية للأندرويد/iOS
     if (isMedianApp()) {
       try {
         const bridge = getMedianBridge();
@@ -138,102 +120,140 @@
           bridge.localNotifications.create({
             title: title,
             message: body,
-            text: body
+            text: body,
+            id: Math.floor(Math.random() * 100000)
           });
-          return;
         }
       } catch (e) {
-        console.warn("Median Local Notification Error:", e);
+        console.warn("Median LocalNotif Error:", e);
+      }
+
+      // 2. إرسال إشعار Push حقيقي للجهاز نفسه عبر OneSignal لضمان وصوله حتى لو جمد النظام الخلفية
+      const myPlayerId = localStorage.getItem("geodev_onesignal_id");
+      if (myPlayerId && ONESIGNAL_APP_ID !== "ضع_هنا_ONESIGNAL_APP_ID" && ONESIGNAL_REST_KEY !== "ضع_هنا_REST_API_KEY") {
+        fetch("https://onesignal.com/api/v1/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": "Basic " + ONESIGNAL_REST_KEY
+          },
+          body: JSON.stringify({
+            app_id: ONESIGNAL_APP_ID,
+            include_subscription_ids: [myPlayerId],
+            headings: { en: title, ar: title },
+            contents: { en: body, ar: body }
+          })
+        }).catch(() => {});
       }
       return;
     }
 
-    // في حالة المتصفح العادي
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-
-    if (swRegistration && swRegistration.active) {
-      swRegistration.active.postMessage({
-        type: "SHOW_NOTIFICATION",
-        title,
-        body
-      });
-    } else {
-      try {
-        new Notification(title, {
-          body,
-          icon: "https://cdn-icons-png.flaticon.com/512/854/854878.png"
-        });
-      } catch (_) {}
+    // 3. في حالة متصفح الويب
+    if ("Notification" in window && Notification.permission === "granted") {
+      if (swRegistration && swRegistration.active) {
+        swRegistration.active.postMessage({ type: "SHOW_NOTIFICATION", title, body });
+      } else {
+        try { new Notification(title, { body, icon: "icon.svg" }); } catch (_) {}
+      }
     }
   }
 
   /* ==========================================================================
-     5. إرسال إشعار تلقائي عند اكتمال إجابة الذكاء الاصطناعي والمستخدم خارج التطبيق
+     5. مراقبة اكتمال إجابات الذكاء الاصطناعي وإشعار المستخدم إذا كان خارج التطبيق
      ========================================================================== */
-  function hookBackgroundReplyNotifications() {
-    // 1. في المساعد الذكي العام (window.ask)
-    const _origAsk = window.ask;
-    if (typeof _origAsk === "function" && !_origAsk.__bgNotifHooked) {
-      const wrappedAsk = async function (prompt, shown) {
-        const questionPreview = String(shown || prompt || "").slice(0, 65);
-        try {
-          const result = await _origAsk.apply(this, arguments);
-          if (document.hidden || document.visibilityState === "hidden") {
-            sendSystemNotification(
-              "تمت الإجابة على سؤالك • GeoDev AI",
-              questionPreview ? `اكتمل الرد على: "${questionPreview}..."` : "إجابتك جاهزة الآن داخل المنصة."
-            );
-          }
-          return result;
-        } catch (err) {
-          throw err;
-        }
-      };
-      wrappedAsk.__bgNotifHooked = true;
-      window.ask = wrappedAsk;
-    }
+  function setupAIReplyWatcher() {
+    let wasGenerating = false;
+    let lastQuestion = "";
 
-    // 2. في شات الجيوماتكس (window.gisSend)
-    const _origGisSend = window.gisSend;
-    if (typeof _origGisSend === "function" && !_origGisSend.__bgNotifHooked) {
-      const wrappedGis = async function () {
-        try {
-          const res = await _origGisSend.apply(this, arguments);
-          if (document.hidden || document.visibilityState === "hidden") {
-            sendSystemNotification(
-              "تمت الإجابة في قسم الجيوماتكس",
-              "اكتمل التحليل والرد على استفسارك الجغرافي، اضغط لعرضه."
-            );
-          }
-          return res;
-        } catch (err) {
-          throw err;
-        }
-      };
-      wrappedGis.__bgNotifHooked = true;
-      window.gisSend = wrappedGis;
-    }
+    // حفظ آخر سؤال أرسله المستخدم
+    document.addEventListener("click", e => {
+      if (e.target.closest("button")?.textContent?.includes("نفّذ") || e.target.closest("button")?.textContent?.includes("إرسال")) {
+        const q = $("ui")?.value.trim() || $("gisInput")?.value.trim();
+        if (q) lastQuestion = q.slice(0, 60);
+      }
+    }, true);
 
-    // 3. في المدرس الذكي (GEOAcademyEngines.teacherChat)
-    if (window.GEOAcademyEngines && typeof window.GEOAcademyEngines.teacherChat === "function" && !window.GEOAcademyEngines.teacherChat.__bgNotifHooked) {
-      const _origTeacher = window.GEOAcademyEngines.teacherChat;
-      const wrappedTeacher = async function () {
-        const res = await _origTeacher.apply(this, arguments);
+    $("ui")?.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        const q = $("ui").value.trim();
+        if (q) lastQuestion = q.slice(0, 60);
+      }
+    });
+
+    // مراقبة حالة التوليد كل ثانية (تعمل حتى لو تم استبدال دوال AI من ملفات أخرى)
+    setInterval(() => {
+      const stText = ($("st")?.textContent || "").trim();
+      const isGenerating = stText === "..." || stText.includes("يكتب") || stText.includes("استكمال") ||
+                           document.querySelector(".gd-cw.gd-live") !== null;
+
+      if (isGenerating) {
+        wasGenerating = true;
+      } else if (wasGenerating && !isGenerating) {
+        wasGenerating = false;
+        // إذا اكتملت الإجابة والمستخدم خارج التطبيق أو في تبويب آخر
         if (document.hidden || document.visibilityState === "hidden") {
-          sendSystemNotification(
-            "تمت الإجابة من المدرس الذكي",
-            "شرح سؤالك جاهز الآن في الأكاديمية، اضغط للمتابعة."
-          );
+          const msg = lastQuestion
+            ? `اكتملت الإجابة على سؤالك: "${lastQuestion}..."`
+            : "إجابتك جاهزة الآن داخل GeoDev Studio Pro.";
+          sendSystemNotification("GeoDev AI • إجابتك جاهزة", msg);
         }
-        return res;
-      };
-      wrappedTeacher.__bgNotifHooked = true;
-      window.GEOAcademyEngines.teacherChat = wrappedTeacher;
-    }
+      }
+    }, 1000);
   }
 
   /* ==========================================================================
-     6. الاستماع اللحظي لإشعارات الإدارة من Firestore وعرضها لجميع المستخدمين
+     6. إرسال إشعارات الإدارة (Firestore + OneSignal Push لجميع المستخدمين)
+     ========================================================================== */
+  window.GEOSendBroadcastNotif = async function () {
+    const title = $("admNotifTitle")?.value.trim();
+    const body = $("admNotifBody")?.value.trim();
+    if (!title || !body) {
+      return window.toast && window.toast("اكتب عنوان الإشعار وتفاصيل الإشعار أولاً", "warn");
+    }
+
+    try {
+      // 1. حفظ الإشعار في Firestore ليظهر داخل التطبيق
+      if (window.firebase && firebase.apps.length) {
+        await firebase.firestore().collection("geodev_notifications").add({
+          title,
+          body,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      // 2. إرسال الإشعار عبر OneSignal Push لجميع هواتف المستخدمين (حتى لو التطبيق مغلق)
+      if (ONESIGNAL_APP_ID !== "ضع_هنا_ONESIGNAL_APP_ID" && ONESIGNAL_REST_KEY !== "ضع_هنا_REST_API_KEY") {
+        const res = await fetch("https://onesignal.com/api/v1/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": "Basic " + ONESIGNAL_REST_KEY
+          },
+          body: JSON.stringify({
+            app_id: ONESIGNAL_APP_ID,
+            included_segments: ["Subscribed Users", "Total Subscriptions"],
+            headings: { en: title, ar: title },
+            contents: { en: body, ar: body }
+          })
+        });
+        const data = await res.json();
+        if (data.errors) {
+          console.warn("OneSignal Broadcast Warning:", data.errors);
+        }
+      } else {
+        window.toast && window.toast("تم الحفظ في قاعدة البيانات، لكن يرجى وضع مفاتيح OneSignal في الكود ليصل للهواتف المغلقة", "warn");
+      }
+
+      $("admNotifTitle").value = "";
+      $("admNotifBody").value = "";
+      window.toast && window.toast("تم إرسال الإشعار لجميع المستخدمين بنجاح!", "success");
+    } catch (e) {
+      window.toast && window.toast("تعذر الإرسال: " + e.message, "error");
+    }
+  };
+
+  /* ==========================================================================
+     7. الاستماع لإشعارات Firestore داخل التطبيق وعرض السجل في لوحة الإدارة
      ========================================================================== */
   function listenForNotifications() {
     if (!window.firebase || !firebase.apps.length) return;
@@ -261,19 +281,18 @@
           if (typeof window.toast === "function") {
             window.toast(`${latest.title}: ${latest.body}`, "info");
           }
-          sendSystemNotification(latest.title, latest.body);
+          // إظهار إشعار في شريط النظام إذا كان المستخدم خارج التطبيق
+          if (document.hidden || document.visibilityState === "hidden") {
+            sendSystemNotification(latest.title, latest.body);
+          }
         }
       }, err => console.warn("Notif Listener:", err.message));
   }
 
-  /* ==========================================================================
-     7. إضافة أزرار التثبيت والإشعارات في القائمة الجانبية (☰) وخانة الإرسال في الأدمن
-     ========================================================================== */
   function injectDrawerAppControls() {
     const dm = document.querySelector("#drw .dm");
     if (!dm || $("gdEnableNotifBtn")) return;
 
-    // إخفاء زر تثبيت التطبيق إذا كان المستخدم يفتحه من داخل تطبيق Median بالفعل
     const installBtnHtml = isMedianApp() ? "" : `
       <button id="gdInstallAppBtn" onclick="toggleDrawer();window.GEOInstallApp()">
         تثبيت التطبيق على الهاتف
@@ -303,28 +322,6 @@
         </div>
       `).join("");
   }
-
-  window.GEOSendBroadcastNotif = async function () {
-    if (!window.firebase || !firebase.apps.length) return;
-    const title = $("admNotifTitle")?.value.trim();
-    const body = $("admNotifBody")?.value.trim();
-    if (!title || !body) {
-      return window.toast && window.toast("اكتب عنوان الإشعار وتفاصيل الإشعار أولاً", "warn");
-    }
-
-    try {
-      await firebase.firestore().collection("geodev_notifications").add({
-        title,
-        body,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      $("admNotifTitle").value = "";
-      $("admNotifBody").value = "";
-      window.toast && window.toast("تم إرسال الإشعار لجميع المستخدمين بنجاح!", "success");
-    } catch (e) {
-      window.toast && window.toast("تعذر الإرسال: " + e.message, "error");
-    }
-  };
 
   function injectAdminNotifCard() {
     const adminPanel = $("adminPanel");
@@ -359,11 +356,8 @@
     registerPWA();
     injectDrawerAppControls();
     injectAdminNotifCard();
-    hookBackgroundReplyNotifications();
+    setupAIReplyWatcher();
 
-    setTimeout(hookBackgroundReplyNotifications, 600);
-
-    // تفعيل ومزامنة OneSignal تلقائياً عند فتح تطبيق Median
     if (isMedianApp()) {
       setTimeout(() => {
         const bridge = getMedianBridge();
@@ -379,14 +373,8 @@
         if (u) {
           injectDrawerAppControls();
           injectAdminNotifCard();
-          hookBackgroundReplyNotifications();
           listenForNotifications();
-
-          if (isMedianApp()) {
-            setTimeout(syncOneSignalPlayerId, 2000);
-          } else if ("Notification" in window && Notification.permission === "default") {
-            setTimeout(() => Notification.requestPermission().catch(() => {}), 3500);
-          }
+          if (isMedianApp()) setTimeout(syncOneSignalPlayerId, 2000);
         }
       });
     }
