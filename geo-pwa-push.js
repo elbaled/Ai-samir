@@ -320,7 +320,7 @@
   if (window.GEODownloadBannerInit) return;
   window.GEODownloadBannerInit = true;
 
-  const APK_DOWNLOAD_URL = "https://www.mediafire.com/file/3tljcf6jlglju06/app-release+(1).apk/file";
+  const APK_DOWNLOAD_URL = "https://www.mediafire.com/file/3tljcf6jlglju06/GEO_DEV_AI_.apk/file";
 
   // عدم إظهار البانر إذا كان المستخدم يفتح المنصة من داخل تطبيق الأندرويد نفسه
   const isInsideAndroidApp = () => {
