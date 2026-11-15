@@ -571,7 +571,7 @@
   if (window.GEOGiveawayBannerInit) return;
   window.GEOGiveawayBannerInit = true;
 
-  const GIVEAWAY_URL = "https://docs.google.com/forms/d/e/1FAIpQLScFA1nsJRwq3TP1NGvwLunIahy3MDsmQBNd5doazTfuzoLNEg/viewform?usp=publish-editor";
+  const GIVEAWAY_URL = "‏مراسلة Eng-Ahmed Samir عبر واتساب. https://wa.me/201015912371";
 
   function injectGiveawayBanner() {
     if (sessionStorage.getItem("gd_giveaway_closed") === "1") return;
@@ -660,8 +660,8 @@
       <div id="gdGiveawayFloatingCard">
         <div class="gd-gw-badge">🎁</div>
         <div class="gd-gw-info">
-          <h4>سحب مجاني على حسابين PRO!</h4>
-          <p>سجّل اسمك الآن للدخول في السحب العشوائي على اشتراك PRO مجاني.</p>
+          <h4>اشتركت في عرض البرو  ؟ لسة كلمنا بسرعة و شوف عرض هديتك في البرو!</h4>
+          <p>كلمنا بسرعة والحق عرض ضعف الاشتراك او مفتاحين لحسابين مخلتلفين .</p>
         </div>
         <a href="${GIVEAWAY_URL}" target="_blank" rel="noopener" class="gd-gw-btn">سجّل الآن</a>
         <button type="button" class="gd-gw-close" id="gdCloseGiveawayBtn" title="إغلاق">×</button>
