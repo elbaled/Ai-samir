@@ -312,3 +312,254 @@
     initPWA();
   }
 })();
+/* ============================================================================
+   بانر تحميل تطبيق Android APK + نافذة تعليمات التثبيت المرقّمة
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEODownloadBannerInit) return;
+  window.GEODownloadBannerInit = true;
+
+  const APK_DOWNLOAD_URL = "https://www.mediafire.com/file/eb2xkp5foz4294v/app-release.apk/file";
+
+  // عدم إظهار البانر إذا كان المستخدم يفتح المنصة من داخل تطبيق الأندرويد نفسه
+  const isInsideAndroidApp = () => {
+    const ua = (navigator.userAgent || "").toLowerCase();
+    return ua.includes("median") || ua.includes("gonative") || typeof window.median !== "undefined" || typeof window.gonative !== "undefined";
+  };
+
+  function injectApkBannerAndGuide() {
+    if (isInsideAndroidApp()) return;
+    if (sessionStorage.getItem("gd_apk_banner_closed") === "1") return;
+    if (document.getElementById("gdApkFloatingBanner")) return;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #gdApkFloatingBanner {
+        position: fixed;
+        bottom: 68px;
+        left: 12px;
+        right: 12px;
+        max-width: 520px;
+        margin: 0 auto;
+        background: #171c26;
+        border: 1.5px solid #e09f24;
+        border-radius: 16px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        z-index: 9990;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+        direction: rtl;
+        font-family: inherit;
+      }
+      .gd-apk-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #e09f24;
+        color: #11151c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 22px;
+        font-weight: 900;
+      }
+      .gd-apk-text {
+        flex: 1;
+        min-width: 0;
+      }
+      .gd-apk-text h4 {
+        margin: 0 0 3px;
+        color: #ffffff;
+        font-size: 13.5px;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+      .gd-apk-text p {
+        margin: 0;
+        color: #b8c2d1;
+        font-size: 11.5px;
+        line-height: 1.45;
+      }
+      .gd-apk-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .gd-apk-btn-install {
+        background: #e09f24;
+        color: #11151c;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 13px;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        line-height: 1.25;
+        text-align: center;
+      }
+      .gd-apk-btn-close {
+        background: transparent;
+        border: none;
+        color: #9aa5b4;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 4px 6px;
+      }
+      /* نافذة تعليمات التثبيت */
+      #gdApkGuideModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 10000;
+        direction: rtl;
+      }
+      .gd-guide-box {
+        background: #171c26;
+        border: 1.5px solid #e09f24;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 440px;
+        max-height: 88vh;
+        overflow-y: auto;
+        padding: 18px;
+        color: #f3f6fa;
+      }
+      .gd-guide-step {
+        background: #10141c;
+        border: 1px solid #2a3242;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .gd-step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #e0531f;
+        color: #fff;
+        font-weight: 900;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+      <div id="gdApkFloatingBanner">
+        <div class="gd-apk-icon">⬇</div>
+        <div class="gd-apk-text">
+          <h4>تثبيت تطبيق GeoDev Studio</h4>
+          <p>حمّل تطبيق الأندرويد الرسمي على هاتفك بضغطة واحدة</p>
+        </div>
+        <div class="gd-apk-actions">
+          <button type="button" class="gd-apk-btn-install" id="gdOpenApkGuideBtn">تثبيت<br>الآن</button>
+          <button type="button" class="gd-apk-btn-close" id="gdCloseApkBannerBtn">إغلاق</button>
+        </div>
+      </div>
+
+      <div id="gdApkGuideModal">
+        <div class="gd-guide-box">
+          <h3 style="margin:0 0 6px;color:#e09f24;font-size:16px">خطوات تحميل وتثبيت تطبيق GeoDev Studio</h3>
+          <p style="margin:0 0 14px;color:#b8c2d1;font-size:12.5px;line-height:1.6">
+            اتبع الخطوات الأربع التالية لتثبيت التطبيق بنجاح على هاتفك الأندرويد:
+          </p>
+
+          <div class="gd-guide-step">
+            <div class="gd-step-num">1</div>
+            <div style="font-size:12.5px;line-height:1.6">
+              <strong style="color:#fff">تنزيل وفتح الملف:</strong><br>
+              بعد انتهاء التحميل من MediaFire، افتح قائمة التنزيلات في هاتفك واضغط على ملف <code style="color:#e09f24">app-release.apk</code>.
+            </div>
+          </div>
+
+          <div class="gd-guide-step">
+            <div class="gd-step-num">2</div>
+            <div style="font-size:12.5px;line-height:1.6">
+              <strong style="color:#fff">اختيار أداة التثبيت:</strong><br>
+              في نافذة "فتح باستخدام"، اختر <strong style="color:#e09f24">أداة تثبيت الحزم (Package Installer)</strong> واضغط "مرة واحدة فقط".
+            </div>
+          </div>
+
+          <div class="gd-guide-step">
+            <div class="gd-step-num">3</div>
+            <div style="font-size:12.5px;line-height:1.6">
+              <strong style="color:#fff">تأكيد التثبيت:</strong><br>
+              ستظهر رسالة "هل المطلوب تثبيت هذا التطبيق؟ GeoDev Studio"، اضغط على <strong style="color:#e09f24">تثبيت</strong>.
+            </div>
+          </div>
+
+          <div class="gd-guide-step">
+            <div class="gd-step-num">4</div>
+            <div style="font-size:12.5px;line-height:1.6">
+              <strong style="color:#fff">تخطي رسالة Google Play للحماية:</strong><br>
+              إذا ظهرت رسالة "تم حظر التطبيق لحماية جهازك"، اضغط على <strong style="color:#e09f24">التثبيت على أي حال</strong> (Install anyway) لإتمام التثبيت.
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <a href="${APK_DOWNLOAD_URL}" target="_blank" rel="noopener"
+               style="flex:1;background:#e09f24;color:#11151c;text-decoration:none;text-align:center;padding:11px;border-radius:11px;font-weight:900;font-size:13.5px">
+              بدء تحميل التطبيق الآن (9.57 MB)
+            </a>
+            <button type="button" id="gdCloseGuideModalBtn"
+               style="background:#262e3d;color:#fff;border:none;padding:11px 14px;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", html);
+
+    document.getElementById("gdCloseApkBannerBtn").onclick = () => {
+      sessionStorage.setItem("gd_apk_banner_closed", "1");
+      document.getElementById("gdApkFloatingBanner").remove();
+    };
+
+    document.getElementById("gdOpenApkGuideBtn").onclick = () => {
+      document.getElementById("gdApkGuideModal").style.display = "flex";
+    };
+
+    document.getElementById("gdCloseGuideModalBtn").onclick = () => {
+      document.getElementById("gdApkGuideModal").style.display = "none";
+    };
+  }
+
+  // إظهار البانر لجميع الحسابات المسجلة (تجريبي / مجاني / PRO / أدمن)
+  function initForAllLoggedUsers() {
+    if (window.firebase && firebase.apps.length) {
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          injectApkBannerAndGuide();
+        }
+      });
+    } else {
+      injectApkBannerAndGuide();
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initForAllLoggedUsers);
+  } else {
+    initForAllLoggedUsers();
+  }
+})();
