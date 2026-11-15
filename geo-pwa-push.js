@@ -685,3 +685,204 @@
     injectGiveawayBanner();
   }
 })();
+/* ============================================================================
+   تنسيق صناديق الأكواد في المختبر (خلفية سوداء + اتجاه LTR + زر نسخ علوي)
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEOLabCodeFormatterInit) return;
+  window.GEOLabCodeFormatterInit = true;
+
+  function injectLabCodeStyles() {
+    if (document.getElementById("gdLabCodeStyles")) return;
+    const style = document.createElement("style");
+    style.id = "gdLabCodeStyles";
+    style.textContent = `
+      /* ضبط تنسيق النصوص العامة داخل صناديق الإجابات */
+      #labOut, .gd-cw, [id*="Out"], [id*="Result"] {
+        line-height: 1.75 !important;
+        word-wrap: break-word !important;
+      }
+
+      /* حاوية الكود المستقلة داخل مربع الإجابة */
+      .gd-code-box {
+        background: #090c10 !important;
+        border: 1.5px solid #2a3342 !important;
+        border-radius: 12px !important;
+        margin: 14px 0 !important;
+        overflow: hidden !important;
+        direction: ltr !important;
+        text-align: left !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+      }
+
+      /* الشريط العلوي للكود (اسم اللغة + زر النسخ) */
+      .gd-code-header {
+        background: #141923 !important;
+        border-bottom: 1px solid #252e3d !important;
+        padding: 7px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        direction: ltr !important;
+      }
+
+      .gd-code-lang {
+        color: #e09f24 !important;
+        font-size: 11.5px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        font-family: monospace !important;
+      }
+
+      .gd-code-copy-btn {
+        background: #232b3a !important;
+        color: #f3f6fa !important;
+        border: 1px solid #384459 !important;
+        border-radius: 7px !important;
+        padding: 4px 11px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        transition: all 0.2s ease !important;
+        font-family: inherit !important;
+      }
+
+      .gd-code-copy-btn:hover {
+        background: #e09f24 !important;
+        color: #11151c !important;
+        border-color: #e09f24 !important;
+      }
+
+      .gd-code-copy-btn.copied {
+        background: #16a34a !important;
+        color: #ffffff !important;
+        border-color: #16a34a !important;
+      }
+
+      /* جسم الكود نفسه */
+      .gd-code-box pre {
+        margin: 0 !important;
+        padding: 14px !important;
+        background: #090c10 !important;
+        color: #e6edf3 !important;
+        font-family: "Fira Code", "Consolas", "Courier New", monospace !important;
+        font-size: 12.5px !important;
+        line-height: 1.6 !important;
+        overflow-x: auto !important;
+        white-space: pre !important;
+        direction: ltr !important;
+        text-align: left !important;
+        border: none !important;
+        border-radius: 0 !important;
+      }
+
+      .gd-code-box code {
+        background: transparent !important;
+        color: inherit !important;
+        padding: 0 !important;
+        font-family: inherit !important;
+        direction: ltr !important;
+        unicode-bidi: embed !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function enhanceCodeBlocks(root = document) {
+    const pres = root.querySelectorAll("pre");
+    pres.forEach(pre => {
+      if (pre.closest(".gd-code-box")) return;
+
+      const codeEl = pre.querySelector("code");
+      const rawText = (codeEl ? codeEl.innerText : pre.innerText) || "";
+      if (!rawText.trim()) return;
+
+      // استخراج اسم اللغة البرمجية إن وُجد
+      let lang = "CODE";
+      if (codeEl && codeEl.className) {
+        const match = codeEl.className.match(/language-([a-zA-Z0-9_+-]+)/);
+        if (match) lang = match[1];
+      } else if (rawText.includes("(defun ")) {
+        lang = "AutoLISP";
+      } else if (rawText.includes("import ") || rawText.includes("def ")) {
+        lang = "Python";
+      }
+
+      // إنشاء الحاوية السوداء وزر النسخ
+      const wrapper = document.createElement("div");
+      wrapper.className = "gd-code-box";
+
+      const header = document.createElement("div");
+      header.className = "gd-code-header";
+
+      const langBadge = document.createElement("span");
+      langBadge.className = "gd-code-lang";
+      langBadge.textContent = lang;
+
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "gd-code-copy-btn";
+      copyBtn.innerHTML = `<span>📋</span><span>نسخ الكود</span>`;
+
+      copyBtn.onclick = async () => {
+        const textToCopy = (codeEl ? codeEl.innerText : pre.innerText) || "";
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+        } catch (_) {
+          const ta = document.createElement("textarea");
+          ta.value = textToCopy;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        copyBtn.classList.add("copied");
+        copyBtn.innerHTML = `<span>✔</span><span>تم النسخ</span>`;
+        if (typeof window.toast === "function") {
+          window.toast("تم نسخ الكود بنجاح!", "success");
+        }
+        setTimeout(() => {
+          copyBtn.classList.remove("copied");
+          copyBtn.innerHTML = `<span>📋</span><span>نسخ الكود</span>`;
+        }, 2000);
+      };
+
+      header.appendChild(langBadge);
+      header.appendChild(copyBtn);
+
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.appendChild(header);
+      wrapper.appendChild(pre);
+    });
+  }
+
+  function initLabFormatter() {
+    injectLabCodeStyles();
+    enhanceCodeBlocks(document);
+
+    // مراقبة أي إجابات جديدة تتولد في المختبر أو الشات وتنسيقها فوراً
+    const observer = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.addedNodes && m.addedNodes.length) {
+          enhanceCodeBlocks(document);
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initLabFormatter);
+  } else {
+    initLabFormatter();
+  }
+})();
