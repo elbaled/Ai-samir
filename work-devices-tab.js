@@ -1,129 +1,1010 @@
 /* ============================================================================
-   إضافة قسم "شغل وأجهزة" تلقائياً في الشريط السفلي بجانب "المساحة" (محدّث)
+   قسم "شغل وأجهزة" المتكامل (الوظائف المساحية + سوق الأجهزة للبيع والإيجار)
+   صلاحيات الأدمن للإضافة وتغيير الحالة + بحث فوري + تواصل واتساب مباشر
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOWorkDevicesTabInit) return;
-  window.GEOWorkDevicesTabInit = true;
+  if (window.GEOWorkDevicesFullInit) return;
+  window.GEOWorkDevicesFullInit = true;
 
-  function injectWorkDevicesStyles() {
-    if (document.getElementById("gdWorkDevicesStyles")) return;
+  const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
+  const ADMIN_WHATSAPP = "201015912371";
+  const IMGBB_API_KEY = ""; // اختياري: ضع مفتاح ImgBB هنا إذا أردت رفع الصور من الهاتف مباشرة، أو ضع رابط الصورة مباشرة
+
+  let isAdminUser = false;
+  let activeSubTab = "jobs"; // 'jobs' | 'devices'
+  let jobCategoryFilter = "all"; // 'all' | 'مساح' | 'مساعد مساحة' | 'GIS'
+  let deviceTypeFilter = "all"; // 'all' | 'بيع' | 'إيجار'
+  let searchQuery = "";
+
+  let jobsList = [];
+  let devicesList = [];
+
+  // 1. حقن التنسيقات المتوافقة مع الثيم الفاتح والداكن
+  function injectStyles() {
+    if (document.getElementById("gdWorkDevicesFullStyles")) return;
     const style = document.createElement("style");
-    style.id = "gdWorkDevicesStyles";
+    style.id = "gdWorkDevicesFullStyles";
     style.textContent = `
-      @keyframes gdGearRotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      @keyframes gdGearRotateReverse {
-        0% { transform: rotate(360deg); }
-        100% { transform: rotate(0deg); }
-      }
       #gdWorkDevicesView {
         display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 48px 20px 100px;
-        min-height: 62vh;
+        padding: 16px 14px 110px;
+        max-width: 820px;
+        margin: 0 auto;
         direction: rtl;
-        color: #f3f6fa;
+        text-align: right;
+        font-family: inherit;
       }
       #gdWorkDevicesView.active {
-        display: flex;
+        display: block;
       }
-      /* إجبار عدم تفعيل أي تبويب آخر أثناء فتح "شغل وأجهزة" */
+
+      /* منع تفعيل أي تبويب آخر في الشريط السفلي أثناء فتح القسم */
       body.gd-wd-open nav .active:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open nav .on:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open footer .active:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open footer .on:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open [class*="nav"] .active:not(#gdWorkDevicesNavBtn),
-      body.gd-wd-open [class*="nav"] .on:not(#gdWorkDevicesNavBtn),
-      body.gd-wd-open [class*="bottom"] .active:not(#gdWorkDevicesNavBtn),
-      body.gd-wd-open [class*="bottom"] .on:not(#gdWorkDevicesNavBtn) {
+      body.gd-wd-open [class*="bottom"] .active:not(#gdWorkDevicesNavBtn) {
         color: #8b949e !important;
-        border-top-color: transparent !important;
-        border-bottom-color: transparent !important;
+        border-color: transparent !important;
         background: transparent !important;
-        box-shadow: none !important;
       }
-      /* تنسيق التبويب الجديد عند تفعيله فقط */
       #gdWorkDevicesNavBtn.gd-wd-active {
         color: #e0531f !important;
         border-top: 2px solid #e0531f !important;
         background: rgba(224, 83, 31, 0.08) !important;
       }
-      #gdWorkDevicesNavBtn:not(.gd-wd-active) {
-        color: #8b949e !important;
-        border-color: transparent !important;
-        background: transparent !important;
+
+      /* التبويبان الرئيسيان: قسم الشغل | قسم الأجهزة */
+      .gd-wd-main-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 14px;
       }
-      .gd-wd-gears-wrap {
-        position: relative;
-        width: 130px;
-        height: 130px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 22px;
-      }
-      .gd-wd-gear-main {
-        color: #e09f24;
-        filter: drop-shadow(0 0 18px rgba(224, 159, 36, 0.35));
-        animation: gdGearRotate 7s linear infinite;
-      }
-      .gd-wd-gear-sub {
-        position: absolute;
-        bottom: 6px;
-        left: 8px;
-        color: #38bdf8;
-        filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.3));
-        animation: gdGearRotateReverse 5s linear infinite;
-      }
-      .gd-wd-badge-icon {
-        position: absolute;
-        top: 4px;
-        right: 6px;
-        background: #171c26;
-        border: 1.5px solid #e09f24;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      }
-      .gd-wd-title {
-        margin: 0 0 10px;
-        font-size: 22px;
+      .gd-wd-main-tab {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 10px;
+        font-size: 14px;
         font-weight: 900;
+        cursor: pointer;
+        background: transparent;
+        color: #475569;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+      .gd-wd-main-tab.active {
+        background: #e09f24;
+        color: #0f172a;
+        box-shadow: 0 4px 12px rgba(224, 159, 36, 0.35);
+      }
+
+      /* شريط البحث والتصفية */
+      .gd-wd-search-box {
+        position: relative;
+        margin-bottom: 12px;
+      }
+      .gd-wd-search-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 38px 11px 14px;
+        border-radius: 12px;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 13.5px;
+        font-family: inherit;
+        outline: none;
+      }
+      .gd-wd-search-input:focus {
+        border-color: #e09f24;
+      }
+      .gd-wd-search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+        pointer-events: none;
+      }
+
+      /* أزرار الفلترة الفرعية */
+      .gd-wd-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+      .gd-wd-filter-chip {
+        padding: 6px 13px;
+        border-radius: 99px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .gd-wd-filter-chip.active {
+        background: #0f172a;
+        color: #e09f24;
+        border-color: #0f172a;
+      }
+
+      /* بانر التواصل مع الأدمن لإضافة جهاز أو وظيفة */
+      .gd-wd-contact-banner {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1.5px solid #f59e0b;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .gd-wd-contact-banner p {
+        margin: 0;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #78350f;
+        line-height: 1.5;
+        flex: 1;
+        min-width: 200px;
+      }
+      .gd-wd-wa-btn {
+        background: #25D366;
+        color: #0f172a;
+        text-decoration: none;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 900;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      /* زر الإضافة الخاص بالأدمن */
+      .gd-wd-admin-add-btn {
+        width: 100%;
+        background: #e0531f;
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px;
+        font-size: 13.5px;
+        font-weight: 900;
+        cursor: pointer;
+        margin-bottom: 14px;
+        font-family: inherit;
+        box-shadow: 0 4px 14px rgba(224, 83, 31, 0.3);
+      }
+
+      /* شبكة البطاقات (الكروت) */
+      .gd-wd-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 14px;
+      }
+      .gd-wd-card {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .gd-wd-card.closed-item {
+        opacity: 0.78;
+        border-color: #cbd5e1;
+      }
+      .gd-wd-card-img-wrap {
+        position: relative;
+        width: 100%;
+        height: 185px;
+        background: #0f172a;
+        overflow: hidden;
+      }
+      .gd-wd-card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gd-wd-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 900;
+        background: #0f172a;
         color: #e09f24;
       }
-      .gd-wd-desc {
+      .gd-wd-status-ribbon {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 900;
+      }
+      .gd-wd-status-ribbon.open {
+        background: #16a34a;
+        color: #ffffff;
+      }
+      .gd-wd-status-ribbon.closed {
+        background: #dc2626;
+        color: #ffffff;
+      }
+
+      .gd-wd-card-body {
+        padding: 14px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .gd-wd-card-title {
         margin: 0;
-        font-size: 13.5px;
-        color: #94a3b8;
-        max-width: 340px;
-        line-height: 1.7;
+        font-size: 15.5px;
+        font-weight: 900;
+        color: #0f172a;
+      }
+      .gd-wd-card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 11.5px;
+        color: #475569;
+        font-weight: 700;
+      }
+      .gd-wd-card-meta span {
+        background: #f1f5f9;
+        padding: 3px 8px;
+        border-radius: 6px;
+      }
+      .gd-wd-card-desc {
+        margin: 0;
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.65;
+        white-space: pre-line;
+      }
+      .gd-wd-card-footer {
+        padding: 10px 14px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .gd-wd-price {
+        font-size: 14px;
+        font-weight: 900;
+        color: #b45309;
+      }
+
+      /* أزرار تحكم الأدمن داخل الكارت */
+      .gd-wd-admin-controls {
+        width: 100%;
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+        padding-top: 8px;
+        border-top: 1px dashed #cbd5e1;
+      }
+      .gd-wd-admin-ctrl-btn {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      /* نافذة الإضافة للأدمن */
+      #gdWdAdminModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.78);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 10020;
+        direction: rtl;
+      }
+      .gd-wd-modal-box {
+        background: #ffffff;
+        border: 2px solid #e09f24;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 460px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 18px;
+        color: #0f172a;
+      }
+      .gd-wd-field {
+        margin-bottom: 11px;
+      }
+      .gd-wd-field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 4px;
+        color: #334155;
+      }
+      .gd-wd-field input,
+      .gd-wd-field select,
+      .gd-wd-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 11px;
+        border-radius: 10px;
+        border: 1.5px solid #cbd5e1;
+        font-size: 13px;
+        font-family: inherit;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      /* التوافق مع الوضع الداكن إذا فعّله المستخدم */
+      body.dark-mode .gd-wd-main-tabs,
+      body.dark .gd-wd-main-tabs,
+      [data-theme="dark"] .gd-wd-main-tabs {
+        background: #171c26;
+        border-color: #2a3242;
+      }
+      body.dark-mode .gd-wd-main-tab,
+      body.dark .gd-wd-main-tab,
+      [data-theme="dark"] .gd-wd-main-tab {
+        color: #cbd5e1;
+      }
+      body.dark-mode .gd-wd-card,
+      body.dark .gd-wd-card,
+      [data-theme="dark"] .gd-wd-card {
+        background: #171c26;
+        border-color: #2a3242;
+      }
+      body.dark-mode .gd-wd-card-title,
+      body.dark .gd-wd-card-title,
+      [data-theme="dark"] .gd-wd-card-title {
+        color: #ffffff;
+      }
+      body.dark-mode .gd-wd-card-desc,
+      body.dark .gd-wd-card-desc,
+      [data-theme="dark"] .gd-wd-card-desc {
+        color: #cbd5e1;
+      }
+      body.dark-mode .gd-wd-search-input,
+      body.dark-mode .gd-wd-filter-chip,
+      [data-theme="dark"] .gd-wd-search-input,
+      [data-theme="dark"] .gd-wd-filter-chip {
+        background: #171c26;
+        border-color: #2a3242;
+        color: #f3f6fa;
       }
     `;
     document.head.appendChild(style);
   }
 
+  // 2. إدارة البيانات (Firestore + التخزين المحلي كنسخة احتياطية فورية)
+  function getFirestoreDb() {
+    try {
+      if (window.firebase && firebase.firestore) {
+        return firebase.firestore();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function loadInitialSampleIfEmpty() {
+    const localJobs = JSON.parse(localStorage.getItem("gd_wd_jobs") || "[]");
+    const localDevices = JSON.parse(localStorage.getItem("gd_wd_devices") || "[]");
+
+    if (localJobs.length === 0) {
+      jobsList = [
+        {
+          id: "sample_job_1",
+          category: "مساح",
+          title: "مطلوب مهندس مساحة خبرة للعمل بمشروع بنية تحتية",
+          location: "القاهرة / الجيزة",
+          salary: "يحدد حسب الخبرة",
+          details: "إجادة العمل على أجهزة Total Station و GPS واستخراج اللوحات والكميات على AutoCAD Civil 3D.",
+          phone: ADMIN_WHATSAPP,
+          status: "open", // 'open' | 'completed'
+          createdAt: Date.now()
+        }
+      ];
+      localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+    } else {
+      jobsList = localJobs;
+    }
+
+    if (localDevices.length === 0) {
+      devicesList = [
+        {
+          id: "sample_dev_1",
+          offerType: "بيع", // 'بيع' | 'إيجار'
+          title: "جهاز توتال ستيشن Leica TS06 Plus",
+          condition: "بحالة ممتازة + كامل المشتملات",
+          price: "تواصل لمعرفة السعر",
+          imageUrl: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+          details: "الجهاز معاير وجاهز للعمل فوراً، يشمل الحامل الثلاثي، العاكس، الشاحن، وشنطة الحفظ الأصلية.",
+          phone: ADMIN_WHATSAPP,
+          status: "available", // 'available' | 'sold' | 'rented'
+          createdAt: Date.now()
+        }
+      ];
+      localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+    } else {
+      devicesList = localDevices;
+    }
+  }
+
+  function syncDataFromCloud() {
+    const db = getFirestoreDb();
+    if (!db) {
+      loadInitialSampleIfEmpty();
+      renderContent();
+      return;
+    }
+
+    db.collection("geodev_jobs")
+      .orderBy("createdAt", "desc")
+      .onSnapshot(
+        snap => {
+          if (!snap.empty) {
+            jobsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+          } else {
+            loadInitialSampleIfEmpty();
+          }
+          renderContent();
+        },
+        () => {
+          loadInitialSampleIfEmpty();
+          renderContent();
+        }
+      );
+
+    db.collection("geodev_devices")
+      .orderBy("createdAt", "desc")
+      .onSnapshot(
+        snap => {
+          if (!snap.empty) {
+            devicesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+          } else {
+            loadInitialSampleIfEmpty();
+          }
+          renderContent();
+        },
+        () => {
+          loadInitialSampleIfEmpty();
+          renderContent();
+        }
+      );
+  }
+
+  async function saveNewItem(type, payload) {
+    const db = getFirestoreDb();
+    if (type === "jobs") {
+      if (db) {
+        await db.collection("geodev_jobs").add(payload);
+      } else {
+        jobsList.unshift({ id: "job_" + Date.now(), ...payload });
+        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+      }
+    } else {
+      if (db) {
+        await db.collection("geodev_devices").add(payload);
+      } else {
+        devicesList.unshift({ id: "dev_" + Date.now(), ...payload });
+        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+      }
+    }
+    renderContent();
+  }
+
+  async function updateItemStatus(type, id, newStatus) {
+    const db = getFirestoreDb();
+    if (type === "jobs") {
+      if (db && !id.startsWith("sample_") && !id.startsWith("job_")) {
+        await db.collection("geodev_jobs").doc(id).update({ status: newStatus });
+      } else {
+        jobsList = jobsList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
+        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+      }
+    } else {
+      if (db && !id.startsWith("sample_") && !id.startsWith("dev_")) {
+        await db.collection("geodev_devices").doc(id).update({ status: newStatus });
+      } else {
+        devicesList = devicesList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
+        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+      }
+    }
+    renderContent();
+  }
+
+  async function deleteItem(type, id) {
+    if (!confirm("هل أنت متأكد من حذف هذا العنصر نهائياً؟")) return;
+    const db = getFirestoreDb();
+    if (type === "jobs") {
+      if (db && !id.startsWith("sample_") && !id.startsWith("job_")) {
+        await db.collection("geodev_jobs").doc(id).delete();
+      } else {
+        jobsList = jobsList.filter(item => item.id !== id);
+        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+      }
+    } else {
+      if (db && !id.startsWith("sample_") && !id.startsWith("dev_")) {
+        await db.collection("geodev_devices").doc(id).delete();
+      } else {
+        devicesList = devicesList.filter(item => item.id !== id);
+        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+      }
+    }
+    renderContent();
+  }
+
+  // 3. رسم واجهة القسم بالكامل
+  function renderContent() {
+    const view = document.getElementById("gdWorkDevicesView");
+    if (!view) return;
+
+    const q = searchQuery.trim().toLowerCase();
+
+    // بناء قسم الشغل
+    let jobsHtml = "";
+    if (activeSubTab === "jobs") {
+      const filteredJobs = jobsList.filter(job => {
+        const matchCat = jobCategoryFilter === "all" || job.category === jobCategoryFilter;
+        const matchQuery =
+          !q ||
+          (job.title || "").toLowerCase().includes(q) ||
+          (job.category || "").toLowerCase().includes(q) ||
+          (job.location || "").toLowerCase().includes(q) ||
+          (job.details || "").toLowerCase().includes(q);
+        return matchCat && matchQuery;
+      });
+
+      const jobCards = filteredJobs.length
+        ? filteredJobs
+            .map(job => {
+              const isCompleted = job.status === "completed";
+              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص وظيفة: ${job.title} (${job.category})`);
+              return `
+                <div class="gd-wd-card ${isCompleted ? "closed-item" : ""}">
+                  <div class="gd-wd-card-body">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                      <span style="background:#0f172a;color:#e09f24;padding:3px 10px;border-radius:7px;font-size:11.5px;font-weight:900;">
+                        👷‍♂️ ${job.category}
+                      </span>
+                      <span style="background:${isCompleted ? "#dc2626" : "#16a34a"};color:#fff;padding:3px 10px;border-radius:7px;font-size:11px;font-weight:900;">
+                        ${isCompleted ? "تم اكتمال العدد المطلوب" : "متاح للتقديم"}
+                      </span>
+                    </div>
+                    <h3 class="gd-wd-card-title">${job.title}</h3>
+                    <div class="gd-wd-card-meta">
+                      ${job.location ? `<span>📍 ${job.location}</span>` : ""}
+                      ${job.salary ? `<span>💰 ${job.salary}</span>` : ""}
+                    </div>
+                    <p class="gd-wd-card-desc">${job.details || ""}</p>
+                  </div>
+                  <div class="gd-wd-card-footer">
+                    ${
+                      isCompleted
+                        ? `<span style="color:#dc2626;font-size:12px;font-weight:900;">✔ أُغلق باب التقديم</span>`
+                        : `<a href="https://wa.me/${job.phone || ADMIN_WHATSAPP}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل للتقديم</a>`
+                    }
+                    ${
+                      isAdminUser
+                        ? `
+                      <div class="gd-wd-admin-controls">
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:${isCompleted ? "#16a34a" : "#dc2626"};color:#fff;"
+                          onclick="window.GDWorkDevicesActions.toggleJobStatus('${job.id}', '${isCompleted ? "open" : "completed"}')">
+                          ${isCompleted ? "إعادة فتح الوظيفة" : "تم اكتمال العدد المطلوب"}
+                        </button>
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:#334155;color:#fff;max-width:65px;"
+                          onclick="window.GDWorkDevicesActions.deleteItem('jobs', '${job.id}')">
+                          حذف
+                        </button>
+                      </div>
+                    `
+                        : ""
+                    }
+                  </div>
+                </div>
+              `;
+            })
+            .join("")
+        : `<p style="text-align:center;color:#64748b;padding:24px;font-weight:700;">لا توجد وظائف مطابقة لبحثك حالياً.</p>`;
+
+      jobsHtml = `
+        <div class="gd-wd-filters">
+          ${["all", "مساح", "مساعد مساحة", "GIS"]
+            .map(
+              cat => `
+            <button type="button" class="gd-wd-filter-chip ${jobCategoryFilter === cat ? "active" : ""}"
+              onclick="window.GDWorkDevicesActions.setJobFilter('${cat}')">
+              ${cat === "all" ? "الكل" : "شغل " + cat}
+            </button>
+          `
+            )
+            .join("")}
+        </div>
+        ${
+          isAdminUser
+            ? `<button type="button" class="gd-wd-admin-add-btn" onclick="window.GDWorkDevicesActions.openAdminModal('jobs')">➕ إضافة إعلان وظيفة جديدة (أدمن)</button>`
+            : ""
+        }
+        <div class="gd-wd-grid">${jobCards}</div>
+      `;
+    }
+
+    // بناء قسم الأجهزة
+    let devicesHtml = "";
+    if (activeSubTab === "devices") {
+      const filteredDevices = devicesList.filter(dev => {
+        const matchType = deviceTypeFilter === "all" || dev.offerType === deviceTypeFilter;
+        const matchQuery =
+          !q ||
+          (dev.title || "").toLowerCase().includes(q) ||
+          (dev.offerType || "").toLowerCase().includes(q) ||
+          (dev.condition || "").toLowerCase().includes(q) ||
+          (dev.details || "").toLowerCase().includes(q);
+        return matchType && matchQuery;
+      });
+
+      const deviceCards = filteredDevices.length
+        ? filteredDevices
+            .map(dev => {
+              const isSold = dev.status === "sold";
+              const isRented = dev.status === "rented";
+              const isClosed = isSold || isRented;
+              const statusLabel = isSold ? "تم البيع" : isRented ? "تم التأجير" : `متاح (${dev.offerType})`;
+              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص الجهاز المعروض (${dev.offerType}): ${dev.title}`);
+
+              return `
+                <div class="gd-wd-card ${isClosed ? "closed-item" : ""}">
+                  <div class="gd-wd-card-img-wrap">
+                    <img class="gd-wd-card-img" src="${dev.imageUrl || "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80"}" alt="${dev.title}">
+                    <span class="gd-wd-badge">${dev.offerType === "بيع" ? "🏷️ للبيع" : "⏱️ للإيجار"}</span>
+                    <span class="gd-wd-status-ribbon ${isClosed ? "closed" : "open"}">${statusLabel}</span>
+                  </div>
+                  <div class="gd-wd-card-body">
+                    <h3 class="gd-wd-card-title">${dev.title}</h3>
+                    <div class="gd-wd-card-meta">
+                      ${dev.condition ? `<span>⚙️ ${dev.condition}</span>` : ""}
+                    </div>
+                    <p class="gd-wd-card-desc">${dev.details || ""}</p>
+                  </div>
+                  <div class="gd-wd-card-footer">
+                    <span class="gd-wd-price">${dev.price || "تواصل للسعر"}</span>
+                    ${
+                      isClosed
+                        ? `<span style="color:#dc2626;font-size:12px;font-weight:900;">✔ ${statusLabel}</span>`
+                        : `<a href="https://wa.me/${dev.phone || ADMIN_WHATSAPP}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل عبر واتساب</a>`
+                    }
+                    ${
+                      isAdminUser
+                        ? `
+                      <div class="gd-wd-admin-controls">
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:#dc2626;color:#fff;"
+                          onclick="window.GDWorkDevicesActions.toggleDeviceStatus('${dev.id}', 'sold')">
+                          تم البيع
+                        </button>
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:#d97706;color:#fff;"
+                          onclick="window.GDWorkDevicesActions.toggleDeviceStatus('${dev.id}', 'rented')">
+                          تم التأجير
+                        </button>
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:#16a34a;color:#fff;"
+                          onclick="window.GDWorkDevicesActions.toggleDeviceStatus('${dev.id}', 'available')">
+                          متاح
+                        </button>
+                        <button type="button" class="gd-wd-admin-ctrl-btn" style="background:#334155;color:#fff;max-width:55px;"
+                          onclick="window.GDWorkDevicesActions.deleteItem('devices', '${dev.id}')">
+                          حذف
+                        </button>
+                      </div>
+                    `
+                        : ""
+                    }
+                  </div>
+                </div>
+              `;
+            })
+            .join("")
+        : `<p style="text-align:center;color:#64748b;padding:24px;font-weight:700;">لا توجد أجهزة مطابقة لبحثك حالياً.</p>`;
+
+      devicesHtml = `
+        <div class="gd-wd-filters">
+          ${["all", "بيع", "إيجار"]
+            .map(
+              t => `
+            <button type="button" class="gd-wd-filter-chip ${deviceTypeFilter === t ? "active" : ""}"
+              onclick="window.GDWorkDevicesActions.setDeviceFilter('${t}')">
+              ${t === "all" ? "جميع الأجهزة" : "أجهزة لل" + t}
+            </button>
+          `
+            )
+            .join("")}
+        </div>
+        ${
+          isAdminUser
+            ? `<button type="button" class="gd-wd-admin-add-btn" onclick="window.GDWorkDevicesActions.openAdminModal('devices')">➕ إضافة جهاز جديد للبيع أو الإيجار (أدمن)</button>`
+            : ""
+        }
+        <div class="gd-wd-grid">${deviceCards}</div>
+      `;
+    }
+
+    const contactBannerText =
+      activeSubTab === "jobs"
+        ? "هل لديك فرصة عمل مساحي أو GIS وتريد نشرها هنا؟ تواصل مع الأدمن لإضافتها فوراً."
+        : "هل لديك جهاز مساحي (Total Station / GPS / Level) وتريد عرضه للبيع أو الإيجار؟ تواصل مع الأدمن لإضافته بالصور والتفاصيل.";
+
+    const contactWaText = encodeURIComponent(
+      activeSubTab === "jobs"
+        ? "مرحباً م. أحمد، أريد نشر إعلان وظيفة في قسم الشغل بالمنصة."
+        : "مرحباً م. أحمد، أريد عرض جهاز مساحي للبيع / الإيجار في قسم الأجهزة بالمنصة."
+    );
+
+    view.innerHTML = `
+      <div class="gd-wd-main-tabs">
+        <button type="button" class="gd-wd-main-tab ${activeSubTab === "jobs" ? "active" : ""}"
+          onclick="window.GDWorkDevicesActions.switchTab('jobs')">
+          👷‍♂️ قسم الشغل والوظائف
+        </button>
+        <button type="button" class="gd-wd-main-tab ${activeSubTab === "devices" ? "active" : ""}"
+          onclick="window.GDWorkDevicesActions.switchTab('devices')">
+          📡 قسم الأجهزة (بيع وإيجار)
+        </button>
+      </div>
+
+      <div class="gd-wd-search-box">
+        <span class="gd-wd-search-icon">🔍</span>
+        <input type="text" class="gd-wd-search-input"
+          placeholder="${activeSubTab === "jobs" ? "ابحث عن شغل مساح، مساعد مساحة، GIS، أو المحافظة..." : "ابحث عن جهاز Total Station، GPS، ميزان، بيع أو إيجار..."}"
+          value="${searchQuery.replace(/"/g, "&quot;")}"
+          oninput="window.GDWorkDevicesActions.onSearch(this.value)">
+      </div>
+
+      <div class="gd-wd-contact-banner">
+        <p>📢 ${contactBannerText}</p>
+        <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${contactWaText}" target="_blank" rel="noopener" class="gd-wd-wa-btn">
+          💬 تواصل مع الأدمن (01015912371)
+        </a>
+      </div>
+
+      ${activeSubTab === "jobs" ? jobsHtml : devicesHtml}
+    `;
+  }
+
+  // 4. نافذة الإضافة الخاصة بالأدمن فقط
+  function injectAdminModal() {
+    if (document.getElementById("gdWdAdminModal")) return;
+    const modalHtml = `
+      <div id="gdWdAdminModal">
+        <div class="gd-wd-modal-box">
+          <h3 id="gdWdModalTitle" style="margin:0 0 12px;color:#b45309;font-size:16px;">إضافة عنصر جديد</h3>
+          <form id="gdWdAdminForm">
+            <div id="gdWdFormFields"></div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <button type="submit" style="flex:1;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;font-family:inherit;">
+                نشر الآن
+              </button>
+              <button type="button" onclick="document.getElementById('gdWdAdminModal').style.display='none'"
+                style="background:#e2e8f0;color:#334155;border:none;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;">
+                إلغاء
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+  }
+
+  function openAdminModal(type) {
+    if (!isAdminUser) return;
+    injectAdminModal();
+    const modal = document.getElementById("gdWdAdminModal");
+    const titleEl = document.getElementById("gdWdModalTitle");
+    const fieldsEl = document.getElementById("gdWdFormFields");
+    const form = document.getElementById("gdWdAdminForm");
+
+    if (type === "jobs") {
+      titleEl.textContent = "➕ إضافة وظيفة جديدة في قسم الشغل";
+      fieldsEl.innerHTML = `
+        <div class="gd-wd-field">
+          <label>تخصص الوظيفة</label>
+          <select name="category" required>
+            <option value="مساح">شغل مساح</option>
+            <option value="مساعد مساحة">شغل مساعد مساحة</option>
+            <option value="GIS">شغل GIS</option>
+          </select>
+        </div>
+        <div class="gd-wd-field">
+          <label>عنوان الوظيفة</label>
+          <input type="text" name="title" placeholder="مثال: مطلوب مساح طرق خبرة 3 سنوات" required>
+        </div>
+        <div class="gd-wd-field">
+          <label>موقع العمل / المحافظة</label>
+          <input type="text" name="location" placeholder="مثال: المنيا / القاهرة / العلمين">
+        </div>
+        <div class="gd-wd-field">
+          <label>الراتب / المميزات</label>
+          <input type="text" name="salary" placeholder="مثال: 8000 ج + إقامة">
+        </div>
+        <div class="gd-wd-field">
+          <label>تفاصيل وشروط الوظيفة</label>
+          <textarea name="details" rows="3" placeholder="اكتب تفاصيل العمل والأجهزة المطلوبة..." required></textarea>
+        </div>
+      `;
+    } else {
+      titleEl.textContent = "➕ إضافة جهاز جديد للبيع أو الإيجار";
+      fieldsEl.innerHTML = `
+        <div class="gd-wd-field">
+          <label>نوع العرض</label>
+          <select name="offerType" required>
+            <option value="بيع">للبيع</option>
+            <option value="إيجار">للإيجار</option>
+          </select>
+        </div>
+        <div class="gd-wd-field">
+          <label>اسم وموديل الجهاز</label>
+          <input type="text" name="title" placeholder="مثال: توتال ستيشن Sokkia CX-105" required>
+        </div>
+        <div class="gd-wd-field">
+          <label>السعر / قيمة الإيجار</label>
+          <input type="text" name="price" placeholder="مثال: 145,000 جنيه أو 700 ج/يوم" required>
+        </div>
+        <div class="gd-wd-field">
+          <label>حالة الجهاز ومشتملاته</label>
+          <input type="text" name="condition" placeholder="مثال: كسر زيرو بالضمان والمعايرة">
+        </div>
+        <div class="gd-wd-field">
+          <label>صورة الجهاز (اختر صورة من جهازك أو ضع رابط صورة)</label>
+          <input type="file" id="gdWdDeviceFile" accept="image/*" style="margin-bottom:6px;">
+          <input type="url" name="imageUrl" placeholder="أو الصق رابط الصورة مباشرة https://...">
+        </div>
+        <div class="gd-wd-field">
+          <label>التفاصيل الكاملة للجهاز</label>
+          <textarea name="details" rows="3" placeholder="اكتب كافة المواصفات والملحقات..." required></textarea>
+        </div>
+      `;
+    }
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      if (type === "jobs") {
+        await saveNewItem("jobs", {
+          category: fd.get("category"),
+          title: fd.get("title"),
+          location: fd.get("location"),
+          salary: fd.get("salary"),
+          details: fd.get("details"),
+          phone: ADMIN_WHATSAPP,
+          status: "open",
+          createdAt: Date.now()
+        });
+      } else {
+        let finalImgUrl = fd.get("imageUrl") || "";
+        const fileInput = document.getElementById("gdWdDeviceFile");
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          // تحويل الصورة المصغرة إلى DataURL مضغوطة لتعمل مباشرة بدون تعقيد
+          finalImgUrl = await compressImageToDataUrl(fileInput.files[0]);
+        }
+        await saveNewItem("devices", {
+          offerType: fd.get("offerType"),
+          title: fd.get("title"),
+          price: fd.get("price"),
+          condition: fd.get("condition"),
+          imageUrl: finalImgUrl,
+          details: fd.get("details"),
+          phone: ADMIN_WHATSAPP,
+          status: "available",
+          createdAt: Date.now()
+        });
+      }
+      modal.style.display = "none";
+      if (typeof window.toast === "function") window.toast("تم النشر بنجاح!", "success");
+    };
+
+    modal.style.display = "flex";
+  }
+
+  // ضغط الصورة المرفوعة من الهاتف تلقائياً لضمان سرعة التحميل والحفظ
+  function compressImageToDataUrl(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxW = 720;
+          const scale = Math.min(1, maxW / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.78));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ربط دوال التفاعل بالواجهة
+  window.GDWorkDevicesActions = {
+    switchTab(tab) {
+      activeSubTab = tab;
+      renderContent();
+    },
+    setJobFilter(cat) {
+      jobCategoryFilter = cat;
+      renderContent();
+    },
+    setDeviceFilter(type) {
+      deviceTypeFilter = type;
+      renderContent();
+    },
+    onSearch(val) {
+      searchQuery = val;
+      renderContent();
+      // الحفاظ على التركيز داخل خانة البحث أثناء الكتابة
+      const input = document.querySelector("#gdWorkDevicesView .gd-wd-search-input");
+      if (input) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    },
+    openAdminModal,
+    toggleJobStatus(id, status) {
+      updateItemStatus("jobs", id, status);
+    },
+    toggleDeviceStatus(id, status) {
+      updateItemStatus("devices", id, status);
+    },
+    deleteItem
+  };
+
+  // 5. حقن الزر في الشريط السفلي بجانب "المساحة" وربط الصفحة
   function setupWorkDevicesTab() {
     if (document.getElementById("gdWorkDevicesNavBtn")) return;
 
     const allButtons = Array.from(document.querySelectorAll("button, a, .nav-item, [data-tab]"));
     const surveyBtn = allButtons.find(
-      el => (el.textContent || "").trim().includes("المساحة") &&
-      el.closest("nav, footer, [class*='nav'], [class*='bottom'], [id*='nav']")
+      el =>
+        (el.textContent || "").trim().includes("المساحة") &&
+        el.closest("nav, footer, [class*='nav'], [class*='bottom'], [id*='nav']")
     );
 
     if (!surveyBtn) return;
 
-    // استنساخ زر "المساحة" وتنظيف جميع سمات التفعيل والارتباط منه
     const newBtn = surveyBtn.cloneNode(true);
     newBtn.id = "gdWorkDevicesNavBtn";
     newBtn.classList.remove("active", "on", "selected", "current");
@@ -147,9 +1028,7 @@
     `;
 
     const svgEl = newBtn.querySelector("svg, i, span:first-child");
-    if (svgEl) {
-      svgEl.outerHTML = customIconSvg;
-    }
+    if (svgEl) svgEl.outerHTML = customIconSvg;
 
     const walker = document.createTreeWalker(newBtn, NodeFilter.SHOW_TEXT, null, false);
     let node;
@@ -159,84 +1038,93 @@
       }
     }
 
-    // وضع الزر بجانب "المساحة"
     surveyBtn.insertAdjacentElement("afterend", newBtn);
 
     const mainContainer = document.querySelector("main, .main-content, #app, .container") || document.body;
     const viewDiv = document.createElement("div");
     viewDiv.id = "gdWorkDevicesView";
-    viewDiv.innerHTML = `
-      <div class="gd-wd-gears-wrap">
-        <div class="gd-wd-badge-icon" title="مساحة وأجهزة">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e09f24" stroke-width="2">
-            <path d="M5 10a7 7 0 0 1 14 0v1H5v-1z"/>
-            <path d="M3 11h18"/>
-            <rect x="9" y="13" width="6" height="4" rx="1"/>
-            <path d="M10 17l-3 4M14 17l3 4M12 17v4"/>
-          </svg>
-        </div>
-        <svg class="gd-wd-gear-main" width="84" height="84" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-        <svg class="gd-wd-gear-sub" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-      </div>
-      <h2 class="gd-wd-title">جاري تصميم القسم...</h2>
-      <p class="gd-wd-desc">نعمل حالياً على تجهيز قسم <strong>شغل وأجهزة</strong> لتوفير أحدث فرص العمل المساحية وأدوات وأجهزة الرفع والـ Total Station. انتظرونا قريباً!</p>
-    `;
     mainContainer.appendChild(viewDiv);
 
     const navContainer = surveyBtn.parentElement;
     const siblingTabs = Array.from(navContainer.children).filter(el => el !== newBtn);
 
-    // عند الضغط على "شغل وأجهزة"
-    newBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    newBtn.addEventListener(
+      "click",
+      e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-      document.body.classList.add("gd-wd-open");
-      siblingTabs.forEach(btn => btn.classList.remove("active", "on", "selected", "current"));
-      newBtn.classList.add("gd-wd-active");
-
-      Array.from(mainContainer.children).forEach(child => {
-        if (
-          child !== viewDiv &&
-          !child.contains(navContainer) &&
-          child.id !== "gdApkFloatingBanner" &&
-          child.id !== "gdGiveawayFloatingCard"
-        ) {
-          if (child.style.display !== "none") {
-            child.dataset.prevDisplay = child.style.display || "block";
-            child.style.display = "none";
-          }
-        }
-      });
-      viewDiv.classList.add("active");
-    }, true);
-
-    // عند الضغط على أي قسم آخر (بما فيها المساحة)
-    siblingTabs.forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.body.classList.remove("gd-wd-open");
-        newBtn.classList.remove("gd-wd-active", "active", "on", "selected", "current");
-        viewDiv.classList.remove("active");
+        document.body.classList.add("gd-wd-open");
+        siblingTabs.forEach(btn => btn.classList.remove("active", "on", "selected", "current"));
+        newBtn.classList.add("gd-wd-active");
 
         Array.from(mainContainer.children).forEach(child => {
-          if (child !== viewDiv && child.dataset.prevDisplay) {
-            child.style.display = child.dataset.prevDisplay === "block" ? "" : child.dataset.prevDisplay;
-            delete child.dataset.prevDisplay;
+          if (
+            child !== viewDiv &&
+            !child.contains(navContainer) &&
+            child.id !== "gdQueueFloatingBanner" &&
+            child.id !== "gdApkFloatingBanner" &&
+            child.id !== "gdGiveawayFloatingCard"
+          ) {
+            if (child.style.display !== "none") {
+              child.dataset.prevDisplay = child.style.display || "block";
+              child.style.display = "none";
+            }
           }
         });
-      }, true);
+
+        viewDiv.classList.add("active");
+        renderContent();
+      },
+      true
+    );
+
+    siblingTabs.forEach(btn => {
+      btn.addEventListener(
+        "click",
+        () => {
+          document.body.classList.remove("gd-wd-open");
+          newBtn.classList.remove("gd-wd-active", "active", "on", "selected", "current");
+          viewDiv.classList.remove("active");
+
+          Array.from(mainContainer.children).forEach(child => {
+            if (child !== viewDiv && child.dataset.prevDisplay) {
+              child.style.display = child.dataset.prevDisplay === "block" ? "" : child.dataset.prevDisplay;
+              delete child.dataset.prevDisplay;
+            }
+          });
+        },
+        true
+      );
     });
   }
 
+  // 6. التحقق من صلاحية الأدمن عند تسجيل الدخول
+  function watchAdminAuth() {
+    const checkAuth = () => {
+      if (window.firebase && firebase.apps && firebase.apps.length) {
+        firebase.auth().onAuthStateChanged(user => {
+          isAdminUser = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+          renderContent();
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (!checkAuth()) {
+      const iv = setInterval(() => {
+        if (checkAuth()) clearInterval(iv);
+      }, 400);
+      setTimeout(() => clearInterval(iv), 10000);
+    }
+  }
+
   function init() {
-    injectWorkDevicesStyles();
+    injectStyles();
     setupWorkDevicesTab();
+    watchAdminAuth();
+    syncDataFromCloud();
     setTimeout(setupWorkDevicesTab, 800);
     setTimeout(setupWorkDevicesTab, 2000);
   }
@@ -245,5 +1133,5 @@
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
-  } 
+  }
 })();
