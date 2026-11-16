@@ -1,70 +1,54 @@
 /* ============================================================================
-   قسم "ربط التطبيقات بالـ AI" في الأكاديمية (PRO Plus) + الأدوات الهندسية المتطورة
+   قسم "ربط التطبيقات بالـ AI" في الأكاديمية (الافتراضي الأول + رفع 500MB للأدمن)
+   + توزيع الأدوات المتطورة وأدوات الـ AI المستقبلية في المساحة والجيوماتكس فقط
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOAcademyProPlusInit) return;
-  window.GEOAcademyProPlusInit = true;
+  if (window.GEOAcademyProPlusV2Init) return;
+  window.GEOAcademyProPlusV2Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const ADMIN_WHATSAPP = "201015912371";
+  const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 ميجابايت (نصف جيجا)
 
   let isAdminUser = false;
   let isProPlusUser = false;
-  let selectedSoftware = "all"; // 'all' | 'AutoCAD' | 'Civil 3D' | 'ArcGIS Pro' | 'ERDAS'
+  let selectedSoftware = "all";
+  let showToolsDownloadBtn = localStorage.getItem("gd_ai_show_tools_btn") === "1"; // معطل افتراضياً ولا يظهر للمستخدمين إلا إذا فعّله الأدمن
 
-  // قاعدة بيانات دروس وفيديوهات ربط التطبيقات بالـ AI (قابلة للتوسيع من لوحة الأدمن)
-  let aiBridgeCourses = JSON.parse(localStorage.getItem("gd_ai_bridge_courses") || "null") || [
+  // قائمة الدروس والحالات المرفوعة
+  let aiBridgeCourses = JSON.parse(localStorage.getItem("gd_ai_bridge_courses_v2") || "null") || [
     {
       id: "ai_cad_1",
       software: "AutoCAD",
       title: "ربط AutoCAD بالذكاء الاصطناعي وتوليد الليسبات التلقائية",
-      duration: "25 دقيقة",
-      level: "تطبيقي",
+      desc: "شرح عملي لربط أوتوكاد بأوامر الذكاء الاصطناعي لتسريع التفريد، الترقيم، واستخراج الجداول بضغطة زر.",
       videoUrl: "https://www.youtube.com/results?search_query=AutoCAD+AI+AutoLISP+automation",
-      desc: "شرح عملي لربط أوتوكاد بأوامر الذكاء الاصطناعي لتسريع التفريد، الترقيم، واستخراج الجداول بضغطة زر."
-    },
-    {
-      id: "ai_civil_1",
-      software: "Civil 3D",
-      title: "أتمتة تصميم الطرق والبروفايلات في Civil 3D باستخدام AI",
-      duration: "32 دقيقة",
-      level: "متقدم",
-      videoUrl: "https://www.youtube.com/results?search_query=Civil+3D+AI+Dynamo+automation",
-      desc: "كيفية استخدام الذكاء الاصطناعي و Dynamo لإنشاء المقاطع العرضية وحساب كميات الحفر والردم آلياً."
-    },
-    {
-      id: "ai_arcgis_1",
-      software: "ArcGIS Pro",
-      title: "ربط ArcGIS Pro بالذكاء الاصطناعي وكتابة سكريبتات ArcPy",
-      duration: "40 دقيقة",
-      level: "شامل",
-      videoUrl: "https://www.youtube.com/results?search_query=ArcGIS+Pro+AI+ArcPy+automation",
-      desc: "تشغيل التحليلات المكانية المعقدة وإخراج الخرائط الآلية في ArcGIS Pro عبر دمج نماذج AI مع Python."
-    },
-    {
-      id: "ai_erdas_1",
-      software: "ERDAS",
-      title: "معالجة المرئيات الفضائية في ERDAS Imagine بمساعدة AI",
-      duration: "28 دقيقة",
-      level: "استشعار عن بُعد",
-      videoUrl: "https://www.youtube.com/results?search_query=ERDAS+Imagine+AI+remote+sensing+classification",
-      desc: "التصنيف المراقب وغير المراقب وتحسين الدقة الطيفية للمرئيات الفضائية عبر بناء نماذج Spatial Modeler ذكية."
+      pdfUrl: "",
+      pdfName: "",
+      toolsUrl: "",
+      createdAt: Date.now()
     }
   ];
 
-  // 1. حقن التنسيقات
+  // إزالة أي بقايا للبانر/الصندوق العام القديم
+  function cleanupOldGlobalBox() {
+    const oldBox = document.getElementById("gdAdvancedEngToolsBox");
+    if (oldBox) oldBox.remove();
+  }
+
   function injectStyles() {
-    if (document.getElementById("gdAcademyProPlusStyles")) return;
+    if (document.getElementById("gdAcademyProPlusV2Styles")) return;
     const style = document.createElement("style");
-    style.id = "gdAcademyProPlusStyles";
+    style.id = "gdAcademyProPlusV2Styles";
     style.textContent = `
+      /* قسم ربط التطبيقات بالـ AI داخل الأكاديمية */
       .gd-ai-academy-box {
         background: #ffffff;
         border: 2px solid #e09f24;
         border-radius: 18px;
         padding: 16px;
-        margin: 16px 0;
+        margin: 10px 0 18px;
         direction: rtl;
         text-align: right;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -95,76 +79,81 @@
         border-radius: 99px;
         font-size: 11px;
         font-weight: 900;
-        letter-spacing: 0.4px;
       }
 
-      /* شريط اختيار البرنامج */
-      .gd-sw-selector-row {
+      /* شريط اختيار التطبيق + زر البحث */
+      .gd-sw-search-bar {
         display: flex;
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
         margin-bottom: 14px;
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid #cbd5e1;
       }
       .gd-sw-select {
-        padding: 8px 12px;
+        flex: 1;
+        min-width: 190px;
+        padding: 9px 12px;
         border-radius: 10px;
         border: 1.5px solid #cbd5e1;
-        background: #f8fafc;
+        background: #ffffff;
         color: #0f172a;
         font-size: 13px;
         font-weight: 800;
         font-family: inherit;
-        cursor: pointer;
       }
-      .gd-sw-chip {
-        padding: 6px 12px;
-        border-radius: 99px;
-        border: 1px solid #cbd5e1;
-        background: #f8fafc;
-        color: #334155;
-        font-size: 12px;
-        font-weight: 800;
+      .gd-sw-search-btn {
+        background: #0f172a;
+        color: #e09f24;
+        border: none;
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 13px;
+        font-weight: 900;
         cursor: pointer;
         font-family: inherit;
       }
-      .gd-sw-chip.active {
-        background: #0f172a;
-        color: #e09f24;
-        border-color: #0f172a;
-      }
 
-      /* شبكة الفيديوهات */
+      /* كروت الفيديوهات */
       .gd-ai-videos-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+        gap: 14px;
       }
       .gd-ai-video-card {
         background: #f8fafc;
         border: 1.5px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 13px;
+        border-radius: 15px;
+        padding: 14px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        gap: 8px;
-        position: relative;
+        gap: 10px;
       }
       .gd-ai-video-card h4 {
         margin: 0;
-        font-size: 14px;
+        font-size: 14.5px;
         font-weight: 900;
         color: #0f172a;
         line-height: 1.45;
       }
       .gd-ai-video-card p {
         margin: 0;
-        font-size: 12px;
+        font-size: 12.5px;
         color: #475569;
-        line-height: 1.6;
+        line-height: 1.65;
+        white-space: pre-line;
       }
-      .gd-ai-watch-btn {
+      .gd-ai-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-top: 4px;
+      }
+      .gd-ai-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -177,37 +166,107 @@
         border: none;
         cursor: pointer;
         font-family: inherit;
-        margin-top: 4px;
+        width: 100%;
+        box-sizing: border-box;
       }
-      .gd-ai-watch-btn.unlocked {
+      .gd-ai-btn.watch {
         background: #16a34a;
         color: #ffffff;
       }
-      .gd-ai-watch-btn.locked {
+      .gd-ai-btn.pdf {
+        background: #dc2626;
+        color: #ffffff;
+      }
+      .gd-ai-btn.tools {
+        background: #2563eb;
+        color: #ffffff;
+      }
+      .gd-ai-btn.locked {
         background: #0f172a;
         color: #e09f24;
       }
 
-      /* قسم الأدوات المتطورة (استشعار + GIS + مساحة) */
-      .gd-adv-tools-section {
-        background: #ffffff;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 18px;
+      /* لوحة تحكم الأدمن داخل الأكاديمية */
+      .gd-ai-admin-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        background: #fffbeb;
+        border: 1.5px dashed #f59e0b;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+      }
+
+      /* نافذة رفع الفيديو والملفات للأدمن */
+      #gdAiUploadModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.82);
+        display: none;
+        align-items: center;
+        justify-content: center;
         padding: 16px;
-        margin: 16px 0;
+        z-index: 10040;
+        direction: rtl;
+      }
+      .gd-ai-modal-box {
+        background: #ffffff;
+        border: 2px solid #e09f24;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 18px;
+        color: #0f172a;
+      }
+      .gd-ai-field {
+        margin-bottom: 11px;
+      }
+      .gd-ai-field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 4px;
+        color: #334155;
+      }
+      .gd-ai-field input,
+      .gd-ai-field select,
+      .gd-ai-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 11px;
+        border-radius: 10px;
+        border: 1.5px solid #cbd5e1;
+        font-size: 13px;
+        font-family: inherit;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      /* قسم الأدوات المتطورة المخصص للمساحة والجيوماتكس */
+      .gd-section-tools-box {
+        background: #ffffff;
+        border: 1.5px solid #e09f24;
+        border-radius: 16px;
+        padding: 14px;
+        margin: 14px 0;
         direction: rtl;
         text-align: right;
       }
-      .gd-adv-tools-grid {
+      .gd-section-tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 11px;
-        margin-top: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
       }
       .gd-adv-tool-card {
         background: #f8fafc;
         border: 1.5px solid #e2e8f0;
-        border-radius: 14px;
+        border-radius: 13px;
         padding: 12px;
         cursor: pointer;
         transition: transform 0.15s ease, border-color 0.15s ease;
@@ -218,7 +277,7 @@
       }
       .gd-adv-tool-card h5 {
         margin: 0 0 5px;
-        font-size: 13.5px;
+        font-size: 13px;
         font-weight: 900;
         color: #0f172a;
       }
@@ -228,8 +287,18 @@
         color: #475569;
         line-height: 1.5;
       }
+      .gd-ai-new-badge {
+        display: inline-block;
+        background: #0f172a;
+        color: #e09f24;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 1px 7px;
+        border-radius: 6px;
+        margin-bottom: 5px;
+      }
 
-      /* نافذة تشغيل الأداة المتطورة */
+      /* نافذة تشغيل الأدوات */
       #gdAdvToolModal {
         position: fixed;
         inset: 0;
@@ -238,7 +307,7 @@
         align-items: center;
         justify-content: center;
         padding: 16px;
-        z-index: 10030;
+        z-index: 10035;
         direction: rtl;
       }
       .gd-adv-modal-box {
@@ -274,11 +343,11 @@
         color: #1e293b;
       }
 
-      /* التوافق مع الثيم الداكن */
+      /* التوافق مع الوضع الداكن */
       body.dark-mode .gd-ai-academy-box,
-      body.dark-mode .gd-adv-tools-section,
+      body.dark-mode .gd-section-tools-box,
       [data-theme="dark"] .gd-ai-academy-box,
-      [data-theme="dark"] .gd-adv-tools-section {
+      [data-theme="dark"] .gd-section-tools-box {
         background: #171c26;
         border-color: #2a3242;
       }
@@ -307,162 +376,392 @@
     document.head.appendChild(style);
   }
 
-  // 2. التحقق من صلاحية PRO Plus للمستخدم الحالي
   function checkUserProPlusAccess() {
     if (isAdminUser) return true;
     const plan = (localStorage.getItem("gd_user_plan") || localStorage.getItem("plan") || "").toLowerCase();
     return isProPlusUser || plan.includes("plus") || plan.includes("pro_plus");
   }
 
-  function handleUpgradePrompt(courseTitle) {
-    const msg = encodeURIComponent(
-      `مرحبا، أريد الاشتراك في باقة PRO Plus لفتح قسم ربط التطبيقات بالـ AI ومشاهدة: ${courseTitle}`
+  // 1. العثور على حاوية الأكاديمية وجعل قسم "ربط التطبيقات بالـ AI" هو الأول تلقائياً
+  function findAcademyContainer() {
+    return (
+      document.getElementById("academy") ||
+      document.getElementById("academyView") ||
+      document.getElementById("sec-academy") ||
+      document.querySelector('[data-section="academy"], [data-tab-content="academy"], [id*="academy"]')
     );
-    if (
-      confirm(
-        "🔒 هذا المحتوى حصري لمشتركي باقة PRO Plus (ربط أوتوكاد وسيفيل وأرك جي آي إس وإيرداس بالـ AI).\n\nهل تريد التواصل عبر واتساب لتفعيل اشتراك PRO Plus الآن؟"
-      )
-    ) {
-      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${msg}`, "_blank", "noopener");
-    }
   }
 
-  // 3. رسم قسم "ربط التطبيقات بالـ AI" داخل الأكاديمية
-  function renderAiAcademySection(container) {
+  function renderAiAcademySection() {
+    const container = findAcademyContainer();
     if (!container) return;
+
     let box = document.getElementById("gdAcademyAiBridgeBox");
     if (!box) {
       box = document.createElement("div");
       box.id = "gdAcademyAiBridgeBox";
       box.className = "gd-ai-academy-box";
+    }
+    // ضمان وضعه دائماً كأول عنصر في أعلى الأكاديمية
+    if (container.firstElementChild !== box) {
       container.prepend(box);
     }
 
     const hasAccess = checkUserProPlusAccess();
-    const programs = ["all", "AutoCAD", "Civil 3D", "ArcGIS Pro", "ERDAS"];
     const filtered = aiBridgeCourses.filter(c => selectedSoftware === "all" || c.software === selectedSoftware);
 
-    const cardsHtml = filtered
-      .map(
-        c => `
-      <div class="gd-ai-video-card">
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <span style="background:#0f172a;color:#e09f24;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:900;">
-              💻 ${c.software}
-            </span>
-            <span style="font-size:11px;color:#64748b;font-weight:700;">⏱ ${c.duration} • ${c.level}</span>
+    const cardsHtml = filtered.length
+      ? filtered
+          .map(
+            c => `
+        <div class="gd-ai-video-card">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="background:#0f172a;color:#e09f24;padding:3px 10px;border-radius:7px;font-size:11.5px;font-weight:900;">
+                💻 ${c.software}
+              </span>
+              <span style="font-size:11px;color:#64748b;font-weight:700;">PRO Plus</span>
+            </div>
+            <h4>${c.title}</h4>
+            <p style="margin-top:6px;">${c.desc}</p>
           </div>
-          <h4>${c.title}</h4>
-          <p style="margin-top:5px;">${c.desc}</p>
+
+          <div class="gd-ai-card-actions">
+            ${
+              hasAccess
+                ? `
+                <button type="button" class="gd-ai-btn watch" onclick="window.GEOAcademyBridgeActions.playVideo('${c.id}')">
+                  ▶ مشاهدة الفيديو التطبيقي
+                </button>
+                ${
+                  c.pdfUrl
+                    ? `<a href="${c.pdfUrl}" download="${c.pdfName || c.title + ".pdf"}" target="_blank" rel="noopener" class="gd-ai-btn pdf">
+                        📄 تحميل ملف PDF الخاص بالفيديو
+                      </a>`
+                    : ""
+                }
+                ${
+                  showToolsDownloadBtn && c.toolsUrl
+                    ? `<a href="${c.toolsUrl}" target="_blank" rel="noopener" class="gd-ai-btn tools">
+                        🧰 تحميل الأدوات المرفقة
+                      </a>`
+                    : ""
+                }
+              `
+                : `
+                <button type="button" class="gd-ai-btn locked" onclick="window.GEOAcademyBridgeActions.requestUpgrade('${c.title.replace(/'/g, "")}')">
+                  🔒 حصري لمشتركي PRO Plus — اشترك للمشاهدة والتحميل
+                </button>
+              `
+            }
+            ${
+              isAdminUser
+                ? `<button type="button" onclick="window.GEOAcademyBridgeActions.deleteCourse('${c.id}')"
+                    style="background:#334155;color:#fff;border:none;border-radius:8px;padding:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">
+                    🗑 حذف الدرس (أدمن)
+                  </button>`
+                : ""
+            }
+          </div>
         </div>
-        <div>
-          ${
-            hasAccess
-              ? `<a href="${c.videoUrl}" target="_blank" rel="noopener" class="gd-ai-watch-btn unlocked">▶ مشاهدة الدرس والتطبيق العملي</a>`
-              : `<button type="button" class="gd-ai-watch-btn locked" onclick="window.GEOAcademyBridgeActions.requestUpgrade('${c.title.replace(/'/g, "")}')">
-                  🔒 حصري لمشتركي PRO Plus — اشترك للمشاهدة
-                </button>`
-          }
-          ${
-            isAdminUser
-              ? `<button type="button" onclick="window.GEOAcademyBridgeActions.deleteCourse('${c.id}')"
-                  style="width:100%;margin-top:5px;background:#dc2626;color:#fff;border:none;border-radius:7px;padding:4px;font-size:11px;cursor:pointer;">
-                  حذف الدرس (أدمن)
-                </button>`
-              : ""
-          }
-        </div>
-      </div>
-    `
-      )
-      .join("");
+      `
+          )
+          .join("")
+      : `<p style="text-align:center;color:#64748b;padding:18px;font-weight:700;">لا توجد فيديوهات مرفوعة لهذا التطبيق حالياً.</p>`;
 
     box.innerHTML = `
       <div class="gd-ai-academy-header">
         <h3 class="gd-ai-academy-title">
-          🤖 قسم ربط التطبيقات الهندسية بالـ AI
+          🤖 ربط التطبيقات الهندسية بالـ AI
           <span class="gd-proplus-pill">PRO Plus</span>
         </h3>
-        ${
-          isAdminUser
-            ? `<button type="button" onclick="window.GEOAcademyBridgeActions.addNewCourse()"
-                style="background:#e0531f;color:#fff;border:none;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit;">
-                ➕ إضافة فيديو ربط جديد
-              </button>`
-            : ""
-        }
       </div>
 
-      <div class="gd-sw-selector-row">
-        <span style="font-size:12.5px;font-weight:800;color:#475569;">اختر البرنامج:</span>
-        <select class="gd-sw-select" onchange="window.GEOAcademyBridgeActions.selectProgram(this.value)">
-          <option value="all" ${selectedSoftware === "all" ? "selected" : ""}>جميع البرامج (AutoCAD / Civil / ArcGIS / ERDAS)</option>
+      ${
+        isAdminUser
+          ? `
+        <div class="gd-ai-admin-bar">
+          <button type="button" onclick="window.GEOAcademyBridgeActions.openUploadModal()"
+            style="background:#e0531f;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:900;cursor:pointer;font-family:inherit;">
+            ➕ رفع فيديو جديد (حتى 500MB) + PDF
+          </button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#78350f;cursor:pointer;">
+            <input type="checkbox" ${showToolsDownloadBtn ? "checked" : ""}
+              onchange="window.GEOAcademyBridgeActions.toggleToolsBtn(this.checked)">
+            إظهار زر «تحميل الأدوات» في الكروت
+          </label>
+        </div>
+      `
+          : ""
+      }
+
+      <div class="gd-sw-search-bar">
+        <select id="gdAcademySwSelect" class="gd-sw-select">
+          <option value="all" ${selectedSoftware === "all" ? "selected" : ""}>جميع التطبيقات (AutoCAD / Civil 3D / ArcGIS Pro / ERDAS)</option>
           <option value="AutoCAD" ${selectedSoftware === "AutoCAD" ? "selected" : ""}>AutoCAD (أوتوكاد)</option>
           <option value="Civil 3D" ${selectedSoftware === "Civil 3D" ? "selected" : ""}>Civil 3D (سيفيل ثري دي)</option>
           <option value="ArcGIS Pro" ${selectedSoftware === "ArcGIS Pro" ? "selected" : ""}>ArcGIS Pro (أرك جي آي إس برو)</option>
           <option value="ERDAS" ${selectedSoftware === "ERDAS" ? "selected" : ""}>ERDAS Imagine (إيرداس)</option>
+          <option value="QGIS" ${selectedSoftware === "QGIS" ? "selected" : ""}>QGIS</option>
         </select>
-
-        ${programs
-          .map(
-            p => `
-          <button type="button" class="gd-sw-chip ${selectedSoftware === p ? "active" : ""}"
-            onclick="window.GEOAcademyBridgeActions.selectProgram('${p}')">
-            ${p === "all" ? "الكل" : p}
-          </button>
-        `
-          )
-          .join("")}
+        <button type="button" class="gd-sw-search-btn" onclick="window.GEOAcademyBridgeActions.searchByApp()">
+          🔍 بحث
+        </button>
       </div>
 
       <div class="gd-ai-videos-grid">${cardsHtml}</div>
     `;
   }
 
-  // 4. حقن حزمة الأدوات المتطورة (الاستشعار عن بُعد + GIS + المساحة)
-  function renderAdvancedEngineeringTools() {
-    const targetParent =
-      document.querySelector("#tools, #survey, #gis, main, .main-content, #app") || document.body;
-    if (!targetParent || document.getElementById("gdAdvancedEngToolsBox")) return;
+  // نافذة رفع الفيديو (حتى نصف جيجا) + PDF للأدمن فقط
+  function openAdminUploadModal() {
+    if (!isAdminUser) return;
+    let modal = document.getElementById("gdAiUploadModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "gdAiUploadModal";
+      document.body.appendChild(modal);
+    }
 
-    const section = document.createElement("div");
-    section.id = "gdAdvancedEngToolsBox";
-    section.className = "gd-adv-tools-section";
-    section.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin:0;font-size:16px;font-weight:900;color:#b45309;">
-          🚀 أدوات هندسية متطورة (استشعار عن بُعد • GIS • مساحة)
-        </h3>
-        <span style="font-size:11px;font-weight:800;color:#64748b;">اضغط على الأداة لتشغيلها فوراً</span>
-      </div>
-
-      <div class="gd-adv-tools-grid">
-        <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ndvi')">
-          <h5>🛰️ حاسبة المؤشرات الطيفية (NDVI / NDWI / NDBI)</h5>
-          <p>حساب مؤشرات الغطاء النباتي والمياه والمباني من قيم الباندات مع توليد معادلة Raster Calculator.</p>
-        </div>
-
-        <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('utm')">
-          <h5>🗺️ تحديد نطاق UTM & ETM ومعامل القياس</h5>
-          <p>استخراج نطاق UTM Zone وحزام مصر ETM مباشرة من الإحداثيات الجغرافية (خط الطول والعرض).</p>
-        </div>
-
-        <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('area')">
-          <h5>📏 حاسبة المساحات (م² / فدان / قيراط / سهم)</h5>
-          <p>حساب المساحة الدقيقة لأي قطعة أرض من إحداثيات أركانها (E, N) وتحويلها للوحدات المصرية.</p>
-        </div>
-
-        <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('leveling')">
-          <h5>📐 حاسبة الميزانية الطولية وخطأ القفل</h5>
-          <p>حساب فرق المنسوب وخطأ القفل المسموح به ومقارنته بالقراءة الفعلية في أعمال الميزانية.</p>
-        </div>
+    modal.innerHTML = `
+      <div class="gd-ai-modal-box">
+        <h3 style="margin:0 0 12px;color:#b45309;font-size:16px;">➕ رفع درس فيديو ربط التطبيقات بالـ AI</h3>
+        <form id="gdAiUploadForm">
+          <div class="gd-ai-field">
+            <label>اختر التطبيق *</label>
+            <select name="software" required>
+              <option value="AutoCAD">AutoCAD (أوتوكاد)</option>
+              <option value="Civil 3D">Civil 3D (سيفيل ثري دي)</option>
+              <option value="ArcGIS Pro">ArcGIS Pro (أرك جي آي إس برو)</option>
+              <option value="ERDAS">ERDAS Imagine (إيرداس)</option>
+              <option value="QGIS">QGIS</option>
+            </select>
+          </div>
+          <div class="gd-ai-field">
+            <label>عنوان الفيديو *</label>
+            <input type="text" name="title" placeholder="مثال: ربط AutoCAD بالذكاء الاصطناعي لاستخراج الجداول" required>
+          </div>
+          <div class="gd-ai-field">
+            <label>وصف الفيديو *</label>
+            <textarea name="desc" rows="3" placeholder="اكتب شرحاً تفصيلياً لما سيتعلمه المشترك في هذا الفيديو..." required></textarea>
+          </div>
+          <div class="gd-ai-field">
+            <label>رفع الفيديو من الهاتف (يدعم حتى 500 ميجابايت / نصف جيجا) أو ضع رابط الفيديو</label>
+            <input type="file" id="gdAiVideoFileInput" accept="video/*" style="margin-bottom:6px;">
+            <input type="url" name="videoUrl" placeholder="أو الصق رابط الفيديو المباشر (YouTube / Google Drive / MP4)">
+            <small id="gdAiVideoSizeInfo" style="display:block;color:#64748b;font-size:11px;margin-top:3px;">الحد الأقصى لحجم ملف الفيديو: 500 ميجابايت (0.5 GB).</small>
+          </div>
+          <div class="gd-ai-field">
+            <label>رفع ملف PDF الخاص بالفيديو (ملخص / أوامر / أكواد)</label>
+            <input type="file" id="gdAiPdfFileInput" accept=".pdf,application/pdf">
+          </div>
+          <div class="gd-ai-field" style="${showToolsDownloadBtn ? "" : "display:none;"}">
+            <label>رابط تحميل الأدوات (يظهر فقط عند تفعيل زر تحميل الأدوات)</label>
+            <input type="url" name="toolsUrl" placeholder="https://...">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button type="submit" id="gdAiPublishBtn" style="flex:1;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;font-family:inherit;">
+              نشر الفيديو والملفات الآن
+            </button>
+            <button type="button" onclick="document.getElementById('gdAiUploadModal').style.display='none'"
+              style="background:#e2e8f0;color:#334155;border:none;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;">
+              إلغاء
+            </button>
+          </div>
+        </form>
       </div>
     `;
 
-    targetParent.appendChild(section);
+    const videoInput = document.getElementById("gdAiVideoFileInput");
+    const sizeInfo = document.getElementById("gdAiVideoSizeInfo");
+    videoInput.onchange = () => {
+      const f = videoInput.files && videoInput.files[0];
+      if (!f) return;
+      const mb = (f.size / (1024 * 1024)).toFixed(1);
+      if (f.size > MAX_VIDEO_BYTES) {
+        alert(`حجم الفيديو (${mb} MB) يتجاوز الحد الأقصى المسموح به وهو 500 ميجابايت (نصف جيجا).`);
+        videoInput.value = "";
+        sizeInfo.textContent = "الحد الأقصى لحجم ملف الفيديو: 500 ميجابايت (0.5 GB).";
+      } else {
+        sizeInfo.innerHTML = `<span style="color:#16a34a;font-weight:800;">✔ تم اختيار الفيديو: ${f.name} (${mb} MB / 500 MB)</span>`;
+      }
+    };
+
+    document.getElementById("gdAiUploadForm").onsubmit = async e => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const publishBtn = document.getElementById("gdAiPublishBtn");
+      publishBtn.disabled = true;
+      publishBtn.textContent = "جاري الرفع والنشر...";
+
+      try {
+        let finalVideoUrl = (fd.get("videoUrl") || "").trim();
+        const vFile = videoInput.files && videoInput.files[0];
+
+        if (vFile) {
+          // محاولة الرفع السحابي عبر Firebase Storage إن كان مفعلاً، وإلا إنشاء رابط تشغيل محلي فوري
+          if (window.firebase && typeof firebase.storage === "function") {
+            const ref = firebase.storage().ref(`ai_bridge_videos/${Date.now()}_${vFile.name}`);
+            await ref.put(vFile);
+            finalVideoUrl = await ref.getDownloadURL();
+          } else {
+            finalVideoUrl = URL.createObjectURL(vFile);
+          }
+        }
+
+        if (!finalVideoUrl) {
+          alert("من فضلك اختر ملف فيديو من هاتفك أو ضع رابط الفيديو.");
+          publishBtn.disabled = false;
+          publishBtn.textContent = "نشر الفيديو والملفات الآن";
+          return;
+        }
+
+        let finalPdfUrl = "";
+        let finalPdfName = "";
+        const pdfInput = document.getElementById("gdAiPdfFileInput");
+        const pFile = pdfInput.files && pdfInput.files[0];
+        if (pFile) {
+          finalPdfName = pFile.name;
+          if (window.firebase && typeof firebase.storage === "function") {
+            const pdfRef = firebase.storage().ref(`ai_bridge_pdfs/${Date.now()}_${pFile.name}`);
+            await pdfRef.put(pFile);
+            finalPdfUrl = await pdfRef.getDownloadURL();
+          } else {
+            finalPdfUrl = await fileToDataUrl(pFile);
+          }
+        }
+
+        const newItem = {
+          id: "ai_c_" + Date.now(),
+          software: fd.get("software"),
+          title: (fd.get("title") || "").trim(),
+          desc: (fd.get("desc") || "").trim(),
+          videoUrl: finalVideoUrl,
+          pdfUrl: finalPdfUrl,
+          pdfName: finalPdfName,
+          toolsUrl: (fd.get("toolsUrl") || "").trim(),
+          createdAt: Date.now()
+        };
+
+        aiBridgeCourses.unshift(newItem);
+        localStorage.setItem("gd_ai_bridge_courses_v2", JSON.stringify(aiBridgeCourses));
+
+        if (window.firebase && typeof firebase.firestore === "function") {
+          try {
+            await firebase.firestore().collection("geodev_ai_courses").add(newItem);
+          } catch (_) {}
+        }
+
+        modal.style.display = "none";
+        renderAiAcademySection();
+        if (typeof window.toast === "function") window.toast("تم نشر الفيديو وملف الـ PDF بنجاح!", "success");
+      } catch (err) {
+        alert("حدث خطأ أثناء الرفع: " + (err && err.message ? err.message : err));
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = "نشر الفيديو والملفات الآن";
+      }
+    };
+
+    modal.style.display = "flex";
   }
 
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  // 2. توزيع الأدوات في قسمي "الجيوماتكس" و "المساحة" فقط (وحذف الأدوات المكررة والبنر السفلي)
+  function injectToolsIntoSurveyAndGeomatics() {
+    cleanupOldGlobalBox();
+
+    // أ) قسم الجيوماتكس: حاسبة المؤشرات الطيفية + نطاق UTM/ETM + أدوات AI للاستشعار والـ GIS
+    const geomaticsContainer =
+      document.getElementById("geomatics") ||
+      document.getElementById("gis") ||
+      document.querySelector('[data-section="geomatics"], [data-section="gis"], [id*="geomatics"], [id*="gis"]');
+
+    if (geomaticsContainer && !document.getElementById("gdGeomaticsAdvTools")) {
+      const geoBox = document.createElement("div");
+      geoBox.id = "gdGeomaticsAdvTools";
+      geoBox.className = "gd-section-tools-box";
+      geoBox.innerHTML = `
+        <h4 style="margin:0;font-size:15px;font-weight:900;color:#b45309;">
+          🛰️ أدوات الجيوماتكس والاستشعار عن بُعد المتطورة (AI & Remote Sensing)
+        </h4>
+        <div class="gd-section-tools-grid">
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ndvi')">
+            <span class="gd-ai-new-badge">استشعار عن بُعد</span>
+            <h5>🛰️ حاسبة المؤشرات الطيفية (NDVI / NDWI / NDBI)</h5>
+            <p>حساب مؤشرات الغطاء النباتي والمياه والمباني من الباندات وتوليد معادلة Raster Calculator.</p>
+          </div>
+
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('utm')">
+            <span class="gd-ai-new-badge">جيوديسيا وإسقاط</span>
+            <h5>🗺️ تحديد نطاق UTM & ETM ومعامل القياس</h5>
+            <p>استخراج نطاق UTM Zone وحزام مصر ETM مباشرة من خط الطول ودائرة العرض.</p>
+          </div>
+
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ai_change')">
+            <span class="gd-ai-new-badge">أداة AI مستقبلية ✨</span>
+            <h5>🧠 محلل كشف التغيرات الطيفية الزمني بالـ AI</h5>
+            <p>التنبؤ بمناطق الزحف العمراني أو تغير الغطاء النباتي بين فترتين زمنيتين (T1 / T2) آلياً.</p>
+          </div>
+
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ai_drone')">
+            <span class="gd-ai-new-badge">أداة AI مستقبلية ✨</span>
+            <h5>🚁 مخطط مسارات الدرون والتصوير الجوي بالـ AI</h5>
+            <p>حساب ارتفاع الطيران (GSD)، التداخل، وعدد الصور والبطاريات المطلوبة للمسح الجوي.</p>
+          </div>
+        </div>
+      `;
+      geomaticsContainer.appendChild(geoBox);
+    }
+
+    // ب) قسم المساحة: نسخة من حاسبة المؤشرات الطيفية + أدوات AI للمساحة والكميات
+    const surveyContainer =
+      document.getElementById("survey") ||
+      document.getElementById("surveying") ||
+      document.querySelector('[data-section="survey"], [id*="survey"]');
+
+    if (surveyContainer && !document.getElementById("gdSurveyAdvTools")) {
+      const srvBox = document.createElement("div");
+      srvBox.id = "gdSurveyAdvTools";
+      srvBox.className = "gd-section-tools-box";
+      srvBox.innerHTML = `
+        <h4 style="margin:0;font-size:15px;font-weight:900;color:#b45309;">
+          📐 أدوات المساحة المتطورة والذكاء الاصطناعي (AI Surveying Suite)
+        </h4>
+        <div class="gd-section-tools-grid">
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ndvi')">
+            <span class="gd-ai-new-badge">دمج المرئيات والمساحة</span>
+            <h5>🛰️ حاسبة المؤشرات الطيفية (NDVI / NDWI / NDBI)</h5>
+            <p>تحليل الغطاء الأرضي والمسطحات المائية للمناطق المرفوعة مساحياً وتوليد معادلة الاستخراج.</p>
+          </div>
+
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ai_earthwork')">
+            <span class="gd-ai-new-badge">أداة AI مستقبلية ✨</span>
+            <h5>🛣️ مُقدّر كميات الحفر والردم والتكلفة بالـ AI</h5>
+            <p>حساب حجم الحفر والردم ومعامل الانتفاش وتقدير عدد النقلات والتكلفة الهندسية فوراً.</p>
+          </div>
+
+          <div class="gd-adv-tool-card" onclick="window.GEOAdvancedTools.open('ai_qaqc')">
+            <span class="gd-ai-new-badge">أداة AI مستقبلية ✨</span>
+            <h5>🔎 مدقق أخطاء الترافيرس وأرصاد GNSS بالـ AI</h5>
+            <p>فحص دقة الأرصاد الحقلية واكتشاف مصدر الخطأ (الزاوي أو الطولي أو Multipath) واقتراح الحل.</p>
+          </div>
+        </div>
+      `;
+      surveyContainer.appendChild(srvBox);
+    }
+  }
+
+  // 3. تشغيل نوافذ الأدوات التفاعلية
   function openAdvancedToolModal(toolKey) {
     let modal = document.getElementById("gdAdvToolModal");
     if (!modal) {
@@ -474,7 +773,7 @@
     let bodyHtml = "";
     if (toolKey === "ndvi") {
       bodyHtml = `
-        <h3 style="margin:0 0 10px;color:#b45309;">🛰️ حاسبة المؤشرات الطيفية (Remote Sensing)</h3>
+        <h3 style="margin:0 0 10px;color:#b45309;">🛰️ حاسبة المؤشرات الطيفية (NDVI / NDWI / NDBI)</h3>
         <label style="font-size:12px;font-weight:800;">اختر المؤشر الطيفي:</label>
         <select id="gdRsType" class="gd-adv-input">
           <option value="NDVI">NDVI (مؤشر الغطاء النباتي: NIR & Red)</option>
@@ -495,7 +794,7 @@
       bodyHtml = `
         <h3 style="margin:0 0 10px;color:#b45309;">🗺️ مستكشف نطاقات UTM & ETM الجيوديسي</h3>
         <label style="font-size:12px;font-weight:800;">خط الطول (Longitude) بالدرجات العشرية:</label>
-        <input type="number" step="any" id="gdUtmLon" class="gd-adv-input" placeholder="مثال: 30.75 (المنيا)">
+        <input type="number" step="any" id="gdUtmLon" class="gd-adv-input" placeholder="مثال: 30.75">
         <label style="font-size:12px;font-weight:800;">دائرة العرض (Latitude) بالدرجات العشرية:</label>
         <input type="number" step="any" id="gdUtmLat" class="gd-adv-input" placeholder="مثال: 28.10">
         <button type="button" onclick="window.GEOAdvancedTools.calcUtm()"
@@ -504,31 +803,63 @@
         </button>
         <div id="gdAdvToolOut" class="gd-adv-result" style="display:none;"></div>
       `;
-    } else if (toolKey === "area") {
+    } else if (toolKey === "ai_change") {
       bodyHtml = `
-        <h3 style="margin:0 0 10px;color:#b45309;">📏 حاسبة المساحات من الإحداثيات (م² / فدان)</h3>
-        <p style="font-size:12px;color:#475569;margin:0 0 8px;">أدخل إحداثيات كل ركن في سطر منفصل بصيغة: <code>E, N</code></p>
-        <textarea id="gdAreaCoords" rows="5" class="gd-adv-input" placeholder="500100, 3100200&#10;500150, 3100200&#10;500150, 3100240&#10;500100, 3100240"></textarea>
-        <button type="button" onclick="window.GEOAdvancedTools.calcArea()"
+        <h3 style="margin:0 0 10px;color:#b45309;">🧠 محلل كشف التغيرات الطيفية الزمني بالـ AI</h3>
+        <label style="font-size:12px;font-weight:800;">قيمة المؤشر في الفترة الأقدم (T1):</label>
+        <input type="number" step="any" id="gdChT1" class="gd-adv-input" placeholder="مثال: 0.62">
+        <label style="font-size:12px;font-weight:800;">قيمة المؤشر في الفترة الأحدث (T2):</label>
+        <input type="number" step="any" id="gdChT2" class="gd-adv-input" placeholder="مثال: 0.21">
+        <button type="button" onclick="window.GEOAdvancedTools.calcAiChange()"
           style="width:100%;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;">
-          حساب المساحة بالمتر والفدان والقيراط
+          تحليل التغير والتنبؤ بالظاهرة
         </button>
         <div id="gdAdvToolOut" class="gd-adv-result" style="display:none;"></div>
       `;
-    } else if (toolKey === "leveling") {
+    } else if (toolKey === "ai_drone") {
       bodyHtml = `
-        <h3 style="margin:0 0 10px;color:#b45309;">📐 فاحص خطأ القفل في الميزانية الطولية</h3>
-        <label style="font-size:12px;font-weight:800;">منسوب أول روبير (BM Start):</label>
-        <input type="number" step="any" id="gdLvlStart" class="gd-adv-input" placeholder="مثال: 25.400">
-        <label style="font-size:12px;font-weight:800;">منسوب روبير القفل المعلوم (BM End):</label>
-        <input type="number" step="any" id="gdLvlKnownEnd" class="gd-adv-input" placeholder="مثال: 26.150">
-        <label style="font-size:12px;font-weight:800;">منسوب القفل المحسوب من الرصد:</label>
-        <input type="number" step="any" id="gdLvlObsEnd" class="gd-adv-input" placeholder="مثال: 26.158">
-        <label style="font-size:12px;font-weight:800;">طول خط الميزانية بالكيلومتر (K):</label>
-        <input type="number" step="any" id="gdLvlDist" class="gd-adv-input" placeholder="مثال: 1.5">
-        <button type="button" onclick="window.GEOAdvancedTools.calcLeveling()"
+        <h3 style="margin:0 0 10px;color:#b45309;">🚁 مخطط مسارات الدرون والتصوير الجوي بالـ AI</h3>
+        <label style="font-size:12px;font-weight:800;">مساحة منطقة الرفع بالفدان:</label>
+        <input type="number" step="any" id="gdDrArea" class="gd-adv-input" placeholder="مثال: 50">
+        <label style="font-size:12px;font-weight:800;">ارتفاع الطيران المطلوب (بالمتر):</label>
+        <input type="number" step="any" id="gdDrAlt" class="gd-adv-input" value="80">
+        <button type="button" onclick="window.GEOAdvancedTools.calcAiDrone()"
           style="width:100%;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;">
-          فحص الدقة وخطأ القفل
+          توليد خطة الطيران وعدد الصور
+        </button>
+        <div id="gdAdvToolOut" class="gd-adv-result" style="display:none;"></div>
+      `;
+    } else if (toolKey === "ai_earthwork") {
+      bodyHtml = `
+        <h3 style="margin:0 0 10px;color:#b45309;">🛣️ مُقدّر كميات الحفر والردم والتكلفة بالـ AI</h3>
+        <label style="font-size:12px;font-weight:800;">مساحة المسطح (م²):</label>
+        <input type="number" step="any" id="gdEwArea" class="gd-adv-input" placeholder="مثال: 1200">
+        <label style="font-size:12px;font-weight:800;">متوسط فرق المنسوب (متر):</label>
+        <input type="number" step="any" id="gdEwDepth" class="gd-adv-input" placeholder="مثال: 1.4">
+        <label style="font-size:12px;font-weight:800;">نوع التربة:</label>
+        <select id="gdEwSoil" class="gd-adv-input">
+          <option value="1.15">تربة رملية (معامل انتفاش 15%)</option>
+          <option value="1.25">تربة طينية (معامل انتفاش 25%)</option>
+          <option value="1.40">تربة صخرية (معامل انتفاش 40%)</option>
+        </select>
+        <button type="button" onclick="window.GEOAdvancedTools.calcAiEarthwork()"
+          style="width:100%;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;">
+          حساب الكميات وعدد النقلات
+        </button>
+        <div id="gdAdvToolOut" class="gd-adv-result" style="display:none;"></div>
+      `;
+    } else if (toolKey === "ai_qaqc") {
+      bodyHtml = `
+        <h3 style="margin:0 0 10px;color:#b45309;">🔎 مدقق أخطاء الترافيرس وأرصاد GNSS بالـ AI</h3>
+        <label style="font-size:12px;font-weight:800;">خطأ القفل الإحداثي (ΔE بالمتر):</label>
+        <input type="number" step="any" id="gdQaDe" class="gd-adv-input" placeholder="مثال: 0.018">
+        <label style="font-size:12px;font-weight:800;">خطأ القفل الإحداثي (ΔN بالمتر):</label>
+        <input type="number" step="any" id="gdQaDn" class="gd-adv-input" placeholder="مثال: 0.022">
+        <label style="font-size:12px;font-weight:800;">إجمالي محيط الترافيرس (بالمتر):</label>
+        <input type="number" step="any" id="gdQaPerim" class="gd-adv-input" placeholder="مثال: 850">
+        <button type="button" onclick="window.GEOAdvancedTools.calcAiQaqc()"
+          style="width:100%;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;">
+          تشخيص الدقة واقتراح التصحيح
         </button>
         <div id="gdAdvToolOut" class="gd-adv-result" style="display:none;"></div>
       `;
@@ -554,155 +885,105 @@
       const b2 = parseFloat(document.getElementById("gdRsB2").value);
       const out = document.getElementById("gdAdvToolOut");
       if (isNaN(b1) || isNaN(b2) || b1 + b2 === 0) return alert("أدخل قيم الباندات بشكل صحيح.");
-
       const val = ((b1 - b2) / (b1 + b2)).toFixed(4);
-      let desc = "";
-      let formula = "";
-      if (type === "NDVI") {
-        formula = `Float("NIR" - "Red") / Float("NIR" + "Red")`;
-        desc = val > 0.5 ? "غطاء نباتي كثيف وصحي" : val > 0.2 ? "غطاء نباتي متوسط / محاصيل" : "تربة جرداء أو مياه أو مباني";
-      } else if (type === "NDWI") {
-        formula = `Float("Green" - "NIR") / Float("Green" + "NIR")`;
-        desc = val > 0.1 ? "مسطح مائي واضح" : "منطقة يابسة / غير مائية";
-      } else {
-        formula = `Float("SWIR" - "NIR") / Float("SWIR" + "NIR")`;
-        desc = val > 0.1 ? "منطقة عمرانية / مباني كثيفة" : "منطقة غير مبنية";
-      }
-
+      let desc = type === "NDVI" ? (val > 0.4 ? "غطاء نباتي صحي" : "تربة أو عمران") : val > 0.1 ? "ظاهرة موجبة واضحة" : "ظاهرة منخفضة";
+      const formula = type === "NDVI" ? `Float("NIR" - "Red") / Float("NIR" + "Red")` : type === "NDWI" ? `Float("Green" - "NIR") / Float("Green" + "NIR")` : `Float("SWIR" - "NIR") / Float("SWIR" + "NIR")`;
       out.style.display = "block";
-      out.innerHTML = `
-        <strong>النتيجة (${type}):</strong> <span style="font-size:16px;color:#b45309;font-weight:900;">${val}</span><br>
-        <strong>التفسير الطيفي:</strong> ${desc}<br>
-        <strong>معادلة ArcGIS Raster Calculator:</strong><br>
-        <code style="display:block;direction:ltr;background:#fef3c7;padding:6px;border-radius:6px;margin-top:4px;">${formula}</code>
-      `;
+      out.innerHTML = `<strong>قيمة ${type}:</strong> <b>${val}</b> (${desc})<br><strong>معادلة Raster Calculator:</strong><code style="display:block;direction:ltr;background:#fef3c7;padding:5px;border-radius:6px;margin-top:4px;">${formula}</code>`;
     },
     calcUtm() {
       const lon = parseFloat(document.getElementById("gdUtmLon").value);
       const lat = parseFloat(document.getElementById("gdUtmLat").value);
       const out = document.getElementById("gdAdvToolOut");
       if (isNaN(lon) || isNaN(lat)) return alert("أدخل خط الطول ودائرة العرض.");
-
       const zone = Math.floor((lon + 180) / 6) + 1;
-      const hemi = lat >= 0 ? "N (شمال خط الاستواء)" : "S (جنوب خط الاستواء)";
       const epsg = (lat >= 0 ? 32600 : 32700) + zone;
-      let etm = "خارج أحزمة ETM المصرية";
-      if (lat >= 22 && lat <= 32 && lon >= 24 && lon <= 37) {
-        if (lon < 29.5) etm = "Egypt Purple Belt (الحزام البنفسجي - EPSG:22993)";
-        else if (lon <= 32.5) etm = "Egypt Red Belt (الحزام الأحمر - EPSG:22992)";
-        else etm = "Egypt Blue Belt (الحزام الأزرق - EPSG:22994)";
-      }
-
+      let etm = lon < 29.5 ? "Egypt Purple Belt (EPSG:22993)" : lon <= 32.5 ? "Egypt Red Belt (EPSG:22992)" : "Egypt Blue Belt (EPSG:22994)";
       out.style.display = "block";
-      out.innerHTML = `
-        <strong>نطاق UTM العالمي:</strong> Zone <b>${zone}${lat >= 0 ? "N" : "S"}</b> (${hemi})<br>
-        <strong>كود الإسقاط القياسي:</strong> <code>EPSG:${epsg}</code><br>
-        <strong>نظام المساحة المصرية:</strong> ${etm}
-      `;
+      out.innerHTML = `<strong>نطاق UTM:</strong> Zone <b>${zone}${lat >= 0 ? "N" : "S"}</b> (<code>EPSG:${epsg}</code>)<br><strong>حزام مصر ETM:</strong> ${etm}`;
     },
-    calcArea() {
-      const raw = document.getElementById("gdAreaCoords").value.trim();
+    calcAiChange() {
+      const t1 = parseFloat(document.getElementById("gdChT1").value);
+      const t2 = parseFloat(document.getElementById("gdChT2").value);
       const out = document.getElementById("gdAdvToolOut");
-      const pts = raw
-        .split("\n")
-        .map(line => line.split(/[,;\s]+/).map(Number))
-        .filter(arr => arr.length >= 2 && !isNaN(arr[0]) && !isNaN(arr[1]));
-
-      if (pts.length < 3) return alert("أدخل 3 نقاط على الأقل لحساب المساحة.");
-
-      let sum = 0;
-      for (let i = 0; i < pts.length; i++) {
-        const j = (i + 1) % pts.length;
-        sum += pts[i][0] * pts[j][1] - pts[j][0] * pts[i][1];
-      }
-      const sqm = Math.abs(sum) / 2;
-      const feddanTotal = sqm / 4200.83;
-      const feddan = Math.floor(feddanTotal);
-      const qiratTotal = (feddanTotal - feddan) * 24;
-      const qirat = Math.floor(qiratTotal);
-      const sahm = ((qiratTotal - qirat) * 24).toFixed(2);
-
+      if (isNaN(t1) || isNaN(t2)) return alert("أدخل القيمتين T1 و T2.");
+      const diff = (t2 - t1).toFixed(4);
+      const diagnosis = diff < -0.25 ? "⚠️ تراجع حاد في الغطاء النباتي (مؤشر زحف عمراني أو تجريف)" : diff > 0.25 ? "🌱 توسع زراعي / استصلاح جديد" : "✔ استقرار نسبي في الغطاء الأرضي";
       out.style.display = "block";
-      out.innerHTML = `
-        <strong>المساحة بالمتر المربع:</strong> <span style="font-size:15px;font-weight:900;color:#b45309;">${sqm.toFixed(2)} م²</span><br>
-        <strong>بالمقياس المصري:</strong> <b>${feddan}</b> فدان • <b>${qirat}</b> قيراط • <b>${sahm}</b> سهم
-      `;
+      out.innerHTML = `<strong>مقدار التغير (Δ):</strong> ${diff}<br><strong>التشخيص الذكي:</strong> ${diagnosis}`;
     },
-    calcLeveling() {
-      const knownEnd = parseFloat(document.getElementById("gdLvlKnownEnd").value);
-      const obsEnd = parseFloat(document.getElementById("gdLvlObsEnd").value);
-      const dist = parseFloat(document.getElementById("gdLvlDist").value);
+    calcAiDrone() {
+      const feddan = parseFloat(document.getElementById("gdDrArea").value);
+      const alt = parseFloat(document.getElementById("gdDrAlt").value);
       const out = document.getElementById("gdAdvToolOut");
-      if (isNaN(knownEnd) || isNaN(obsEnd) || isNaN(dist) || dist <= 0) {
-        return alert("أدخل منسوب القفل وطول الخط بشكل صحيح.");
-      }
-      const errMm = ((obsEnd - knownEnd) * 1000).toFixed(1);
-      const allowableMm = (12 * Math.sqrt(dist)).toFixed(1);
-      const isAccepted = Math.abs(obsEnd - knownEnd) * 1000 <= 12 * Math.sqrt(dist);
-
+      if (isNaN(feddan) || isNaN(alt) || feddan <= 0) return alert("أدخل المساحة وارتفاع الطيران.");
+      const gsdCm = (alt * 0.027).toFixed(2);
+      const estPhotos = Math.ceil((feddan * 4200.83) / (alt * alt * 0.35));
+      const batteries = Math.max(1, Math.ceil(estPhotos / 180));
       out.style.display = "block";
-      out.innerHTML = `
-        <strong>خطأ القفل الفعلي:</strong> ${errMm} مم<br>
-        <strong>الخطأ المسموح به (درجة أولى 12√K):</strong> ±${allowableMm} مم<br>
-        <strong>الحالة:</strong> <span style="font-weight:900;color:${isAccepted ? "#16a34a" : "#dc2626"};">
-          ${isAccepted ? "✔ مقبول هندسياً (ضمن الحدود المسموحة)" : "✖ مرفوض (يتجاوز الخطأ المسموح ويلزم إعادة الرصد)"}
-        </span>
-      `;
+      out.innerHTML = `<strong>دقة البكسل الأرضية (GSD):</strong> ${gsdCm} سم/بكسل<br><strong>عدد الصور التقديري (تداخل 80%/70%):</strong> ~${estPhotos} صورة<br><strong>عدد البطاريات المطلوبة:</strong> ${batteries} بطارية`;
+    },
+    calcAiEarthwork() {
+      const area = parseFloat(document.getElementById("gdEwArea").value);
+      const depth = parseFloat(document.getElementById("gdEwDepth").value);
+      const swell = parseFloat(document.getElementById("gdEwSoil").value);
+      const out = document.getElementById("gdAdvToolOut");
+      if (isNaN(area) || isNaN(depth)) return alert("أدخل المساحة وفرق المنسوب.");
+      const netVol = area * Math.abs(depth);
+      const looseVol = netVol * swell;
+      const trucks = Math.ceil(looseVol / 18);
+      out.style.display = "block";
+      out.innerHTML = `<strong>الحجم الهندسي الصافي:</strong> ${netVol.toFixed(1)} م³<br><strong>الحجم بعد الانتفاش:</strong> ${looseVol.toFixed(1)} م³<br><strong>عدد النقلات (قلاّب 18 م³):</strong> ~${trucks} نقلة`;
+    },
+    calcAiQaqc() {
+      const de = parseFloat(document.getElementById("gdQaDe").value);
+      const dn = parseFloat(document.getElementById("gdQaDn").value);
+      const perim = parseFloat(document.getElementById("gdQaPerim").value);
+      const out = document.getElementById("gdAdvToolOut");
+      if (isNaN(de) || isNaN(dn) || isNaN(perim) || perim <= 0) return alert("أدخل قيم الخطأ ومحيط الترافيرس.");
+      const linearErr = Math.hypot(de, dn);
+      const ratio = Math.round(perim / (linearErr || 0.0001));
+      const status = ratio >= 10000 ? "✔ دقة ممتازة (درجة أولى - يُصحح بطريقة بوديتش)" : "⚠️ الدقة منخفضة (يُنصح بمراجعة التسامت وارتفاع العاكس)";
+      out.style.display = "block";
+      out.innerHTML = `<strong>خطأ القفل الخطي:</strong> ${(linearErr * 100).toFixed(2)} سم<br><strong>نسبة الدقة النسبية:</strong> 1 : ${ratio.toLocaleString()}<br><strong>التوصية الذكية:</strong> ${status}`;
     }
   };
 
   window.GEOAcademyBridgeActions = {
-    selectProgram(sw) {
-      selectedSoftware = sw;
-      const academyContainer = findAcademyContainer();
-      if (academyContainer) renderAiAcademySection(academyContainer);
+    searchByApp() {
+      const sel = document.getElementById("gdAcademySwSelect");
+      selectedSoftware = sel ? sel.value : "all";
+      renderAiAcademySection();
     },
-    requestUpgrade: handleUpgradePrompt,
-    addNewCourse() {
-      if (!isAdminUser) return;
-      const software = prompt("اكتب اسم البرنامج (AutoCAD أو Civil 3D أو ArcGIS Pro أو ERDAS):", "AutoCAD");
-      if (!software) return;
-      const title = prompt("اكتب عنوان الدرس / الفيديو:");
-      if (!title) return;
-      const videoUrl = prompt("ضع رابط الفيديو (YouTube / Google Drive):", "https://www.youtube.com");
-      const desc = prompt("اكتب وصف مختصر لمحتوى الدرس:", "شرح عملي لربط البرنامج بالذكاء الاصطناعي.");
-
-      aiBridgeCourses.unshift({
-        id: "ai_c_" + Date.now(),
-        software: software.trim(),
-        title: title.trim(),
-        duration: "فيديو تطبيقي",
-        level: "PRO Plus",
-        videoUrl: (videoUrl || "").trim(),
-        desc: (desc || "").trim()
-      });
-      localStorage.setItem("gd_ai_bridge_courses", JSON.stringify(aiBridgeCourses));
-      const academyContainer = findAcademyContainer();
-      if (academyContainer) renderAiAcademySection(academyContainer);
+    toggleToolsBtn(checked) {
+      showToolsDownloadBtn = !!checked;
+      localStorage.setItem("gd_ai_show_tools_btn", showToolsDownloadBtn ? "1" : "0");
+      renderAiAcademySection();
+    },
+    openUploadModal: openAdminUploadModal,
+    playVideo(id) {
+      const item = aiBridgeCourses.find(c => c.id === id);
+      if (!item || !item.videoUrl) return;
+      window.open(item.videoUrl, "_blank", "noopener");
+    },
+    requestUpgrade(title) {
+      const msg = encodeURIComponent(`مرحبا، أريد الاشتراك في باقة PRO Plus لفتح قسم ربط التطبيقات بالـ AI ومشاهدة: ${title}`);
+      if (confirm("🔒 هذا المحتوى حصري لمشتركي باقة PRO Plus.\n\nهل تريد التواصل عبر واتساب لتفعيل اشتراك PRO Plus الآن؟")) {
+        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${msg}`, "_blank", "noopener");
+      }
     },
     deleteCourse(id) {
-      if (!isAdminUser || !confirm("حذف هذا الفيديو من القسم؟")) return;
+      if (!isAdminUser || !confirm("حذف هذا الفيديو نهائياً؟")) return;
       aiBridgeCourses = aiBridgeCourses.filter(c => c.id !== id);
-      localStorage.setItem("gd_ai_bridge_courses", JSON.stringify(aiBridgeCourses));
-      const academyContainer = findAcademyContainer();
-      if (academyContainer) renderAiAcademySection(academyContainer);
+      localStorage.setItem("gd_ai_bridge_courses_v2", JSON.stringify(aiBridgeCourses));
+      renderAiAcademySection();
     }
   };
 
-  function findAcademyContainer() {
-    return (
-      document.getElementById("academy") ||
-      document.getElementById("academyView") ||
-      document.querySelector('[data-section="academy"], [id*="academy"], [class*="academy"]')
-    );
-  }
-
-  function mountFeatures() {
-    const academyContainer = findAcademyContainer();
-    if (academyContainer) {
-      renderAiAcademySection(academyContainer);
-    }
-    renderAdvancedEngineeringTools();
+  function mountAll() {
+    cleanupOldGlobalBox();
+    renderAiAcademySection();
+    injectToolsIntoSurveyAndGeomatics();
   }
 
   function watchAuth() {
@@ -718,13 +999,12 @@
               isProPlusUser = tier.includes("plus") || tier.includes("pro_plus");
             } catch (_) {}
           }
-          mountFeatures();
+          mountAll();
         });
         return true;
       }
       return false;
     };
-
     if (!check()) {
       const iv = setInterval(() => {
         if (check()) clearInterval(iv);
@@ -736,13 +1016,10 @@
   function init() {
     injectStyles();
     watchAuth();
-    mountFeatures();
-
-    // مراقبة التنقل إلى تبويب الأكاديمية لحقن القسم فوراً عند فتحه
-    document.addEventListener("click", () => {
-      setTimeout(mountFeatures, 200);
-    });
-    setTimeout(mountFeatures, 1000);
+    mountAll();
+    document.addEventListener("click", () => setTimeout(mountAll, 180));
+    setTimeout(mountAll, 800);
+    setTimeout(mountAll, 2000);
   }
 
   if (document.readyState === "loading") {
