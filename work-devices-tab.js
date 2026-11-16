@@ -680,7 +680,7 @@
               const isClosed = isSold || isRented;
               const statusLabel = isSold ? "تم البيع" : isRented ? "تم التأجير" : `متاح (${dev.offerType})`;
               const targetPhone = formatWhatsappNumber(dev.phone || dev.displayPhone);
-              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص الجهاز المعروض (${dev.offerType}): ${dev.title}`);
+              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص وظيفة: ${job.title} (${job.category})`);
 
               return `
                 <div class="gd-wd-card ${isClosed ? "closed-item" : ""}">
