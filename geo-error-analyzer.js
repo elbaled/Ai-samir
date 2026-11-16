@@ -1,8 +1,11 @@
 /**
- * نظام النوافذ المنبثقة الموحد وتحليل الصور لجميع أدوات الجيوماتكس
+ * نظام النوافذ المنبثقة الموحد وتحليل الصور لجميع أدوات الجيوماتكس (محمي ضد الكاش)
  * GeoDev Studio Pro
  */
 (function () {
+  if (window.__geoModalInstalled) return;
+  window.__geoModalInstalled = true;
+
   let selectedGeoImageBase64 = null;
   let selectedGeoMimeType = null;
   let selectedGeoFile = null;
@@ -90,7 +93,7 @@
       <div id="geoUniversalModal" class="geo-modal-overlay">
         <div class="geo-modal-box">
           <div class="geo-modal-header">
-            <h3 id="geoModalTitle"> أداة التحليل الذكي</h3>
+            <h3 id="geoModalTitle">🛠️ أداة التحليل الذكي</h3>
             <button type="button" onclick="window.closeGeoModal()" class="geo-close-btn">&times;</button>
           </div>
           <div class="geo-modal-body">
@@ -100,9 +103,9 @@
             <div id="geoUploadSection" class="geo-upload-section">
               <label>إرفاق صورة أو لقطة شاشة للتحليل (اختياري):</label>
               <div class="geo-upload-buttons">
-                <label for="geoImageGallery" class="geo-btn-secondary">اختيار صورة</label>
+                <label for="geoImageGallery" class="geo-btn-secondary">🖼️ اختيار صورة</label>
                 <input type="file" id="geoImageGallery" accept="image/*" style="display: none;">
-                <label for="geoImageCamera" class="geo-btn-secondary"> تصوير بالكاميرا</label>
+                <label for="geoImageCamera" class="geo-btn-secondary">📷 تصوير بالكاميرا</label>
                 <input type="file" id="geoImageCamera" accept="image/*" capture="environment" style="display: none;">
               </div>
               <div id="geoImagePreviewContainer" class="geo-preview-box">
@@ -112,7 +115,7 @@
             </div>
           </div>
           <div class="geo-modal-footer">
-            <button type="button" id="geoSubmitBtn" onclick="window.submitGeoUniversalModal()" class="geo-btn-primary">تنفيذ التحليل </button>
+            <button type="button" id="geoSubmitBtn" onclick="window.submitGeoUniversalModal()" class="geo-btn-primary">تنفيذ التحليل 🚀</button>
             <button type="button" onclick="window.closeGeoModal()" class="geo-btn-cancel">إلغاء</button>
           </div>
         </div>
@@ -155,7 +158,6 @@
     if (prev) prev.style.display = 'none';
   };
 
-  // 2. تخصيص عنوان النافذة ونوع البرومبت حسب الكارت اللي المستخدم ضغط عليه
   window.openGeoCustomPrompt = function (originalMessage) {
     initGeoModalUI();
     document.getElementById('geoModalInput').value = '';
@@ -169,36 +171,35 @@
     labelEl.textContent = originalMessage;
 
     if (originalMessage.includes('رسالة الخطأ') || originalMessage.includes('ArcGIS')) {
-      titleEl.innerHTML = ' محلل أخطاء البرامج المساحية و GIS';
+      titleEl.innerHTML = '🛠️ محلل أخطاء البرامج المساحية و GIS';
       inputEl.placeholder = 'اكتب تفاصيل الخطأ في ArcGIS أو QGIS أو Civil 3D...';
-      submitBtn.textContent = 'تحليل وحل المشكلة ';
+      submitBtn.textContent = 'تحليل وحل المشكلة 🚀';
       currentToolPromptPrefix = 'بصفتك خبير نظم معلومات جغرافية (GIS) ومساحة، قم بتحليل المشكلة أو رسالة الخطأ التالية وقدم السبب الجذري وخطوات الحل العملية بالترتيب:\n\n';
     } else if (originalMessage.includes('الظاهرة') || originalMessage.includes('الاستشعار')) {
-      titleEl.innerHTML = ' مستشار اختيار المرئيات والمؤشرات';
+      titleEl.innerHTML = '🛰️ مستشار اختيار المرئيات والمؤشرات';
       inputEl.placeholder = 'مثال: رصد الزحف العمراني، دراسة الملوحة، أو الجزر الحرارية...';
-      submitBtn.textContent = 'توليد التوصية العلمية ';
+      submitBtn.textContent = 'توليد التوصية العلمية 🚀';
       currentToolPromptPrefix = 'بصفتك خبير استشعار عن بعد (Remote Sensing)، حدد أنسب قمر صناعي، الدقة المكانية والطيفية، والمؤشر الطيفي بمعادلته الرياضية لدراسة الظاهرة التالية:\n\n';
     } else if (originalMessage.includes('خطة بحث') || originalMessage.includes('موضوع البحث') || originalMessage.includes('عنوان')) {
-      titleEl.innerHTML = ' بناء خطة بحث علمي (Proposal)';
+      titleEl.innerHTML = '🎓 بناء خطة بحث علمي (Proposal)';
       inputEl.placeholder = 'اكتب عنوان أو فكرة البحث الجغرافي / المساحي...';
-      submitBtn.textContent = 'بناء خطة البحث ';
+      submitBtn.textContent = 'بناء خطة البحث 🚀';
       currentToolPromptPrefix = 'بصفتك مستشاراً أكاديمياً في الجغرافيا والجيوماتكس، قم ببناء خطة بحث علمي متكاملة (مشكلة البحث، الأهداف، الفرضيات، المنهجية، والبيانات المكانية المطلوبة) حول الموضوع التالي:\n\n';
     } else if (originalMessage.includes('سير العمل') || originalMessage.includes('التحليل المكاني')) {
-      titleEl.innerHTML = ' مصمم خريطة سير العمل (GIS Workflow)';
+      titleEl.innerHTML = '🗺️ مصمم خريطة سير العمل (GIS Workflow)';
       inputEl.placeholder = 'اكتب هدف التحليل المكاني المطلوب تنفيذه...';
-      submitBtn.textContent = 'تصميم خطوات العمل ;
+      submitBtn.textContent = 'تصميم خطوات العمل 🚀';
       currentToolPromptPrefix = 'بصفتك محلل نظم معلومات جغرافية محترف، ابنِ خطوات التحليل المكاني بالترتيب بأسماء الأدوات الفعلية داخل ArcGIS Pro و QGIS لتحقيق الهدف التالي:\n\n';
     } else {
       titleEl.innerHTML = '🌐 مساعد الجيوماتكس المتخصص';
       inputEl.placeholder = 'اكتب تفاصيل طلبك هنا...';
-      submitBtn.textContent = 'إرسال للتحليل ';
+      submitBtn.textContent = 'إرسال للتحليل 🚀';
       currentToolPromptPrefix = 'بصفتك خبير في الجيوماتكس والمساحة ونظم المعلومات الجغرافية، أجب بدقة ومنهجية عن الطلب التالي:\n\n';
     }
 
     document.getElementById('geoUniversalModal').style.display = 'flex';
   };
 
-  // 3. إرسال البيانات إلى الشات الرئيسي بشكل مؤكد
   window.submitGeoUniversalModal = function () {
     const userText = document.getElementById('geoModalInput').value.trim();
     if (!userText && !selectedGeoImageBase64) {
@@ -213,7 +214,7 @@
 
     const finalPrompt = currentToolPromptPrefix + (userText || 'يرجى تحليل الصورة المرفقة وتقديم الحل والشرح الكامل.');
 
-    // أ) ربط الصورة بمدخل الصور الأساسي في الموقع (إن وجدت)
+    // تمرير الصورة
     if (fileObj) {
       const allFileInputs = Array.from(document.querySelectorAll('input[type="file"]'))
         .filter(inp => inp.id !== 'geoImageGallery' && inp.id !== 'geoImageCamera');
@@ -228,31 +229,29 @@
       window.currentImageMime = imgMime;
     }
 
-    // ب) الانتقال لتبويب "المساعد" (أول زر في الشريط السفلي على اليمين)
+    // الانتقال لتبويب "المساعد"
     const navItems = Array.from(document.querySelectorAll('button, div, a, li'));
     const assistantTab = navItems.find(el => el.textContent && el.textContent.trim() === 'المساعد');
     if (assistantTab) {
       assistantTab.click();
     }
 
-    // ج) البحث عن مربع كتابة الشات الظاهر ووضع النص فيه وإرساله
+    // وضع النص وإرساله
     setTimeout(() => {
       const textboxes = Array.from(document.querySelectorAll('textarea, input[type="text"]'))
         .filter(el => el.id !== 'geoModalInput' && el.offsetParent !== null);
 
       if (textboxes.length > 0) {
-        const chatBox = textboxes[textboxes.length - 1]; // غالباً مربع الشات في الأسفل
+        const chatBox = textboxes[textboxes.length - 1];
         chatBox.value = finalPrompt;
         chatBox.dispatchEvent(new Event('input', { bubbles: true }));
         chatBox.dispatchEvent(new Event('change', { bubbles: true }));
 
-        // البحث عن زر الإرسال المجاور لمربع الشات أو ضغط Enter
         const parentContainer = chatBox.closest('div, form') || document.body;
         const buttons = Array.from(parentContainer.querySelectorAll('button'))
           .filter(btn => btn.offsetParent !== null && !btn.id.startsWith('geo'));
 
         if (buttons.length > 0) {
-          // الضغط على آخر زر في شريط الإدخال (زر الإرسال)
           buttons[buttons.length - 1].click();
         } else {
           chatBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
@@ -260,18 +259,27 @@
       } else if (typeof window.sendMessage === 'function') {
         window.sendMessage(finalPrompt);
       }
-    }, 350);
+    }, 400);
   };
 
-  // 4. اعتراض جميع نوافذ prompt في الموقع وتوحيدها بالتصميم الجديد
-  const originalPrompt = window.prompt;
-  window.prompt = function (message, defaultValue) {
+  // قفل دالة window.prompt ومنع أي سكربت تاني من استبدالها
+  const customPromptFn = function (message, defaultValue) {
     if (message && typeof message === 'string') {
       window.openGeoCustomPrompt(message);
       return null;
     }
-    return originalPrompt.apply(this, arguments);
+    return null;
   };
+
+  try {
+    Object.defineProperty(window, 'prompt', {
+      value: customPromptFn,
+      writable: false,
+      configurable: false
+    });
+  } catch (e) {
+    window.prompt = customPromptFn;
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initGeoModalUI);
