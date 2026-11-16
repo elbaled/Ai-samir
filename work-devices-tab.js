@@ -1,6 +1,5 @@
 /* ============================================================================
-   قسم "شغل وأجهزة" المتكامل (الوظائف المساحية + سوق الأجهزة للبيع والإيجار)
-   صلاحيات الأدمن للإضافة وتغيير الحالة + بحث فوري + تواصل واتساب مباشر
+   قسم "شغل وأجهزة" المتكامل (تحديد رقم تواصل مخصص لكل وظيفة وجهاز)
    ============================================================================ */
 (function () {
   "use strict";
@@ -9,7 +8,6 @@
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const ADMIN_WHATSAPP = "201015912371";
-  const IMGBB_API_KEY = ""; // اختياري: ضع مفتاح ImgBB هنا إذا أردت رفع الصور من الهاتف مباشرة، أو ضع رابط الصورة مباشرة
 
   let isAdminUser = false;
   let activeSubTab = "jobs"; // 'jobs' | 'devices'
@@ -20,7 +18,19 @@
   let jobsList = [];
   let devicesList = [];
 
-  // 1. حقن التنسيقات المتوافقة مع الثيم الفاتح والداكن
+  // تنسيق رقم الهاتف تلقائياً ليعمل مع رابط wa.me سواء كُتب 010... أو 2010...
+  function formatWhatsappNumber(rawPhone) {
+    let cleaned = String(rawPhone || "").replace(/[^0-9]/g, "");
+    if (!cleaned) return ADMIN_WHATSAPP;
+    if (cleaned.startsWith("01") && cleaned.length === 11) {
+      cleaned = "2" + cleaned;
+    } else if (cleaned.startsWith("00")) {
+      cleaned = cleaned.slice(2);
+    }
+    return cleaned;
+  }
+
+  // 1. حقن التنسيقات
   function injectStyles() {
     if (document.getElementById("gdWorkDevicesFullStyles")) return;
     const style = document.createElement("style");
@@ -39,7 +49,6 @@
         display: block;
       }
 
-      /* منع تفعيل أي تبويب آخر في الشريط السفلي أثناء فتح القسم */
       body.gd-wd-open nav .active:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open nav .on:not(#gdWorkDevicesNavBtn),
       body.gd-wd-open footer .active:not(#gdWorkDevicesNavBtn),
@@ -56,7 +65,6 @@
         background: rgba(224, 83, 31, 0.08) !important;
       }
 
-      /* التبويبان الرئيسيان: قسم الشغل | قسم الأجهزة */
       .gd-wd-main-tabs {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -85,7 +93,6 @@
         box-shadow: 0 4px 12px rgba(224, 159, 36, 0.35);
       }
 
-      /* شريط البحث والتصفية */
       .gd-wd-search-box {
         position: relative;
         margin-bottom: 12px;
@@ -114,7 +121,6 @@
         pointer-events: none;
       }
 
-      /* أزرار الفلترة الفرعية */
       .gd-wd-filters {
         display: flex;
         flex-wrap: wrap;
@@ -138,7 +144,6 @@
         border-color: #0f172a;
       }
 
-      /* بانر التواصل مع الأدمن لإضافة جهاز أو وظيفة */
       .gd-wd-contact-banner {
         background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
         border: 1.5px solid #f59e0b;
@@ -174,7 +179,6 @@
         white-space: nowrap;
       }
 
-      /* زر الإضافة الخاص بالأدمن */
       .gd-wd-admin-add-btn {
         width: 100%;
         background: #e0531f;
@@ -190,7 +194,6 @@
         box-shadow: 0 4px 14px rgba(224, 83, 31, 0.3);
       }
 
-      /* شبكة البطاقات (الكروت) */
       .gd-wd-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -300,7 +303,6 @@
         color: #b45309;
       }
 
-      /* أزرار تحكم الأدمن داخل الكارت */
       .gd-wd-admin-controls {
         width: 100%;
         display: flex;
@@ -320,7 +322,6 @@
         font-family: inherit;
       }
 
-      /* نافذة الإضافة للأدمن */
       #gdWdAdminModal {
         position: fixed;
         inset: 0;
@@ -367,7 +368,6 @@
         color: #0f172a;
       }
 
-      /* التوافق مع الوضع الداكن إذا فعّله المستخدم */
       body.dark-mode .gd-wd-main-tabs,
       body.dark .gd-wd-main-tabs,
       [data-theme="dark"] .gd-wd-main-tabs {
@@ -407,7 +407,7 @@
     document.head.appendChild(style);
   }
 
-  // 2. إدارة البيانات (Firestore + التخزين المحلي كنسخة احتياطية فورية)
+  // 2. إدارة البيانات
   function getFirestoreDb() {
     try {
       if (window.firebase && firebase.firestore) {
@@ -431,7 +431,7 @@
           salary: "يحدد حسب الخبرة",
           details: "إجادة العمل على أجهزة Total Station و GPS واستخراج اللوحات والكميات على AutoCAD Civil 3D.",
           phone: ADMIN_WHATSAPP,
-          status: "open", // 'open' | 'completed'
+          status: "open",
           createdAt: Date.now()
         }
       ];
@@ -444,14 +444,14 @@
       devicesList = [
         {
           id: "sample_dev_1",
-          offerType: "بيع", // 'بيع' | 'إيجار'
+          offerType: "بيع",
           title: "جهاز توتال ستيشن Leica TS06 Plus",
           condition: "بحالة ممتازة + كامل المشتملات",
           price: "تواصل لمعرفة السعر",
           imageUrl: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
           details: "الجهاز معاير وجاهز للعمل فوراً، يشمل الحامل الثلاثي، العاكس، الشاحن، وشنطة الحفظ الأصلية.",
           phone: ADMIN_WHATSAPP,
-          status: "available", // 'available' | 'sold' | 'rented'
+          status: "available",
           createdAt: Date.now()
         }
       ];
@@ -567,14 +567,13 @@
     renderContent();
   }
 
-  // 3. رسم واجهة القسم بالكامل
+  // 3. رسم الواجهة
   function renderContent() {
     const view = document.getElementById("gdWorkDevicesView");
     if (!view) return;
 
     const q = searchQuery.trim().toLowerCase();
 
-    // بناء قسم الشغل
     let jobsHtml = "";
     if (activeSubTab === "jobs") {
       const filteredJobs = jobsList.filter(job => {
@@ -592,7 +591,9 @@
         ? filteredJobs
             .map(job => {
               const isCompleted = job.status === "completed";
-              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص وظيفة: ${job.title} (${job.category})`);
+              const targetPhone = formatWhatsappNumber(job.phone);
+              const displayPhone = job.displayPhone || job.phone || "";
+              const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص وظيفة: ${job.title} (${job.category}) المعروضة على منصة GeoDev Studio Pro`);
               return `
                 <div class="gd-wd-card ${isCompleted ? "closed-item" : ""}">
                   <div class="gd-wd-card-body">
@@ -608,6 +609,7 @@
                     <div class="gd-wd-card-meta">
                       ${job.location ? `<span>📍 ${job.location}</span>` : ""}
                       ${job.salary ? `<span>💰 ${job.salary}</span>` : ""}
+                      ${displayPhone ? `<span>📞 ${displayPhone}</span>` : ""}
                     </div>
                     <p class="gd-wd-card-desc">${job.details || ""}</p>
                   </div>
@@ -615,7 +617,7 @@
                     ${
                       isCompleted
                         ? `<span style="color:#dc2626;font-size:12px;font-weight:900;">✔ أُغلق باب التقديم</span>`
-                        : `<a href="https://wa.me/${job.phone || ADMIN_WHATSAPP}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل للتقديم</a>`
+                        : `<a href="https://wa.me/${targetPhone}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل للتقديم</a>`
                     }
                     ${
                       isAdminUser
@@ -662,7 +664,6 @@
       `;
     }
 
-    // بناء قسم الأجهزة
     let devicesHtml = "";
     if (activeSubTab === "devices") {
       const filteredDevices = devicesList.filter(dev => {
@@ -683,6 +684,7 @@
               const isRented = dev.status === "rented";
               const isClosed = isSold || isRented;
               const statusLabel = isSold ? "تم البيع" : isRented ? "تم التأجير" : `متاح (${dev.offerType})`;
+              const targetPhone = formatWhatsappNumber(dev.phone);
               const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص الجهاز المعروض (${dev.offerType}): ${dev.title}`);
 
               return `
@@ -704,7 +706,7 @@
                     ${
                       isClosed
                         ? `<span style="color:#dc2626;font-size:12px;font-weight:900;">✔ ${statusLabel}</span>`
-                        : `<a href="https://wa.me/${dev.phone || ADMIN_WHATSAPP}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل عبر واتساب</a>`
+                        : `<a href="https://wa.me/${targetPhone}?text=${waMsg}" target="_blank" rel="noopener" class="gd-wd-wa-btn">💬 تواصل عبر واتساب</a>`
                     }
                     ${
                       isAdminUser
@@ -801,7 +803,7 @@
     `;
   }
 
-  // 4. نافذة الإضافة الخاصة بالأدمن فقط
+  // 4. نافذة الإضافة للأدمن (مع خانة تحديد رقم التواصل لكل وظيفة/جهاز)
   function injectAdminModal() {
     if (document.getElementById("gdWdAdminModal")) return;
     const modalHtml = `
@@ -858,6 +860,10 @@
           <input type="text" name="salary" placeholder="مثال: 8000 ج + إقامة">
         </div>
         <div class="gd-wd-field">
+          <label>رقم واتساب التواصل للتقديم على هذه الوظيفة *</label>
+          <input type="tel" name="phone" placeholder="اكتب رقم صاحب الوظيفة مثال: 01012345678" required>
+        </div>
+        <div class="gd-wd-field">
           <label>تفاصيل وشروط الوظيفة</label>
           <textarea name="details" rows="3" placeholder="اكتب تفاصيل العمل والأجهزة المطلوبة..." required></textarea>
         </div>
@@ -885,6 +891,10 @@
           <input type="text" name="condition" placeholder="مثال: كسر زيرو بالضمان والمعايرة">
         </div>
         <div class="gd-wd-field">
+          <label>رقم واتساب التواصل لهذا الجهاز</label>
+          <input type="tel" name="phone" value="01015912371" placeholder="اكتب رقم التواصل مثال: 01012345678" required>
+        </div>
+        <div class="gd-wd-field">
           <label>صورة الجهاز (اختر صورة من جهازك أو ضع رابط صورة)</label>
           <input type="file" id="gdWdDeviceFile" accept="image/*" style="margin-bottom:6px;">
           <input type="url" name="imageUrl" placeholder="أو الصق رابط الصورة مباشرة https://...">
@@ -899,6 +909,9 @@
     form.onsubmit = async e => {
       e.preventDefault();
       const fd = new FormData(form);
+      const rawInputPhone = (fd.get("phone") || "").trim();
+      const formattedWaPhone = formatWhatsappNumber(rawInputPhone);
+
       if (type === "jobs") {
         await saveNewItem("jobs", {
           category: fd.get("category"),
@@ -906,7 +919,8 @@
           location: fd.get("location"),
           salary: fd.get("salary"),
           details: fd.get("details"),
-          phone: ADMIN_WHATSAPP,
+          displayPhone: rawInputPhone,
+          phone: formattedWaPhone,
           status: "open",
           createdAt: Date.now()
         });
@@ -914,7 +928,6 @@
         let finalImgUrl = fd.get("imageUrl") || "";
         const fileInput = document.getElementById("gdWdDeviceFile");
         if (fileInput && fileInput.files && fileInput.files[0]) {
-          // تحويل الصورة المصغرة إلى DataURL مضغوطة لتعمل مباشرة بدون تعقيد
           finalImgUrl = await compressImageToDataUrl(fileInput.files[0]);
         }
         await saveNewItem("devices", {
@@ -924,7 +937,8 @@
           condition: fd.get("condition"),
           imageUrl: finalImgUrl,
           details: fd.get("details"),
-          phone: ADMIN_WHATSAPP,
+          displayPhone: rawInputPhone,
+          phone: formattedWaPhone,
           status: "available",
           createdAt: Date.now()
         });
@@ -936,7 +950,6 @@
     modal.style.display = "flex";
   }
 
-  // ضغط الصورة المرفوعة من الهاتف تلقائياً لضمان سرعة التحميل والحفظ
   function compressImageToDataUrl(file) {
     return new Promise(resolve => {
       const reader = new FileReader();
@@ -958,7 +971,6 @@
     });
   }
 
-  // ربط دوال التفاعل بالواجهة
   window.GDWorkDevicesActions = {
     switchTab(tab) {
       activeSubTab = tab;
@@ -975,7 +987,6 @@
     onSearch(val) {
       searchQuery = val;
       renderContent();
-      // الحفاظ على التركيز داخل خانة البحث أثناء الكتابة
       const input = document.querySelector("#gdWorkDevicesView .gd-wd-search-input");
       if (input) {
         input.focus();
@@ -992,7 +1003,6 @@
     deleteItem
   };
 
-  // 5. حقن الزر في الشريط السفلي بجانب "المساحة" وربط الصفحة
   function setupWorkDevicesTab() {
     if (document.getElementById("gdWorkDevicesNavBtn")) return;
 
@@ -1099,7 +1109,6 @@
     });
   }
 
-  // 6. التحقق من صلاحية الأدمن عند تسجيل الدخول
   function watchAdminAuth() {
     const checkAuth = () => {
       if (window.firebase && firebase.apps && firebase.apps.length) {
