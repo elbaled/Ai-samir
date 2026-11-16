@@ -1,5 +1,5 @@
 /* ============================================================================
-   قسم "شغل وأجهزة" المتكامل (تحديد رقم تواصل مخصص لكل وظيفة وجهاز)
+   قسم "شغل وأجهزة" المتكامل (نشر فوري مضمون + استخراج ذكي لرقم التواصل)
    ============================================================================ */
 (function () {
   "use strict";
@@ -10,17 +10,19 @@
   const ADMIN_WHATSAPP = "201015912371";
 
   let isAdminUser = false;
-  let activeSubTab = "jobs"; // 'jobs' | 'devices'
-  let jobCategoryFilter = "all"; // 'all' | 'مساح' | 'مساعد مساحة' | 'GIS'
-  let deviceTypeFilter = "all"; // 'all' | 'بيع' | 'إيجار'
+  let activeSubTab = "jobs";
+  let jobCategoryFilter = "all";
+  let deviceTypeFilter = "all";
   let searchQuery = "";
 
   let jobsList = [];
   let devicesList = [];
 
-  // تنسيق رقم الهاتف تلقائياً ليعمل مع رابط wa.me سواء كُتب 010... أو 2010...
-  function formatWhatsappNumber(rawPhone) {
-    let cleaned = String(rawPhone || "").replace(/[^0-9]/g, "");
+  // استخراج رقم الهاتف من أي نص (مثل "م/محمود: 01280421912") وتحويله لصيغة الواتساب الدولية
+  function formatWhatsappNumber(rawText) {
+    const str = String(rawText || "");
+    const match = str.match(/(?:\+?20|0020|0)?1[0125][0-9\s-]{8,11}/);
+    let cleaned = match ? match[0].replace(/[^0-9]/g, "") : str.replace(/[^0-9]/g, "");
     if (!cleaned) return ADMIN_WHATSAPP;
     if (cleaned.startsWith("01") && cleaned.length === 11) {
       cleaned = "2" + cleaned;
@@ -30,7 +32,6 @@
     return cleaned;
   }
 
-  // 1. حقن التنسيقات
   function injectStyles() {
     if (document.getElementById("gdWorkDevicesFullStyles")) return;
     const style = document.createElement("style");
@@ -407,17 +408,16 @@
     document.head.appendChild(style);
   }
 
-  // 2. إدارة البيانات
   function getFirestoreDb() {
     try {
-      if (window.firebase && firebase.firestore) {
+      if (window.firebase && typeof firebase.firestore === "function") {
         return firebase.firestore();
       }
     } catch (_) {}
     return null;
   }
 
-  function loadInitialSampleIfEmpty() {
+  function loadLocalData() {
     const localJobs = JSON.parse(localStorage.getItem("gd_wd_jobs") || "[]");
     const localDevices = JSON.parse(localStorage.getItem("gd_wd_devices") || "[]");
 
@@ -430,6 +430,7 @@
           location: "القاهرة / الجيزة",
           salary: "يحدد حسب الخبرة",
           details: "إجادة العمل على أجهزة Total Station و GPS واستخراج اللوحات والكميات على AutoCAD Civil 3D.",
+          displayPhone: "01015912371",
           phone: ADMIN_WHATSAPP,
           status: "open",
           createdAt: Date.now()
@@ -450,6 +451,7 @@
           price: "تواصل لمعرفة السعر",
           imageUrl: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
           details: "الجهاز معاير وجاهز للعمل فوراً، يشمل الحامل الثلاثي، العاكس، الشاحن، وشنطة الحفظ الأصلية.",
+          displayPhone: "01015912371",
           phone: ADMIN_WHATSAPP,
           status: "available",
           createdAt: Date.now()
@@ -462,112 +464,105 @@
   }
 
   function syncDataFromCloud() {
+    loadLocalData();
+    renderContent();
+
     const db = getFirestoreDb();
-    if (!db) {
-      loadInitialSampleIfEmpty();
-      renderContent();
-      return;
-    }
+    if (!db) return;
 
-    db.collection("geodev_jobs")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(
-        snap => {
-          if (!snap.empty) {
-            jobsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
-          } else {
-            loadInitialSampleIfEmpty();
-          }
-          renderContent();
-        },
-        () => {
-          loadInitialSampleIfEmpty();
-          renderContent();
-        }
-      );
+    try {
+      db.collection("geodev_jobs")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(
+          snap => {
+            if (!snap.empty) {
+              jobsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+              localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
+              renderContent();
+            }
+          },
+          () => {}
+        );
 
-    db.collection("geodev_devices")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(
-        snap => {
-          if (!snap.empty) {
-            devicesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
-          } else {
-            loadInitialSampleIfEmpty();
-          }
-          renderContent();
-        },
-        () => {
-          loadInitialSampleIfEmpty();
-          renderContent();
-        }
-      );
+      db.collection("geodev_devices")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(
+          snap => {
+            if (!snap.empty) {
+              devicesList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+              localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
+              renderContent();
+            }
+          },
+          () => {}
+        );
+    } catch (_) {}
   }
 
   async function saveNewItem(type, payload) {
-    const db = getFirestoreDb();
+    const tempId = (type === "jobs" ? "job_" : "dev_") + Date.now();
+    // 1. الحفظ والعرض الفوري أولاً حتى لا يتعطل النشر أبداً
     if (type === "jobs") {
-      if (db) {
-        await db.collection("geodev_jobs").add(payload);
-      } else {
-        jobsList.unshift({ id: "job_" + Date.now(), ...payload });
-        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
-      }
+      jobsList.unshift({ id: tempId, ...payload });
+      localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
     } else {
-      if (db) {
-        await db.collection("geodev_devices").add(payload);
-      } else {
-        devicesList.unshift({ id: "dev_" + Date.now(), ...payload });
-        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
-      }
+      devicesList.unshift({ id: tempId, ...payload });
+      localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
     }
     renderContent();
+
+    // 2. المزامنة مع Firestore في الخلفية ليظهر لجميع المستخدمين
+    const db = getFirestoreDb();
+    if (db) {
+      try {
+        const colName = type === "jobs" ? "geodev_jobs" : "geodev_devices";
+        await db.collection(colName).add(payload);
+      } catch (err) {
+        console.warn("Firestore sync warning:", err);
+        alert("تم النشر على جهازك، ولكن لم يتم الحفظ السحابي لجميع المستخدمين بعد. تأكد من تفعيل Firestore Database في وضع Test Mode من لوحة Firebase.");
+      }
+    }
   }
 
   async function updateItemStatus(type, id, newStatus) {
-    const db = getFirestoreDb();
     if (type === "jobs") {
-      if (db && !id.startsWith("sample_") && !id.startsWith("job_")) {
-        await db.collection("geodev_jobs").doc(id).update({ status: newStatus });
-      } else {
-        jobsList = jobsList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
-        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
-      }
+      jobsList = jobsList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
+      localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
     } else {
-      if (db && !id.startsWith("sample_") && !id.startsWith("dev_")) {
-        await db.collection("geodev_devices").doc(id).update({ status: newStatus });
-      } else {
-        devicesList = devicesList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
-        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
-      }
+      devicesList = devicesList.map(item => (item.id === id ? { ...item, status: newStatus } : item));
+      localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
     }
     renderContent();
+
+    const db = getFirestoreDb();
+    if (db && !id.startsWith("sample_") && !id.startsWith("job_") && !id.startsWith("dev_")) {
+      try {
+        const colName = type === "jobs" ? "geodev_jobs" : "geodev_devices";
+        await db.collection(colName).doc(id).update({ status: newStatus });
+      } catch (_) {}
+    }
   }
 
   async function deleteItem(type, id) {
     if (!confirm("هل أنت متأكد من حذف هذا العنصر نهائياً؟")) return;
-    const db = getFirestoreDb();
     if (type === "jobs") {
-      if (db && !id.startsWith("sample_") && !id.startsWith("job_")) {
-        await db.collection("geodev_jobs").doc(id).delete();
-      } else {
-        jobsList = jobsList.filter(item => item.id !== id);
-        localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
-      }
+      jobsList = jobsList.filter(item => item.id !== id);
+      localStorage.setItem("gd_wd_jobs", JSON.stringify(jobsList));
     } else {
-      if (db && !id.startsWith("sample_") && !id.startsWith("dev_")) {
-        await db.collection("geodev_devices").doc(id).delete();
-      } else {
-        devicesList = devicesList.filter(item => item.id !== id);
-        localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
-      }
+      devicesList = devicesList.filter(item => item.id !== id);
+      localStorage.setItem("gd_wd_devices", JSON.stringify(devicesList));
     }
     renderContent();
+
+    const db = getFirestoreDb();
+    if (db && !id.startsWith("sample_") && !id.startsWith("job_") && !id.startsWith("dev_")) {
+      try {
+        const colName = type === "jobs" ? "geodev_jobs" : "geodev_devices";
+        await db.collection(colName).doc(id).delete();
+      } catch (_) {}
+    }
   }
 
-  // 3. رسم الواجهة
   function renderContent() {
     const view = document.getElementById("gdWorkDevicesView");
     if (!view) return;
@@ -591,7 +586,7 @@
         ? filteredJobs
             .map(job => {
               const isCompleted = job.status === "completed";
-              const targetPhone = formatWhatsappNumber(job.phone);
+              const targetPhone = formatWhatsappNumber(job.phone || job.displayPhone);
               const displayPhone = job.displayPhone || job.phone || "";
               const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص وظيفة: ${job.title} (${job.category}) المعروضة على منصة GeoDev Studio Pro`);
               return `
@@ -684,7 +679,7 @@
               const isRented = dev.status === "rented";
               const isClosed = isSold || isRented;
               const statusLabel = isSold ? "تم البيع" : isRented ? "تم التأجير" : `متاح (${dev.offerType})`;
-              const targetPhone = formatWhatsappNumber(dev.phone);
+              const targetPhone = formatWhatsappNumber(dev.phone || dev.displayPhone);
               const waMsg = encodeURIComponent(`مرحباً، أستفسر بخصوص الجهاز المعروض (${dev.offerType}): ${dev.title}`);
 
               return `
@@ -698,6 +693,7 @@
                     <h3 class="gd-wd-card-title">${dev.title}</h3>
                     <div class="gd-wd-card-meta">
                       ${dev.condition ? `<span>⚙️ ${dev.condition}</span>` : ""}
+                      ${dev.displayPhone ? `<span>📞 ${dev.displayPhone}</span>` : ""}
                     </div>
                     <p class="gd-wd-card-desc">${dev.details || ""}</p>
                   </div>
@@ -803,7 +799,6 @@
     `;
   }
 
-  // 4. نافذة الإضافة للأدمن (مع خانة تحديد رقم التواصل لكل وظيفة/جهاز)
   function injectAdminModal() {
     if (document.getElementById("gdWdAdminModal")) return;
     const modalHtml = `
@@ -813,7 +808,7 @@
           <form id="gdWdAdminForm">
             <div id="gdWdFormFields"></div>
             <div style="display:flex;gap:8px;margin-top:14px;">
-              <button type="submit" style="flex:1;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;font-family:inherit;">
+              <button type="button" id="gdWdSubmitPublishBtn" style="flex:1;background:#e09f24;color:#0f172a;border:none;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;font-family:inherit;">
                 نشر الآن
               </button>
               <button type="button" onclick="document.getElementById('gdWdAdminModal').style.display='none'"
@@ -835,25 +830,26 @@
     const titleEl = document.getElementById("gdWdModalTitle");
     const fieldsEl = document.getElementById("gdWdFormFields");
     const form = document.getElementById("gdWdAdminForm");
+    const submitBtn = document.getElementById("gdWdSubmitPublishBtn");
 
     if (type === "jobs") {
       titleEl.textContent = "➕ إضافة وظيفة جديدة في قسم الشغل";
       fieldsEl.innerHTML = `
         <div class="gd-wd-field">
           <label>تخصص الوظيفة</label>
-          <select name="category" required>
+          <select name="category">
             <option value="مساح">شغل مساح</option>
             <option value="مساعد مساحة">شغل مساعد مساحة</option>
             <option value="GIS">شغل GIS</option>
           </select>
         </div>
         <div class="gd-wd-field">
-          <label>عنوان الوظيفة</label>
-          <input type="text" name="title" placeholder="مثال: مطلوب مساح طرق خبرة 3 سنوات" required>
+          <label>عنوان الوظيفة *</label>
+          <input type="text" name="title" placeholder="مثال: مطلوب مساح طرق خبرة 3 سنوات">
         </div>
         <div class="gd-wd-field">
           <label>موقع العمل / المحافظة</label>
-          <input type="text" name="location" placeholder="مثال: المنيا / القاهرة / العلمين">
+          <input type="text" name="location" placeholder="مثال: المنيا / القاهرة / التجمع">
         </div>
         <div class="gd-wd-field">
           <label>الراتب / المميزات</label>
@@ -861,11 +857,11 @@
         </div>
         <div class="gd-wd-field">
           <label>رقم واتساب التواصل للتقديم على هذه الوظيفة *</label>
-          <input type="tel" name="phone" placeholder="اكتب رقم صاحب الوظيفة مثال: 01012345678" required>
+          <input type="text" name="phone" placeholder="مثال: م/محمود 01280421912">
         </div>
         <div class="gd-wd-field">
-          <label>تفاصيل وشروط الوظيفة</label>
-          <textarea name="details" rows="3" placeholder="اكتب تفاصيل العمل والأجهزة المطلوبة..." required></textarea>
+          <label>تفاصيل وشروط الوظيفة *</label>
+          <textarea name="details" rows="3" placeholder="اكتب تفاصيل العمل والأجهزة المطلوبة..."></textarea>
         </div>
       `;
     } else {
@@ -873,78 +869,96 @@
       fieldsEl.innerHTML = `
         <div class="gd-wd-field">
           <label>نوع العرض</label>
-          <select name="offerType" required>
+          <select name="offerType">
             <option value="بيع">للبيع</option>
             <option value="إيجار">للإيجار</option>
           </select>
         </div>
         <div class="gd-wd-field">
-          <label>اسم وموديل الجهاز</label>
-          <input type="text" name="title" placeholder="مثال: توتال ستيشن Sokkia CX-105" required>
+          <label>اسم وموديل الجهاز *</label>
+          <input type="text" name="title" placeholder="مثال: توتال ستيشن Sokkia CX-105">
         </div>
         <div class="gd-wd-field">
-          <label>السعر / قيمة الإيجار</label>
-          <input type="text" name="price" placeholder="مثال: 145,000 جنيه أو 700 ج/يوم" required>
+          <label>السعر / قيمة الإيجار *</label>
+          <input type="text" name="price" placeholder="مثال: 145,000 جنيه أو 700 ج/يوم">
         </div>
         <div class="gd-wd-field">
           <label>حالة الجهاز ومشتملاته</label>
           <input type="text" name="condition" placeholder="مثال: كسر زيرو بالضمان والمعايرة">
         </div>
         <div class="gd-wd-field">
-          <label>رقم واتساب التواصل لهذا الجهاز</label>
-          <input type="tel" name="phone" value="01015912371" placeholder="اكتب رقم التواصل مثال: 01012345678" required>
+          <label>رقم واتساب التواصل لهذا الجهاز *</label>
+          <input type="text" name="phone" value="01015912371" placeholder="اكتب رقم التواصل">
         </div>
         <div class="gd-wd-field">
           <label>صورة الجهاز (اختر صورة من جهازك أو ضع رابط صورة)</label>
           <input type="file" id="gdWdDeviceFile" accept="image/*" style="margin-bottom:6px;">
-          <input type="url" name="imageUrl" placeholder="أو الصق رابط الصورة مباشرة https://...">
+          <input type="text" name="imageUrl" placeholder="أو الصق رابط الصورة مباشرة https://...">
         </div>
         <div class="gd-wd-field">
-          <label>التفاصيل الكاملة للجهاز</label>
-          <textarea name="details" rows="3" placeholder="اكتب كافة المواصفات والملحقات..." required></textarea>
+          <label>التفاصيل الكاملة للجهاز *</label>
+          <textarea name="details" rows="3" placeholder="اكتب كافة المواصفات والملحقات..."></textarea>
         </div>
       `;
     }
 
-    form.onsubmit = async e => {
-      e.preventDefault();
+    submitBtn.onclick = async () => {
       const fd = new FormData(form);
+      const title = (fd.get("title") || "").trim();
+      const details = (fd.get("details") || "").trim();
       const rawInputPhone = (fd.get("phone") || "").trim();
-      const formattedWaPhone = formatWhatsappNumber(rawInputPhone);
 
-      if (type === "jobs") {
-        await saveNewItem("jobs", {
-          category: fd.get("category"),
-          title: fd.get("title"),
-          location: fd.get("location"),
-          salary: fd.get("salary"),
-          details: fd.get("details"),
-          displayPhone: rawInputPhone,
-          phone: formattedWaPhone,
-          status: "open",
-          createdAt: Date.now()
-        });
-      } else {
-        let finalImgUrl = fd.get("imageUrl") || "";
-        const fileInput = document.getElementById("gdWdDeviceFile");
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          finalImgUrl = await compressImageToDataUrl(fileInput.files[0]);
-        }
-        await saveNewItem("devices", {
-          offerType: fd.get("offerType"),
-          title: fd.get("title"),
-          price: fd.get("price"),
-          condition: fd.get("condition"),
-          imageUrl: finalImgUrl,
-          details: fd.get("details"),
-          displayPhone: rawInputPhone,
-          phone: formattedWaPhone,
-          status: "available",
-          createdAt: Date.now()
-        });
+      if (!title) {
+        alert("من فضلك اكتب العنوان أولاً.");
+        return;
       }
-      modal.style.display = "none";
-      if (typeof window.toast === "function") window.toast("تم النشر بنجاح!", "success");
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "جاري النشر...";
+
+      try {
+        const formattedWaPhone = formatWhatsappNumber(rawInputPhone);
+
+        if (type === "jobs") {
+          await saveNewItem("jobs", {
+            category: fd.get("category") || "مساح",
+            title,
+            location: (fd.get("location") || "").trim(),
+            salary: (fd.get("salary") || "").trim(),
+            details,
+            displayPhone: rawInputPhone,
+            phone: formattedWaPhone,
+            status: "open",
+            createdAt: Date.now()
+          });
+        } else {
+          let finalImgUrl = (fd.get("imageUrl") || "").trim();
+          const fileInput = document.getElementById("gdWdDeviceFile");
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            finalImgUrl = await compressImageToDataUrl(fileInput.files[0]);
+          }
+          await saveNewItem("devices", {
+            offerType: fd.get("offerType") || "بيع",
+            title,
+            price: (fd.get("price") || "").trim(),
+            condition: (fd.get("condition") || "").trim(),
+            imageUrl: finalImgUrl,
+            details,
+            displayPhone: rawInputPhone,
+            phone: formattedWaPhone,
+            status: "available",
+            createdAt: Date.now()
+          });
+        }
+
+        modal.style.display = "none";
+        if (typeof window.toast === "function") window.toast("تم النشر بنجاح!", "success");
+      } catch (err) {
+        alert("حدث خطأ أثناء النشر: " + (err && err.message ? err.message : err));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "نشر الآن";
+      }
     };
 
     modal.style.display = "flex";
