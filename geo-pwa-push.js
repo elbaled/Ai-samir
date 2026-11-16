@@ -1156,3 +1156,59 @@
   }
 })();
 
+/* ============================================================================
+   ترقية محرك توليد الأكواد الهندسية (AutoLISP / ArcPy / Civil 3D) إلى المستوى الاحترافي
+   ============================================================================ */
+(function () {
+  "use strict";
+  if (window.GEOCodeEngineProInit) return;
+  window.GEOCodeEngineProInit = true;
+
+  const ENGINEERING_PROMPT_RULES = `
+[تعليمات إلزامية لمحرك الأكواد الهندسية في GeoDev Studio Pro]:
+1. اكتب الكود كاملاً من البداية للنهاية جاهزاً للتشغيل المباشر في بيئة الإنتاج دون أي اختصار أو حذف لأي دالة.
+2. إذا كان الطلب بلغة AutoLISP (.lsp) لبرنامج AutoCAD أو Civil 3D:
+   - ابدأ الكود بتعليق واضح يوضح اسم الأمر، وظيفته، وطريقة تشغيله.
+   - أضف دالة معالجة الأخطاء (*error*) وحفظ واستعادة متغيرات النظام (مثل OSMODE و CMDECHO).
+   - تأكد من إغلاق جميع الأقواس بدقة 100% واستخدام (vl-load-com) عند الحاجة.
+   - أضف في نهاية الملف سطر (princ) يطبع للمستخدم في سطر أوامر أوتوكاد اسم الأمر الذي سيكتبه لتشغيل الليسب.
+3. إذا كان الطلب بلغة Python أو ArcPy لبرنامج ArcGIS Pro أو QGIS:
+   - استخدم ترميز UTF-8 لدعم النصوص العربية، وأضف try/except لمعالجة الأخطاء، واطبع خطوات التنفيذ بوضوح.
+4. ضع الكود بالكامل داخل كتلة برمجية واحدة نظيفة ومحددة اللغة (lisp أو python) حتى يتمكن زر التحميل المباشر من حفظه كملف جاهز فوراً.
+`;
+
+  // اعتراض دوال إرسال الرسائل أو استدعاءات Gemini API لدمج القواعد الهندسية تلقائياً
+  const origFetch = window.fetch;
+  window.fetch = async function (input, init) {
+    try {
+      const url = typeof input === "string" ? input : (input && input.url) || "";
+      if (
+        url.includes("generativelanguage.googleapis.com") &&
+        init &&
+        typeof init.body === "string"
+      ) {
+        const payload = JSON.parse(init.body);
+        if (payload && Array.isArray(payload.contents)) {
+          const lastMsg = payload.contents[payload.contents.length - 1];
+          const userText =
+            lastMsg && lastMsg.parts && lastMsg.parts[0] && lastMsg.parts[0].text
+              ? lastMsg.parts[0].text
+              : "";
+
+          // تفعيل القواعد الهندسية تلقائياً عند طلب ليسب أو كود مساحة أو GIS
+          if (/lisp|ليسب|أوتوكاد|autocad|civil|arcpy|arcgis|qgis|كود|برمج|سكريبت|script/i.test(userText)) {
+            payload.systemInstruction = payload.systemInstruction || { parts: [{ text: "" }] };
+            if (payload.systemInstruction.parts && payload.systemInstruction.parts[0]) {
+              payload.systemInstruction.parts[0].text += "\n" + ENGINEERING_PROMPT_RULES;
+            } else {
+              lastMsg.parts[0].text = ENGINEERING_PROMPT_RULES + "\n\nطلب المستخدم:\n" + userText;
+            }
+            init.body = JSON.stringify(payload);
+          }
+        }
+      }
+    } catch (_) {}
+
+    return origFetch.apply(this, arguments);
+  };
+})();
