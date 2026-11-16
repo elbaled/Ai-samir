@@ -1,13 +1,12 @@
 /**
- * أداة محلل أخطاء البرامج المساحية و GIS (تصميم مخصص + اعتراض تلقائي للـ prompt القديم)
- * GeoDev Studio Pro
+ * أداة محلل أخطاء البرامج المساحية و GIS (ربط تلقائي كامل مع GeoDev Studio Pro)
  */
-
 (function () {
   let selectedGeoErrorImageBase64 = null;
   let selectedGeoErrorMimeType = null;
+  let selectedGeoErrorFile = null;
 
-  // 1. حقن التصميم والنافذة في الصفحة
+  // 1. حقن التصميم والنافذة
   function initGeoErrorModalUI() {
     if (document.getElementById('geoErrorModal')) return;
 
@@ -125,6 +124,7 @@
   function handleGeoImageSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
+    selectedGeoErrorFile = file;
     selectedGeoErrorMimeType = file.type;
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -148,6 +148,7 @@
   };
 
   window.removeGeoImage = function () {
+    selectedGeoErrorFile = null;
     selectedGeoErrorImageBase64 = null;
     selectedGeoErrorMimeType = null;
     const gal = document.getElementById('geoImageGallery');
@@ -158,6 +159,7 @@
     if (prev) prev.style.display = 'none';
   };
 
+  // 2. الربط الذكي التلقائي مع الشات ونظام Vision في الموقع
   window.submitGeoErrorAnalysis = function () {
     const errorText = document.getElementById('geoErrorText').value.trim();
     if (!errorText && !selectedGeoErrorImageBase64) {
@@ -165,25 +167,61 @@
       return;
     }
 
+    const fileObj = selectedGeoErrorFile;
     const imgData = selectedGeoErrorImageBase64;
     const imgMime = selectedGeoErrorMimeType;
     window.closeGeoErrorModal();
 
     const promptMessage = `بصفتك خبير نظم معلومات جغرافية (GIS) ومساحة، قم بتحليل المشكلة أو رسالة الخطأ التالية في برامج (ArcGIS Pro / ArcMap / QGIS / AutoCAD Civil 3D) وقدم السبب الجذري وخطوات الحل العملية بالترتيب:\n\n${errorText || 'يرجى تحليل رسالة الخطأ الظاهرة في الصورة المرفقة وحلها بدقة.'}`;
 
-    if (typeof window.onGeoErrorSubmit === 'function') {
-      window.onGeoErrorSubmit(promptMessage, imgData, imgMime);
-    } else {
-      alert('تم تجهيز التحليل، يرجى ربط دالة الإرسال window.onGeoErrorSubmit');
+    // أ) إذا كان المستخدم أرفق صورة، نمررها لمدخل الصور الأصلي في الشات (geo-vision.js) إن وجد
+    if (fileObj) {
+      const mainFileInput = document.querySelector('input[type="file"][accept*="image"]:not(#geoImageGallery):not(#geoImageCamera)');
+      if (mainFileInput) {
+        const dt = new DataTransfer();
+        dt.items.add(fileObj);
+        mainFileInput.files = dt.files;
+        mainFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        // تخزين الصورة في المتغيرات العامة المحتملة لـ geo-vision.js
+        window.currentImageBase64 = imgData;
+        window.currentImageMime = imgMime;
+        window.selectedImageBase64 = imgData;
+        window.selectedImageType = imgMime;
+      }
     }
+
+    // ب) الانتقال لتبويب المساعد (الشات) ووضع البرومبت وإرساله تلقائياً
+    setTimeout(() => {
+      // محاولة فتح تبويب الشات الرئيسي إذا كان مخفياً
+      const assistantTab = document.querySelector('[data-tab="assistant"], [onclick*="assistant"], [onclick*="chat"]');
+      if (assistantTab) assistantTab.click();
+
+      // البحث عن مربع إدخال الرسالة في الشات
+      const chatInput = document.querySelector('#userInput, #chatInput, #messageInput, textarea[placeholder*="اسأل"], textarea[placeholder*="اكتب"], input[type="text"][placeholder*="اسأل"]');
+      const sendBtn = document.querySelector('#sendBtn, #sendMessageBtn, button[onclick*="send"]');
+
+      if (chatInput) {
+        chatInput.value = promptMessage;
+        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        if (sendBtn) {
+          sendBtn.click();
+        } else if (typeof window.sendMessage === 'function') {
+          window.sendMessage();
+        }
+      } else if (typeof window.sendMessage === 'function') {
+        window.sendMessage(promptMessage, imgData, imgMime);
+      }
+    }, 250);
   };
 
-  // 2. السحر هنا: اعتراض دالة prompt القديمة تلقائياً بدون لمس الكود القديم!
+  // 3. اعتراض نافذة prompt القديمة أوتوماتيكياً
   const originalPrompt = window.prompt;
   window.prompt = function (message, defaultValue) {
     if (message && (message.includes('صف المشكلة') || message.includes('رسالة الخطأ') || message.includes('ArcGIS'))) {
       window.openGeoErrorModal();
-      return null; // إلغاء المربع الأسود القديم فوراً
+      return null;
     }
     return originalPrompt.apply(this, arguments);
   };
