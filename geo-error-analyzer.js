@@ -90,7 +90,7 @@
       <div id="geoUniversalModal" class="geo-modal-overlay">
         <div class="geo-modal-box">
           <div class="geo-modal-header">
-            <h3 id="geoModalTitle">🛠️ أداة التحليل الذكي</h3>
+            <h3 id="geoModalTitle"> أداة التحليل الذكي</h3>
             <button type="button" onclick="window.closeGeoModal()" class="geo-close-btn">&times;</button>
           </div>
           <div class="geo-modal-body">
@@ -100,9 +100,9 @@
             <div id="geoUploadSection" class="geo-upload-section">
               <label>إرفاق صورة أو لقطة شاشة للتحليل (اختياري):</label>
               <div class="geo-upload-buttons">
-                <label for="geoImageGallery" class="geo-btn-secondary">🖼️ اختيار صورة</label>
+                <label for="geoImageGallery" class="geo-btn-secondary">اختيار صورة</label>
                 <input type="file" id="geoImageGallery" accept="image/*" style="display: none;">
-                <label for="geoImageCamera" class="geo-btn-secondary">📷 تصوير بالكاميرا</label>
+                <label for="geoImageCamera" class="geo-btn-secondary"> تصوير بالكاميرا</label>
                 <input type="file" id="geoImageCamera" accept="image/*" capture="environment" style="display: none;">
               </div>
               <div id="geoImagePreviewContainer" class="geo-preview-box">
@@ -112,7 +112,7 @@
             </div>
           </div>
           <div class="geo-modal-footer">
-            <button type="button" id="geoSubmitBtn" onclick="window.submitGeoUniversalModal()" class="geo-btn-primary">تنفيذ التحليل 🚀</button>
+            <button type="button" id="geoSubmitBtn" onclick="window.submitGeoUniversalModal()" class="geo-btn-primary">تنفيذ التحليل </button>
             <button type="button" onclick="window.closeGeoModal()" class="geo-btn-cancel">إلغاء</button>
           </div>
         </div>
@@ -169,29 +169,29 @@
     labelEl.textContent = originalMessage;
 
     if (originalMessage.includes('رسالة الخطأ') || originalMessage.includes('ArcGIS')) {
-      titleEl.innerHTML = '🛠️ محلل أخطاء البرامج المساحية و GIS';
+      titleEl.innerHTML = ' محلل أخطاء البرامج المساحية و GIS';
       inputEl.placeholder = 'اكتب تفاصيل الخطأ في ArcGIS أو QGIS أو Civil 3D...';
-      submitBtn.textContent = 'تحليل وحل المشكلة 🚀';
+      submitBtn.textContent = 'تحليل وحل المشكلة ';
       currentToolPromptPrefix = 'بصفتك خبير نظم معلومات جغرافية (GIS) ومساحة، قم بتحليل المشكلة أو رسالة الخطأ التالية وقدم السبب الجذري وخطوات الحل العملية بالترتيب:\n\n';
     } else if (originalMessage.includes('الظاهرة') || originalMessage.includes('الاستشعار')) {
-      titleEl.innerHTML = '🛰️ مستشار اختيار المرئيات والمؤشرات';
+      titleEl.innerHTML = ' مستشار اختيار المرئيات والمؤشرات';
       inputEl.placeholder = 'مثال: رصد الزحف العمراني، دراسة الملوحة، أو الجزر الحرارية...';
-      submitBtn.textContent = 'توليد التوصية العلمية 🚀';
+      submitBtn.textContent = 'توليد التوصية العلمية ';
       currentToolPromptPrefix = 'بصفتك خبير استشعار عن بعد (Remote Sensing)، حدد أنسب قمر صناعي، الدقة المكانية والطيفية، والمؤشر الطيفي بمعادلته الرياضية لدراسة الظاهرة التالية:\n\n';
     } else if (originalMessage.includes('خطة بحث') || originalMessage.includes('موضوع البحث') || originalMessage.includes('عنوان')) {
-      titleEl.innerHTML = '🎓 بناء خطة بحث علمي (Proposal)';
+      titleEl.innerHTML = ' بناء خطة بحث علمي (Proposal)';
       inputEl.placeholder = 'اكتب عنوان أو فكرة البحث الجغرافي / المساحي...';
-      submitBtn.textContent = 'بناء خطة البحث 🚀';
+      submitBtn.textContent = 'بناء خطة البحث ';
       currentToolPromptPrefix = 'بصفتك مستشاراً أكاديمياً في الجغرافيا والجيوماتكس، قم ببناء خطة بحث علمي متكاملة (مشكلة البحث، الأهداف، الفرضيات، المنهجية، والبيانات المكانية المطلوبة) حول الموضوع التالي:\n\n';
     } else if (originalMessage.includes('سير العمل') || originalMessage.includes('التحليل المكاني')) {
-      titleEl.innerHTML = '🗺️ مصمم خريطة سير العمل (GIS Workflow)';
+      titleEl.innerHTML = ' مصمم خريطة سير العمل (GIS Workflow)';
       inputEl.placeholder = 'اكتب هدف التحليل المكاني المطلوب تنفيذه...';
-      submitBtn.textContent = 'تصميم خطوات العمل 🚀';
+      submitBtn.textContent = 'تصميم خطوات العمل ;
       currentToolPromptPrefix = 'بصفتك محلل نظم معلومات جغرافية محترف، ابنِ خطوات التحليل المكاني بالترتيب بأسماء الأدوات الفعلية داخل ArcGIS Pro و QGIS لتحقيق الهدف التالي:\n\n';
     } else {
       titleEl.innerHTML = '🌐 مساعد الجيوماتكس المتخصص';
       inputEl.placeholder = 'اكتب تفاصيل طلبك هنا...';
-      submitBtn.textContent = 'إرسال للتحليل 🚀';
+      submitBtn.textContent = 'إرسال للتحليل ';
       currentToolPromptPrefix = 'بصفتك خبير في الجيوماتكس والمساحة ونظم المعلومات الجغرافية، أجب بدقة ومنهجية عن الطلب التالي:\n\n';
     }
 
