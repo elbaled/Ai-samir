@@ -3239,6 +3239,13 @@ if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone()&&!sessionStorage
 </script>
   <script src="geo-error-analyzer.js"></script>
   
+<script>
+  window.onGeoErrorSubmit = function(promptText, imageBase64, mimeType) {
+    // مرر النص والصورة لدالة الشات الأساسية عندك هنا
+    // مثال:
+    sendMessage(promptText, imageBase64, mimeType); 
+  };
+</script>
 
 </body>
   </html>
