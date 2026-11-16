@@ -2178,7 +2178,7 @@ const _al=adminLoad;adminLoad=function(){_al();listCodes()};
 
 <script src="work-devices-tab.js"></script>
 <script src="light-theme-fix.js"></script>
-
+<script src="geo-error-analyzer.js"></script>
   <script src="notifications-bridge.js"></script>
 
 <script src="geo-pdf-export.js"></script>
@@ -3237,15 +3237,7 @@ if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone()&&!sessionStorage
 })();
 
 </script>
-  <script src="geo-error-analyzer.js"></script>
   
-<script>
-  window.onGeoErrorSubmit = function(promptText, imageBase64, mimeType) {
-    // مرر النص والصورة لدالة الشات الأساسية عندك هنا
-    // مثال:
-    sendMessage(promptText, imageBase64, mimeType); 
-  };
-</script>
 
 </body>
   </html>
