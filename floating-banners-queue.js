@@ -330,18 +330,18 @@
         actionClass: "ai-btn",
         isCloseOnly: true
       },
-      {
-              
+            {
         id: "whatsapp_pro_offer",
         badgeIcon: "💬",
         badgeClass: "wa-style",
         tag: "عرض الاشتراك • 2 من " + (isInsideAndroidApp() ? "2" : "3"),
-        title: "باقات PRO تبدأ من 70 جنيه شهرياً!",
-        text: "اشترك الآن في باقة PRO (شهري 70 ج • سنوي 550 ج) وتواصل معنا عبر واتساب للتفعيل الفوري.",
-        actionLabel: "اشترك الآن",
+        title: "عرض PRO بـ 50 ج لأول شهر + باقة PRO Plus!",
+        text: "اشترك الآن في باقة PRO (أول شهر 50 ج بدل 70 ج) أو باقة PRO Plus وتواصل معنا عبر واتساب للتفعيل الفوري.",
+        actionLabel: "تواصل واتساب",
         actionClass: "wa-btn",
-        href: WHATSAPP_PRO_URL
+        href: WHATSAPP_PRO_URL + "?text=" + encodeURIComponent("مرحبا استفسر عن عرض الاشتراك في البرو وعرض اشتراك البرو بلس")
       }
+
    
 
       
