@@ -331,16 +331,20 @@
         isCloseOnly: true
       },
       {
+              
         id: "whatsapp_pro_offer",
         badgeIcon: "💬",
         badgeClass: "wa-style",
         tag: "عرض الاشتراك • 2 من " + (isInsideAndroidApp() ? "2" : "3"),
-        title: "عرض خاص على باقة PRO!",
-        text: "تواصل معنا الآن عبر واتساب للاستفادة من عرض اشتراك PRO وتفعيل حسابك.",
-        actionLabel: "تواصل معنا",
+        title: "باقات PRO تبدأ من 70 جنيه شهرياً!",
+        text: "اشترك الآن في باقة PRO (شهري 70 ج • سنوي 550 ج) وتواصل معنا عبر واتساب للتفعيل الفوري.",
+        actionLabel: "اشترك الآن",
         actionClass: "wa-btn",
         href: WHATSAPP_PRO_URL
       }
+   
+
+      
     ];
 
     if (!isInsideAndroidApp()) {
