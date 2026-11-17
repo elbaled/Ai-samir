@@ -1,40 +1,46 @@
 /* ============================================================================
-   استطلاع الرأي العام لجميع المستخدمين عند فتح المنصة:
-   "عاوزين نبدأ إيه في الأوتوكاد؟"
-   - الخيار 1: أساسيات الأوتوكاد المساحي (يبدأ من 30% ويتزايد بعد ذلك)
-   - الخيار 2: بداية كورس ربط الـ AI بالأوتوكاد (يبدأ من 0% ويتزايد بعد ذلك)
+   استطلاع الرأي العام للمستخدمين المسجلين + شريط النتائج العلوي المباشر (مُصلَح للموبايل)
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOAutocadPollInit) return;
-  window.GEOAutocadPollInit = true;
+  if (window.GEOAutocadPollV3Init) return;
+  window.GEOAutocadPollV3Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const POLL_DOC_ID = "autocad_start_poll_v1";
-  const LOCAL_VOTE_KEY = "gd_autocad_poll_choice_v1";
-  const LOCAL_COUNTS_KEY = "gd_autocad_poll_counts_v1";
+  const LOCAL_COUNTS_KEY = "gd_autocad_poll_counts_v3";
 
-  // القيم الابتدائية: 30% للخيار الأول و 0% للخيار الثاني
+  let currentUser = null;
+  let isAdminUser = false;
+  let userChoice = ""; // 'basics' | 'ai' | ''
+  let isSavingVote = false;
+
   let pollState = JSON.parse(localStorage.getItem(LOCAL_COUNTS_KEY) || "null") || {
-    basicsVotes: 0, // تُضاف فوق قاعدة الـ 30%
-    aiVotes: 0      // تبدأ من 0% وتزيد مع كل صوت
+    basicsVotes: 0,
+    aiVotes: 0
   };
 
-  let userChoice = localStorage.getItem(LOCAL_VOTE_KEY) || ""; // 'basics' | 'ai' | ''
-  let isAdminUser = false;
+  function getActiveUserId() {
+    if (currentUser && currentUser.uid) return currentUser.uid;
+    try {
+      if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+        currentUser = firebase.auth().currentUser;
+        return currentUser.uid;
+      }
+    } catch (_) {}
+    const cachedEmail = localStorage.getItem("gd_user_email") || localStorage.getItem("userEmail");
+    return cachedEmail ? "user_" + cachedEmail.replace(/[^a-zA-Z0-9]/g, "_") : "";
+  }
 
-  // حساب النسب المئوية بحيث يبدأ الخيار الأول من 30% والثاني من 0% ثم يتحركان بدقة مع الأصوات
   function calculatePercentages() {
-    const bVotes = Number(pollState.basicsVotes || 0);
-    const aVotes = Number(pollState.aiVotes || 0);
+    const bVotes = Math.max(0, Number(pollState.basicsVotes || 0));
+    const aVotes = Math.max(0, Number(pollState.aiVotes || 0));
     const totalNewVotes = bVotes + aVotes;
 
     if (totalNewVotes === 0) {
       return { basicsPct: 30, aiPct: 0, totalVotes: 0 };
     }
 
-    // توزيع الـ 70% المتبقية + الأصوات الجديدة بحيث يبدأ الأول من 30% والثاني من 0%
-    // كل صوت جديد للأساسيات يرفعها فوق 30%، وكل صوت للـ AI يرفعه من 0%
     const effectiveBasics = 30 + bVotes;
     const effectiveAi = 0 + aVotes;
     const effectiveTotal = effectiveBasics + effectiveAi;
@@ -46,10 +52,59 @@
   }
 
   function injectStyles() {
-    if (document.getElementById("gdAutocadPollStyles")) return;
+    if (document.getElementById("gdAutocadPollV3Styles")) return;
     const style = document.createElement("style");
-    style.id = "gdAutocadPollStyles";
+    style.id = "gdAutocadPollV3Styles";
     style.textContent = `
+      #gdAutocadTopPollBar {
+        position: sticky;
+        top: 0;
+        z-index: 9980;
+        background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        border-bottom: 2px solid #e09f24;
+        padding: 8px 12px;
+        font-size: 12px;
+        direction: rtl;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+      }
+      .gd-top-poll-stats {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-weight: 800;
+      }
+      .gd-top-poll-pill {
+        background: rgba(224, 159, 36, 0.16);
+        border: 1px solid rgba(224, 159, 36, 0.45);
+        color: #fbbf24;
+        padding: 3px 9px;
+        border-radius: 99px;
+        font-size: 11.5px;
+      }
+      .gd-top-poll-pill.ai-pill {
+        background: rgba(34, 197, 94, 0.16);
+        border-color: rgba(34, 197, 94, 0.45);
+        color: #4ade80;
+      }
+      .gd-top-poll-edit-btn {
+        background: #e09f24;
+        color: #0f172a;
+        border: none;
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-size: 11.5px;
+        font-weight: 900;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
       #gdAutocadPollOverlay {
         position: fixed;
         inset: 0;
@@ -59,15 +114,10 @@
         align-items: center;
         justify-content: center;
         padding: 16px;
-        z-index: 10060;
+        z-index: 10090;
         direction: rtl;
         text-align: right;
         font-family: inherit;
-        animation: gdPollFadeIn 0.25s ease;
-      }
-      @keyframes gdPollFadeIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to { opacity: 1; transform: scale(1); }
       }
       .gd-poll-card {
         background: #ffffff;
@@ -79,6 +129,7 @@
         box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
         color: #0f172a;
         position: relative;
+        z-index: 10091;
       }
       .gd-poll-badge {
         display: inline-flex;
@@ -98,36 +149,36 @@
         font-size: 18px;
         font-weight: 900;
         color: #0f172a;
-        line-height: 1.4;
       }
       .gd-poll-sub {
-        margin: 0 0 16px;
+        margin: 0 0 15px;
         font-size: 13px;
         color: #475569;
         line-height: 1.5;
       }
       .gd-poll-option {
         position: relative;
+        width: 100%;
+        text-align: right;
         border: 2px solid #cbd5e1;
         border-radius: 14px;
-        padding: 13px 14px;
+        padding: 14px;
         margin-bottom: 11px;
         cursor: pointer;
         overflow: hidden;
         background: #f8fafc;
         transition: all 0.2s ease;
-        user-select: none;
+        display: block;
+        font-family: inherit;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
-      .gd-poll-option:hover:not(.voted-locked) {
-        border-color: #e09f24;
-        background: #fffbeb;
+      .gd-poll-option:active {
+        transform: scale(0.985);
       }
       .gd-poll-option.selected {
         border-color: #16a34a;
         background: #f0fdf4;
-      }
-      .gd-poll-option.voted-locked {
-        cursor: default;
       }
       .gd-poll-bar-fill {
         position: absolute;
@@ -136,7 +187,8 @@
         bottom: 0;
         background: rgba(224, 159, 36, 0.22);
         z-index: 0;
-        transition: width 0.45s ease;
+        pointer-events: none;
+        transition: width 0.4s ease;
       }
       .gd-poll-option.selected .gd-poll-bar-fill {
         background: rgba(22, 163, 74, 0.18);
@@ -148,6 +200,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
+        pointer-events: none;
       }
       .gd-poll-option-label {
         font-size: 14px;
@@ -215,7 +268,6 @@
         font-family: inherit;
       }
 
-      /* التوافق مع الوضع الداكن */
       body.dark-mode .gd-poll-card,
       [data-theme="dark"] .gd-poll-card {
         background: #171c26;
@@ -226,10 +278,6 @@
       [data-theme="dark"] .gd-poll-title,
       [data-theme="dark"] .gd-poll-option-label {
         color: #ffffff;
-      }
-      body.dark-mode .gd-poll-sub,
-      [data-theme="dark"] .gd-poll-sub {
-        color: #cbd5e1;
       }
       body.dark-mode .gd-poll-option,
       [data-theme="dark"] .gd-poll-option {
@@ -249,68 +297,159 @@
     return null;
   }
 
-  function syncPollFromCloud() {
-    const db = getFirestoreDb();
-    if (!db) return;
+  function renderTopResultsBar() {
+    const uid = getActiveUserId();
+    if (!uid) {
+      const existing = document.getElementById("gdAutocadTopPollBar");
+      if (existing) existing.remove();
+      return;
+    }
 
-    try {
-      db.collection("geodev_polls")
-        .doc(POLL_DOC_ID)
-        .onSnapshot(
-          doc => {
-            if (doc.exists) {
-              const data = doc.data() || {};
-              pollState.basicsVotes = Number(data.basicsVotes || 0);
-              pollState.aiVotes = Number(data.aiVotes || 0);
-              localStorage.setItem(LOCAL_COUNTS_KEY, JSON.stringify(pollState));
-              renderPollModal();
-            }
-          },
-          () => {}
-        );
-    } catch (_) {}
+    let bar = document.getElementById("gdAutocadTopPollBar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "gdAutocadTopPollBar";
+      document.body.prepend(bar);
+    }
+
+    const { basicsPct, aiPct } = calculatePercentages();
+    const myChoiceText =
+      userChoice === "basics"
+        ? "اختيارك: أساسيات الأوتوكاد"
+        : userChoice === "ai"
+        ? "اختيارك: كورس ربط الـ AI"
+        : "لم تختر بعد";
+
+    bar.innerHTML = `
+      <div class="gd-top-poll-stats">
+        <span>📊 تصويت الأوتوكاد:</span>
+        <span class="gd-top-poll-pill">أساسيات الأوتوكاد المساحي: ${basicsPct}%</span>
+        <span class="gd-top-poll-pill ai-pill">ربط الـ AI بالأوتوكاد: ${aiPct}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:#cbd5e1;">(${myChoiceText})</span>
+        <button type="button" id="gdTopPollEditBtn" class="gd-top-poll-edit-btn">
+          تغيير اختياري
+        </button>
+      </div>
+    `;
+
+    const editBtn = document.getElementById("gdTopPollEditBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", openPollModal);
+    }
   }
 
-  async function submitVote(choice) {
-    // منع التصويت أكثر من مرة لنفس المستخدم
-    if (userChoice) return;
+  function subscribeCloudPoll() {
+    const db = getFirestoreDb();
+    const uid = getActiveUserId();
+    if (!db || !uid) return;
 
-    userChoice = choice;
-    localStorage.setItem(LOCAL_VOTE_KEY, choice);
+    db.collection("geodev_polls")
+      .doc(POLL_DOC_ID)
+      .onSnapshot(
+        doc => {
+          if (doc.exists) {
+            const data = doc.data() || {};
+            pollState.basicsVotes = Math.max(0, Number(data.basicsVotes || 0));
+            pollState.aiVotes = Math.max(0, Number(data.aiVotes || 0));
+            localStorage.setItem(LOCAL_COUNTS_KEY, JSON.stringify(pollState));
+          }
+          renderTopResultsBar();
+          const overlay = document.getElementById("gdAutocadPollOverlay");
+          if (overlay && overlay.style.display !== "none") renderPollModal();
+        },
+        () => {}
+      );
 
-    if (choice === "basics") {
-      pollState.basicsVotes = Number(pollState.basicsVotes || 0) + 1;
-    } else if (choice === "ai") {
-      pollState.aiVotes = Number(pollState.aiVotes || 0) + 1;
+    if (currentUser && currentUser.uid) {
+      db.collection("geodev_polls")
+        .doc(POLL_DOC_ID)
+        .collection("voters")
+        .doc(currentUser.uid)
+        .get()
+        .then(doc => {
+          if (doc.exists && doc.data() && doc.data().choice) {
+            userChoice = doc.data().choice;
+            localStorage.setItem(`gd_poll_choice_${currentUser.uid}`, userChoice);
+            renderTopResultsBar();
+          } else {
+            openPollModal();
+          }
+        })
+        .catch(() => {
+          userChoice = localStorage.getItem(`gd_poll_choice_${uid}`) || "";
+          if (!userChoice) openPollModal();
+          renderTopResultsBar();
+        });
     }
+  }
+
+  async function voteOrSwitch(newChoice) {
+    const uid = getActiveUserId();
+    if (!uid || isSavingVote) return;
+    if (userChoice === newChoice) return;
+
+    const prevChoice = userChoice;
+    userChoice = newChoice;
+    localStorage.setItem(`gd_poll_choice_${uid}`, newChoice);
+
+    if (prevChoice === "basics") pollState.basicsVotes = Math.max(0, pollState.basicsVotes - 1);
+    if (prevChoice === "ai") pollState.aiVotes = Math.max(0, pollState.aiVotes - 1);
+
+    if (newChoice === "basics") pollState.basicsVotes += 1;
+    if (newChoice === "ai") pollState.aiVotes += 1;
+
     localStorage.setItem(LOCAL_COUNTS_KEY, JSON.stringify(pollState));
     renderPollModal();
+    renderTopResultsBar();
 
-    // تحديث العداد في Firestore لجميع المستخدمين
     const db = getFirestoreDb();
-    if (db && firebase.firestore && firebase.firestore.FieldValue) {
-      try {
-        const inc = firebase.firestore.FieldValue.increment(1);
-        await db
-          .collection("geodev_polls")
-          .doc(POLL_DOC_ID)
-          .set(
-            choice === "basics"
-              ? { basicsVotes: inc, updatedAt: Date.now() }
-              : { aiVotes: inc, updatedAt: Date.now() },
-            { merge: true }
-          );
-      } catch (_) {}
+    if (!db || !currentUser || !currentUser.uid) return;
+
+    isSavingVote = true;
+    try {
+      const pollRef = db.collection("geodev_polls").doc(POLL_DOC_ID);
+      const voterRef = pollRef.collection("voters").doc(currentUser.uid);
+
+      await db.runTransaction(async tx => {
+        const pollSnap = await tx.get(pollRef);
+        const voterSnap = await tx.get(voterRef);
+
+        const currentData = pollSnap.exists ? pollSnap.data() : { basicsVotes: 0, aiVotes: 0 };
+        let b = Math.max(0, Number(currentData.basicsVotes || 0));
+        let a = Math.max(0, Number(currentData.aiVotes || 0));
+
+        const cloudPrevChoice = voterSnap.exists ? voterSnap.data().choice : "";
+        if (cloudPrevChoice === "basics") b = Math.max(0, b - 1);
+        if (cloudPrevChoice === "ai") a = Math.max(0, a - 1);
+
+        if (newChoice === "basics") b += 1;
+        if (newChoice === "ai") a += 1;
+
+        tx.set(pollRef, { basicsVotes: b, aiVotes: a, updatedAt: Date.now() }, { merge: true });
+        tx.set(voterRef, {
+          choice: newChoice,
+          email: currentUser.email || "",
+          updatedAt: Date.now()
+        });
+      });
+    } catch (err) {
+      console.warn("Firestore poll sync error:", err);
+    } finally {
+      isSavingVote = false;
     }
   }
 
   async function resetPollAdmin() {
-    if (!isAdminUser || !confirm("هل تريد تصفير أصوات الاستطلاع وإعادتها لنقطة البداية (30% / 0%)؟")) return;
+    if (!isAdminUser || !confirm("هل تريد تصفير أصوات الاستطلاع للجميع وإعادتها لنقطة البداية (30% / 0%)؟")) return;
     pollState = { basicsVotes: 0, aiVotes: 0 };
     userChoice = "";
-    localStorage.removeItem(LOCAL_VOTE_KEY);
+    const uid = getActiveUserId();
+    if (uid) localStorage.removeItem(`gd_poll_choice_${uid}`);
     localStorage.setItem(LOCAL_COUNTS_KEY, JSON.stringify(pollState));
     renderPollModal();
+    renderTopResultsBar();
 
     const db = getFirestoreDb();
     if (db) {
@@ -320,39 +459,51 @@
           aiVotes: 0,
           updatedAt: Date.now()
         });
+        if (currentUser && currentUser.uid) {
+          await db.collection("geodev_polls").doc(POLL_DOC_ID).collection("voters").doc(currentUser.uid).delete();
+        }
       } catch (_) {}
     }
+  }
+
+  function openPollModal() {
+    const uid = getActiveUserId();
+    if (!uid) return;
+    let overlay = document.getElementById("gdAutocadPollOverlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "gdAutocadPollOverlay";
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = "flex";
+    renderPollModal();
   }
 
   function closePollModal() {
     const overlay = document.getElementById("gdAutocadPollOverlay");
     if (overlay) overlay.style.display = "none";
-    sessionStorage.setItem("gd_autocad_poll_dismissed_session", "1");
+    renderTopResultsBar();
   }
 
   function renderPollModal() {
-    let overlay = document.getElementById("gdAutocadPollOverlay");
-    if (!overlay) {
-      // إذا سبق للمستخدم التصويت وأغلق الرسالة في هذه الجلسة لا نزعجه
-      if (userChoice && sessionStorage.getItem("gd_autocad_poll_dismissed_session") === "1") return;
-      overlay = document.createElement("div");
-      overlay.id = "gdAutocadPollOverlay";
-      document.body.appendChild(overlay);
-    }
+    const overlay = document.getElementById("gdAutocadPollOverlay");
+    if (!overlay) return;
 
     const { basicsPct, aiPct } = calculatePercentages();
-    const hasVoted = Boolean(userChoice);
 
     overlay.innerHTML = `
       <div class="gd-poll-card">
-        <div class="gd-poll-badge">📢 استطلاع رأي عام للمهندسين والطلاب</div>
+        <div class="gd-poll-badge">📢 استطلاع رأي عام للأعضاء</div>
         <h3 class="gd-poll-title">عاوزين نبدأ إيه في الأوتوكاد؟</h3>
         <p class="gd-poll-sub">
-          ${hasVoted ? "✔ شكراً لمشاركتك! تم تسجيل اختيارك بنجاح وهذه هي النتائج الحالية:" : "اختر مساراً واحداً فقط لنبدأ به الشروحات التطبيقية في المنصة:"}
+          ${
+            userChoice
+              ? "✔ تم حفظ اختيارك في المنصة. اضغط على الخيار الآخر في أي وقت لتبديل رأيك:"
+              : "اضغط على المسار المناسب لك ليتم اعتماده في الشروحات:"
+          }
         </p>
 
-        <div class="gd-poll-option ${userChoice === "basics" ? "selected" : ""} ${hasVoted ? "voted-locked" : ""}"
-          onclick="window.GEOAutocadPollActions.vote('basics')">
+        <button type="button" id="gdPollOptBasics" class="gd-poll-option ${userChoice === "basics" ? "selected" : ""}">
           <div class="gd-poll-bar-fill" style="width: ${basicsPct}%;"></div>
           <div class="gd-poll-option-content">
             <span class="gd-poll-option-label">
@@ -361,10 +512,9 @@
             </span>
             <span class="gd-poll-pct">${basicsPct}%</span>
           </div>
-        </div>
+        </button>
 
-        <div class="gd-poll-option ${userChoice === "ai" ? "selected" : ""} ${hasVoted ? "voted-locked" : ""}"
-          onclick="window.GEOAutocadPollActions.vote('ai')">
+        <button type="button" id="gdPollOptAi" class="gd-poll-option ${userChoice === "ai" ? "selected" : ""}">
           <div class="gd-poll-bar-fill" style="width: ${aiPct}%;"></div>
           <div class="gd-poll-option-content">
             <span class="gd-poll-option-label">
@@ -373,62 +523,98 @@
             </span>
             <span class="gd-poll-pct">${aiPct}%</span>
           </div>
-        </div>
+        </button>
 
         <div class="gd-poll-footer">
           <span style="font-size:11.5px;color:#64748b;font-weight:700;">
-            ${hasVoted ? "اختيار واحد فقط لكل مستخدم" : "اضغط على اختيارك للتصويت"}
+            ${userChoice ? "محفوظ في حسابك ✓" : "اختر أحد الخيارين"}
           </span>
           <div style="display:flex;gap:6px;align-items:center;">
             ${
               isAdminUser
-                ? `<button type="button" onclick="window.GEOAutocadPollActions.reset()"
+                ? `<button type="button" id="gdPollResetBtn"
                     style="background:#dc2626;color:#fff;border:none;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;">
                     تصفير (أدمن)
                   </button>`
                 : ""
             }
-            <button type="button" class="gd-poll-close-btn" onclick="window.GEOAutocadPollActions.close()">
-              ${hasVoted ? "متابعة للمنصة" : "تخطي"}
+            <button type="button" id="gdPollCloseBtn" class="gd-poll-close-btn">
+              متابعة للمنصة
             </button>
           </div>
         </div>
       </div>
     `;
+
+    // ربط الأحداث مباشرة باللمس والنقر لضمان الاستجابة الفورية على الموبايل
+    const btnBasics = document.getElementById("gdPollOptBasics");
+    const btnAi = document.getElementById("gdPollOptAi");
+    const btnClose = document.getElementById("gdPollCloseBtn");
+    const btnReset = document.getElementById("gdPollResetBtn");
+
+    if (btnBasics) {
+      btnBasics.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        voteOrSwitch("basics");
+      });
+    }
+    if (btnAi) {
+      btnAi.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        voteOrSwitch("ai");
+      });
+    }
+    if (btnClose) {
+      btnClose.addEventListener("click", e => {
+        e.preventDefault();
+        closePollModal();
+      });
+    }
+    if (btnReset) {
+      btnReset.addEventListener("click", e => {
+        e.preventDefault();
+        resetPollAdmin();
+      });
+    }
   }
 
-  window.GEOAutocadPollActions = {
-    vote: submitVote,
-    close: closePollModal,
-    reset: resetPollAdmin
-  };
-
-  function watchAdmin() {
+  function watchAuth() {
     const check = () => {
       if (window.firebase && firebase.apps && firebase.apps.length) {
         firebase.auth().onAuthStateChanged(user => {
+          currentUser = user || null;
           isAdminUser = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
-          const overlay = document.getElementById("gdAutocadPollOverlay");
-          if (overlay && overlay.style.display !== "none") renderPollModal();
+
+          if (!currentUser) {
+            const overlay = document.getElementById("gdAutocadPollOverlay");
+            if (overlay) overlay.style.display = "none";
+            const bar = document.getElementById("gdAutocadTopPollBar");
+            if (bar) bar.remove();
+            return;
+          }
+
+          userChoice = localStorage.getItem(`gd_poll_choice_${currentUser.uid}`) || "";
+          renderTopResultsBar();
+          subscribeCloudPoll();
         });
         return true;
       }
       return false;
     };
+
     if (!check()) {
       const iv = setInterval(() => {
         if (check()) clearInterval(iv);
       }, 400);
-      setTimeout(() => clearInterval(iv), 10000);
+      setTimeout(() => clearInterval(iv), 12000);
     }
   }
 
   function init() {
     injectStyles();
-    watchAdmin();
-    syncPollFromCloud();
-    // إظهار الرسالة العامة بعد ثانية واحدة من فتح المنصة
-    setTimeout(renderPollModal, 1000);
+    watchAuth();
   }
 
   if (document.readyState === "loading") {
