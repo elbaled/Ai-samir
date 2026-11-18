@@ -1,17 +1,16 @@
 /* ============================================================================
-   نظام الفترة التجريبية (3 أيام) + تصفية الحسابات القديمة + رسالة انتهاء PRO
+   نظام الفترة التجريبية (3 أيام) + إخفاء الأدوات عن شاشة التسجيل + رسالة انتهاء PRO
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOTrial3DaysGuardInit) return;
-  window.GEOTrial3DaysGuardInit = true;
+  if (window.GEOTrial3DaysGuardV2Init) return;
+  window.GEOTrial3DaysGuardV2Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const ADMIN_WHATSAPP = "201015912371";
   const TRIAL_DAYS_NEW = 3;
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  // حدود التواريخ المرجعية (توقيت مصر UTC+2)
   const NOV_17_START = new Date("2026-11-17T00:00:00+02:00").getTime();
   const NOV_18_START = new Date("2026-11-18T00:00:00+02:00").getTime();
   const NOV_19_START = new Date("2026-11-19T00:00:00+02:00").getTime();
@@ -22,19 +21,38 @@
   let isTrialExpired = false;
   let trialEndTimestamp = 0;
 
-  // 1. تحديث أي نصوص قديمة في الواجهة تشير لفترة تجريبية أطول إلى "3 أيام"
+  // 1. استبدال "7 أيام" (سواء مع PRO أو مجاناً أو تجريبي) بـ "3 أيام" في كل نصوص الصفحة
   function updateTrialTextsInUI() {
+    if (!document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     let node;
     while ((node = walker.nextNode())) {
-      if (!node.nodeValue) continue;
-      if (/(7|14|30|أسبوع|اسبوع|شهر)\s*(أيام|ايام|يوم)?\s*(تجريبي|تجربة|مجاني)/i.test(node.nodeValue)) {
-        node.nodeValue = node.nodeValue.replace(
-          /(7|14|30|أسبوع|اسبوع|شهر)\s*(أيام|ايام|يوم)?\s*(تجريبي|تجربة|مجاني)/gi,
-          "3 أيام تجريبية"
-        );
+      const txt = node.nodeValue;
+      if (!txt) continue;
+      if (/(7|١٤|14|30)\s*(أيام|ايام|يوم)/i.test(txt)) {
+        node.nodeValue = txt.replace(/(7|١٤|14|30)\s*(أيام|ايام|يوم)/gi, "3 أيام");
       }
     }
+  }
+
+  // 2. إخفاء صناديق الأدوات من شاشة التسجيل وقبل تسجيل الدخول نهائياً
+  function enforceAuthVisibilityForTools() {
+    const loggedIn = Boolean(currentUser);
+    const toolBoxes = [
+      document.getElementById("gdGeomaticsAdvTools"),
+      document.getElementById("gdSurveyAdvTools"),
+      document.getElementById("gdAcademyAiBridgeBox"),
+      document.getElementById("gdAdvancedEngToolsBox")
+    ];
+
+    toolBoxes.forEach(box => {
+      if (!box) return;
+      // إذا كان الصندوق محقوناً بالخطأ داخل شاشة تسجيل الدخول أو قبل الدخول -> احذفه/أخفه
+      const insideAuth = box.closest("#authView, #loginScreen, #authModal, .auth-card, [id*='auth'], [id*='login']");
+      if (!loggedIn || insideAuth) {
+        box.remove();
+      }
+    });
   }
 
   function injectStyles() {
@@ -175,30 +193,24 @@
     document.head.appendChild(style);
   }
 
-  // 2. حساب موعد انتهاء الفترة التجريبية بدقة حسب تاريخ تسجيل المستخدم
   function computeExpectedTrialEnd(createdAtMs) {
     if (!createdAtMs || isNaN(createdAtMs)) {
       return Date.now() + TRIAL_DAYS_NEW * DAY_MS;
     }
     if (createdAtMs >= NOV_19_START) {
-      // مستخدم جديد (19 نوفمبر فصاعداً) -> 3 أيام كاملة
       return createdAtMs + TRIAL_DAYS_NEW * DAY_MS;
     }
     if (createdAtMs >= NOV_18_START) {
-      // مسجل يوم 18 نوفمبر -> يومان من تاريخ تسجيله
       return createdAtMs + 2 * DAY_MS;
     }
     if (createdAtMs >= NOV_17_START) {
-      // مسجل يوم 17 نوفمبر -> آخر يوم له هو نهاية 19 نوفمبر
       return NOV_19_START + DAY_MS - 1000;
     }
-    // مسجل قبل يوم 17 نوفمبر -> منتهية فوراً
     return createdAtMs;
   }
 
-  // 3. عرض نافذة "انتهى اشتراكك البرو" مع الأسعار ورابط التفعيل
   function showExpiredModal() {
-    if (isAdminUser || hasActivePaidSub) return;
+    if (!currentUser || isAdminUser || hasActivePaidSub) return;
     let overlay = document.getElementById("gdProExpiredOverlay");
     if (!overlay) {
       overlay = document.createElement("div");
@@ -255,19 +267,13 @@
     overlay.style.display = "flex";
   }
 
-  // 4. اعتراض الضغط على الأدوات والأقسام المحمية إذا انتهى الاشتراك
   function attachProtectionInterceptor() {
     document.addEventListener(
       "click",
       function (e) {
         if (!currentUser || isAdminUser || hasActivePaidSub || !isTrialExpired) return;
+        if (e.target.closest("#gdProExpiredOverlay") || e.target.closest("a[href*='wa.me']")) return;
 
-        // السماح بالضغط داخل نافذة الاشتراك أو أزرار تسجيل الخروج/الواتساب
-        if (e.target.closest("#gdProExpiredOverlay") || e.target.closest("a[href*='wa.me']")) {
-          return;
-        }
-
-        // اعتراض الضغط على أي أداة أو زر توليد كود أو قسم مدفوع
         const interactiveTarget = e.target.closest(
           ".gd-adv-tool-card, .tool-card, [data-tool], [data-action], #sendBtn, #generateBtn, button[type='submit']"
         );
@@ -281,7 +287,6 @@
     );
   }
 
-  // 5. مزامنة وتحديث حالة التجربة في Firebase Firestore لكل مستخدم
   async function syncUserTrialInFirestore(user) {
     if (!user) return;
     isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
@@ -315,7 +320,6 @@
         }
 
         hasActivePaidSub = false;
-        // تحديث حقل trial_end في Firestore ليتطابق مع قاعدة الـ 3 أيام وتصفية القدامى
         const currentStoredEnd = Number(data.trial_end || 0);
         if (!currentStoredEnd || currentStoredEnd > expectedEnd) {
           await userRef.set(
@@ -344,12 +348,21 @@
   function init() {
     injectStyles();
     updateTrialTextsInUI();
+    enforceAuthVisibilityForTools();
     attachProtectionInterceptor();
+
+    // مراقبة مستمرة لمنع ظهور الأدوات في شاشة التسجيل ولتحديث نص الـ 3 أيام
+    const guardInterval = setInterval(() => {
+      updateTrialTextsInUI();
+      enforceAuthVisibilityForTools();
+    }, 350);
+    setTimeout(() => clearInterval(guardInterval), 15000);
 
     const checkAuth = () => {
       if (window.firebase && firebase.apps && firebase.apps.length) {
         firebase.auth().onAuthStateChanged(user => {
           currentUser = user || null;
+          enforceAuthVisibilityForTools();
           if (currentUser) {
             syncUserTrialInFirestore(currentUser);
           }
