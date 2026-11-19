@@ -1,40 +1,97 @@
-
 (function () {
   "use strict";
 
   if (window.GEOAcademyUI) return;
-const courses = [
-  { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "globe", desc: "تعلم GIS والخرائط والتحليل المكاني." },
-  { id: "surveying", title: "المساحة والرفع المساحي", icon: "ruler", desc: "أساسيات المساحة والأجهزة والحسابات." },
-  { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "satellite", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
-  { id: "civil3d", title: "Civil 3D", icon: "drafting-compass", desc: "تصميم الطرق والأعمال المساحية." },
-  { id: "python-gis", title: "Python for GIS", icon: "code", desc: "برمجة وتحليل البيانات الجغرافية." },
-  { id: "gis-programming", title: "GIS Programming", icon: "terminal", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
-  { id: "autocad", title: "AutoCAD", icon: "pencil-ruler", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
-  { id: "autocad-ai", title: "AutoCAD + AI", icon: "bot", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
-];
 
- let currentUser = null;
-let notes = [];
-let memories = [];
-let progress = [];
-let teacherMessages = [];
-let activeTab = "courses";
+  const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
+
+  const courses = [
+    { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "globe", desc: "تعلم GIS والخرائط والتحليل المكاني." },
+    { id: "surveying", title: "المساحة والرفع المساحي", icon: "ruler", desc: "أساسيات المساحة والأجهزة والحسابات." },
+    { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "satellite", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
+    { id: "civil3d", title: "Civil 3D", icon: "drafting-compass", desc: "تصميم الطرق والأعمال المساحية." },
+    { id: "python-gis", title: "Python for GIS", icon: "code", desc: "برمجة وتحليل البيانات الجغرافية." },
+    { id: "gis-programming", title: "GIS Programming", icon: "terminal", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
+    { id: "autocad", title: "AutoCAD", icon: "pencil-ruler", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
+    { id: "autocad-ai", title: "AutoCAD + AI", icon: "bot", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
+  ];
+
+  // البطاقات السبع الرئيسية للأكاديمية بالترتيب المطلوب
+  const academySections = [
+    {
+      id: "courses",
+      title: "الكورسات والدورات",
+      icon: "graduation-cap",
+      badge: "الأساسي",
+      desc: "الدورات المرفوعة، الشروحات التطبيقية، ومكتبة الكورسات العالمية."
+    },
+    {
+      id: "smart-search",
+      title: "البحث الذكي",
+      icon: "search",
+      badge: "AI Search",
+      desc: "ابحث عن كورسات وشروحات حقيقية من YouTube والمنصات العالمية بالـ AI."
+    },
+    {
+      id: "books",
+      title: "الكتب والمراجع",
+      icon: "book-open-check",
+      badge: "مكتبة PDF",
+      desc: "كتب المساحة و GIS والاستشعار عن بعد وأدلة البرامج الهندسية."
+    },
+    {
+      id: "teacher",
+      title: "المدرس الذكي",
+      icon: "bot",
+      badge: "GEO Teacher",
+      desc: "مدرسك الشخصي لشرح المسائل والأكواد خطوة بخطوة مع الصور والصوت."
+    },
+    {
+      id: "notes",
+      title: "ملاحظاتي الدراسية",
+      icon: "notebook-pen",
+      badge: "سحابي",
+      desc: "دوّن ملخصات محاضراتك وأوامر البرامج واحفظها في حسابك."
+    },
+    {
+      id: "memory",
+      title: "ذاكرتي التعليمية",
+      icon: "brain",
+      badge: "تخصصات",
+      desc: "احفظ القوانين والمعادلات والنقاط المهمة مصنفة حسب كل مادة."
+    },
+    {
+      id: "progress",
+      title: "تقدمي التعليمي",
+      icon: "chart-no-axes-column-increasing",
+      badge: "إحصائيات",
+      desc: "تابع نسبة إنجازك في مسارات الجيوماتكس والبرمجة الهندسية."
+    }
+  ];
+
+  let currentUser = null;
+  let isAdminUser = false;
+  let notes = [];
+  let memories = [];
+  let progress = [];
+  let teacherMessages = [];
+  let uploadedCourses = [];
+  let selectedCourseDetailId = null;
+  let courseComments = [];
+  let activeTab = "courses";
 
   const $ = id => document.getElementById(id);
-  
-function refreshAcademyIcons(root = document) {
-  if (!window.lucide || typeof window.lucide.createIcons !== "function") {
-    return;
+
+  function refreshAcademyIcons(root = document) {
+    if (!window.lucide || typeof window.lucide.createIcons !== "function") {
+      return;
+    }
+    window.lucide.createIcons({
+      root,
+      attrs: { "stroke-width": 1.8 }
+    });
   }
 
-  window.lucide.createIcons({
-    root,
-    attrs: {
-      "stroke-width": 1.8
-    }
-  });
-}
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
@@ -48,7 +105,7 @@ function refreshAcademyIcons(root = document) {
   function safeURL(value) {
     try {
       const url = new URL(String(value || ""));
-      if (url.protocol === "https:" || url.protocol === "http:") {
+      if (url.protocol === "https:" || url.protocol === "http:" || url.protocol === "blob:") {
         return escapeHTML(url.href);
       }
     } catch (_) {}
@@ -57,17 +114,14 @@ function refreshAcademyIcons(root = document) {
 
   function notify(message, type = "info") {
     let box = $("academyToast");
-
     if (!box) {
       box = document.createElement("div");
       box.id = "academyToast";
       document.body.appendChild(box);
     }
-
     box.textContent = message;
     box.dataset.type = type;
     box.classList.add("show");
-
     clearTimeout(box._timer);
     box._timer = setTimeout(() => box.classList.remove("show"), 3500);
   }
@@ -80,1053 +134,484 @@ function refreshAcademyIcons(root = document) {
 
     style.textContent = `
       #s-academy {
-        padding:14px;
-        direction:rtl;
-        color:var(--text,#e8edf7);
+        padding: 16px;
+        direction: rtl;
+        color: var(--tx, #e8edf7);
+        animation: academyEnter .35s ease both;
       }
 
-      #s-academy .academy-header {
-        padding:22px;
-        border-radius:18px;
-        background:linear-gradient(135deg,#142b48,#174b68);
-        margin-bottom:18px;
+      @keyframes academyEnter {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* رأس الأكاديمية */
+      #s-academy .academy-header,
+      #s-academy .teacher-header {
+        position: relative;
+        overflow: hidden;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155));
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bl, #38bdf8) 20%, transparent), transparent 45%),
+          linear-gradient(145deg, var(--cd, #182334), color-mix(in srgb, var(--cd, #182334) 82%, var(--bl, #38bdf8)));
+        box-shadow: 0 12px 35px rgba(0,0,0,.12);
       }
 
       #s-academy .academy-header h2 {
-        margin:0 0 9px;
-        font-size:23px;
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--tx, #f8fafc);
+      }
+
+      #s-academy .academy-header h2 svg {
+        width: 27px;
+        height: 27px;
+        color: var(--bl, #38bdf8);
+        flex-shrink: 0;
       }
 
       #s-academy .academy-header p {
-        margin:0;
-        line-height:1.8;
-        opacity:.9;
+        margin: 0;
+        color: var(--mt, #94a3b8);
+        line-height: 1.85;
       }
 
-      #s-academy .academy-tabs {
-        display:flex;
-        gap:8px;
-        overflow-x:auto;
-        padding:5px 0 13px;
-        margin-bottom:12px;
+      /* شبكة البطاقات السبع الرئيسية للأكاديمية */
+      #s-academy .academy-hub-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
       }
 
-      #s-academy .academy-tab {
-        flex:0 0 auto;
-        border:1px solid var(--border,#334155);
-        border-radius:12px;
-        padding:10px 14px;
-        background:var(--card,#182334);
-        color:inherit;
-        cursor:pointer;
+      #s-academy .academy-hub-card {
+        position: relative;
+        text-align: right;
+        cursor: pointer;
+        background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 95%, var(--bl, #38bdf8)), var(--cd, #182334));
+        border: 1.5px solid var(--ln, #334155);
+        border-radius: 18px;
+        padding: 15px;
+        color: inherit;
+        font-family: inherit;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
 
-      #s-academy .academy-tab.active {
-        background:#176b87;
-        color:white;
-        border-color:#176b87;
+      #s-academy .academy-hub-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--bl, #38bdf8);
+      }
+
+      #s-academy .academy-hub-card.active {
+        border: 2px solid #e09f24;
+        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
+        box-shadow: 0 10px 26px rgba(224, 159, 36, 0.18);
+      }
+
+      #s-academy .hub-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      #s-academy .hub-card-badge {
+        font-size: 11px;
+        font-weight: 800;
+        padding: 3px 9px;
+        border-radius: 99px;
+        background: color-mix(in srgb, var(--bl, #38bdf8) 15%, var(--cd, #182334));
+        color: var(--bl, #38bdf8);
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 30%, var(--ln, #334155));
+      }
+
+      #s-academy .academy-hub-card.active .hub-card-badge {
+        background: #e09f24;
+        color: #0f172a;
+        border-color: #e09f24;
+      }
+
+      #s-academy .hub-card-title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 900;
+        color: var(--tx, #f8fafc);
+      }
+
+      #s-academy .hub-card-desc {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: var(--mt, #94a3b8);
+      }
+
+      /* الحاوية الديناميكية للمحتوى النشط */
+      #s-academy .academy-active-stage {
+        border-top: 2px dashed color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
+        padding-top: 16px;
+        margin-top: 6px;
       }
 
       #s-academy .academy-grid {
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));
-        gap:13px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 255px), 1fr));
+        gap: 13px;
       }
 
-      #s-academy .academy-card {
-        background:var(--card,#182334);
-        border:1px solid var(--border,#334155);
-        border-radius:15px;
-        padding:16px;
-        min-width:0;
-        overflow-wrap:anywhere;
+      #s-academy .academy-card,
+      #s-academy .academy-course-result {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 96%, var(--bl, #38bdf8)), var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--ln, #334155) 85%, var(--bl, #38bdf8));
+        border-radius: 18px;
+        padding: 16px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        box-shadow: 0 8px 24px rgba(0,0,0,.09);
       }
 
-      #s-academy .academy-card h3 {
-        font-size:17px;
-        margin:8px 0;
+      #s-academy .academy-card h3,
+      #s-academy .academy-course-result h4 {
+        font-size: 16.5px;
+        margin: 6px 0 8px;
+        color: var(--tx, #f8fafc);
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
-      #s-academy .academy-card p {
-        line-height:1.8;
-        opacity:.85;
-      }
-#s-academy .academy-icon {
-  width:52px;
-  height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:15px;
-  color:#38bdf8;
-  background:rgba(56,189,248,.12);
-  border:1px solid rgba(56,189,248,.2);
-  margin-bottom:12px;
-}
-
-#s-academy .academy-icon svg {
-  width:27px;
-  height:27px;
-  stroke-width:1.8;
-}
-
-#s-academy .academy-tab,
-#s-academy .academy-btn {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-}
-
-#s-academy .academy-tab svg,
-#s-academy .academy-btn svg {
-  width:16px;
-  height:16px;
-  flex-shrink:0;
-}
-
-#s-academy .academy-header h2 {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-#s-academy .academy-header h2 svg {
-  width:27px;
-  height:27px;
-  color:#7dd3fc;
-  flex-shrink:0;
-}
+      #s-academy .academy-card p,
+      #s-academy .academy-course-result p {
+        line-height: 1.85;
+        color: var(--mt, #cbd5e1);
       }
 
+      #s-academy .academy-icon {
+        width: 46px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        color: var(--bl, #38bdf8);
+        background: color-mix(in srgb, var(--bl, #38bdf8) 14%, var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 28%, var(--ln, #334155));
+      }
+
+      #s-academy .academy-icon svg {
+        width: 23px;
+        height: 23px;
+      }
+
+      /* كارت رفع دورة جديدة للأدمن */
+      #s-academy .admin-upload-card {
+        border: 2px solid #e09f24;
+        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 10%, var(--cd, #182334)), var(--cd, #182334));
+        margin-bottom: 18px;
+      }
+
+      #s-academy .admin-upload-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+        gap: 10px;
+      }
+
+      /* مشغل الفيديو وتفاصيل الدورة + التعليقات */
+      #s-academy .course-detail-box {
+        border: 2px solid var(--bl, #38bdf8);
+        margin-bottom: 18px;
+      }
+
+      #s-academy .course-video-frame {
+        width: 100%;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #050811;
+        margin: 12px 0;
+        border: 1px solid var(--ln, #334155);
+      }
+
+      #s-academy .course-video-frame video,
+      #s-academy .course-video-frame iframe {
+        width: 100%;
+        max-height: 420px;
+        display: block;
+        border: 0;
+      }
+
+      #s-academy .course-attachments-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin: 12px 0;
+      }
+
+      #s-academy .comments-section {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid var(--ln, #334155);
+      }
+
+      #s-academy .comment-item {
+        padding: 11px 13px;
+        border-radius: 13px;
+        background: var(--bg, #101827);
+        border: 1px solid var(--ln, #334155);
+        margin-bottom: 9px;
+      }
+
+      #s-academy .comment-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 5px;
+        font-size: 12.5px;
+      }
+
+      /* الأزرار والحقول */
       #s-academy .academy-btn {
-        border:0;
-        border-radius:10px;
-        padding:10px 14px;
-        background:#167b9c;
-        color:white;
-        cursor:pointer;
-        margin:4px 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 25%, var(--ln, #334155));
+        border-radius: 12px;
+        padding: 10px 15px;
+        background: var(--bl, #167b9c);
+        color: #fff;
+        font-weight: 800;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform .18s ease, filter .18s ease;
+      }
+
+      #s-academy .academy-btn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+
+      #s-academy .academy-btn.gold {
+        background: #e09f24;
+        color: #0f172a;
+        border-color: #e09f24;
+      }
+
+      #s-academy .academy-btn.pdf-btn {
+        background: #dc2626;
+        color: #fff;
+        border-color: #dc2626;
+      }
+
+      #s-academy .academy-btn.drive-btn {
+        background: #16a34a;
+        color: #fff;
+        border-color: #16a34a;
       }
 
       #s-academy .academy-btn.secondary {
-        background:#455468;
+        background: color-mix(in srgb, var(--cd, #182334) 80%, var(--bl, #38bdf8));
+        color: var(--tx, #e8edf7);
+        border-color: var(--ln, #334155);
       }
 
       #s-academy .academy-btn.danger {
-        background:#9b3434;
+        background: #991b1b;
+        color: #fff;
+        border-color: #991b1b;
       }
 
       #s-academy .academy-input,
-      #s-academy .academy-textarea {
-        width:100%;
-        box-sizing:border-box;
-        padding:12px;
-        border-radius:10px;
-        border:1px solid var(--border,#334155);
-        background:var(--bg,#101827);
-        color:inherit;
-        margin:7px 0 12px;
-        font:inherit;
+      #s-academy .academy-textarea,
+      #s-academy select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--ln, #334155);
+        background: var(--bg, #101827);
+        color: var(--tx, #e8edf7);
+        margin: 6px 0 11px;
+        font: inherit;
       }
 
       #s-academy .academy-textarea {
-        min-height:110px;
-        resize:vertical;
+        min-height: 95px;
+        resize: vertical;
       }
 
       #s-academy .academy-muted {
-        opacity:.7;
-        font-size:13px;
+        opacity: .75;
+        font-size: 12.5px;
       }
 
       #s-academy .academy-progress {
-        height:9px;
-        background:#344256;
-        border-radius:20px;
-        overflow:hidden;
-        margin:12px 0;
+        height: 9px;
+        background: var(--ln, #344256);
+        border-radius: 20px;
+        overflow: hidden;
+        margin: 12px 0;
       }
 
       #s-academy .academy-progress > span {
-        display:block;
-        height:100%;
-        background:#27b58b;
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--bl, #38bdf8), var(--gr, #27b58b));
       }
 
       #s-academy .academy-empty {
-        text-align:center;
-        padding:25px 12px;
-        opacity:.7;
+        text-align: center;
+        padding: 22px 12px;
+        opacity: .75;
       }
 
       #s-academy .academy-status {
-        padding:12px;
-        border-radius:10px;
-        background:var(--card,#182334);
-        margin-bottom:14px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--cd, #182334) 92%, var(--bl, #38bdf8));
+        border: 1px solid var(--ln, #334155);
+        margin-bottom: 14px;
+        font-size: 13px;
       }
 
-      #s-academy #academySmartResults {
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        box-sizing:border-box;
-        overflow-wrap:anywhere;
-        word-break:break-word;
-        line-height:1.8;
+      /* المدرس الذكي */
+      #s-academy .academy-teacher {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      #s-academy .teacher-header {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 16px;
+      }
+      #s-academy .teacher-avatar {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--bl, #38bdf8) 20%, var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155));
+        font-size: 24px;
+      }
+      #s-academy .teacher-online { color: #4ade80; font-size: 12px; }
+      #s-academy .teacher-subject {
+        padding: 12px;
+        border: 1px solid var(--ln, #334155);
+        border-radius: 14px;
+        background: var(--cd, #182334);
+      }
+      #s-academy .academy-teacher-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 240px;
+        max-height: 62vh;
+        overflow-y: auto;
+        padding: 14px;
+        border: 1px solid var(--ln, #334155);
+        border-radius: 16px;
+        background: var(--bg, #101827);
+      }
+      #s-academy .teacher-welcome,
+      #s-academy .teacher-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+      }
+      #s-academy .teacher-bubble {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--ln, #1e293b);
+        border-radius: 16px;
+        background: var(--cd, #0f172a);
+        line-height: 1.9;
+        overflow-wrap: anywhere;
+      }
+      #s-academy .teacher-composer {
+        padding: 12px;
+        border: 1px solid var(--ln, #334155);
+        border-radius: 16px;
+        background: var(--cd, #182334);
       }
 
-      #s-academy #academySmartResults a {
-        overflow-wrap:anywhere;
-        word-break:break-word;
+      /* نتائج البحث */
+      #s-academy .academy-search-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        margin: 12px 0;
+      }
+      #s-academy .academy-course-platform {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #s-academy .academy-platform-icon,
+      #s-academy .academy-platform-fallback {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 10px;
+      }
+      #s-academy .academy-platform-icon {
+        object-fit: contain;
+        background: #fff;
+        padding: 4px;
+      }
+      #s-academy .academy-platform-fallback {
+        display: grid;
+        place-items: center;
+        background: #26384d;
+        font-size: 20px;
       }
 
       #academyToast {
-        position:fixed;
-        z-index:99999;
-        bottom:20px;
-        right:50%;
-        transform:translate(50%,20px);
-        background:#26384d;
-        color:white;
-        padding:12px 18px;
-        border-radius:12px;
-        opacity:0;
-        pointer-events:none;
-        transition:.2s;
-        max-width:85%;
-        text-align:center;
+        position: fixed;
+        z-index: 99999;
+        bottom: 20px;
+        right: 50%;
+        transform: translate(50%, 20px);
+        background: #26384d;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: .2s;
+        max-width: 85%;
+        text-align: center;
       }
+      #academyToast.show { opacity: 1; transform: translate(50%, 0); }
+      #academyToast[data-type="error"] { background: #9b3434; }
+      #academyToast[data-type="success"] { background: #176b50; }
 
-      #academyToast.show {
-        opacity:1;
-        transform:translate(50%,0);
+      @media (max-width: 640px) {
+        #s-academy { padding: 10px 7px; }
+        #s-academy .academy-hub-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+        #s-academy .academy-hub-card { padding: 12px; }
+        #s-academy .hub-card-title { font-size: 14px; }
+        #s-academy .hub-card-desc { font-size: 11.5px; }
       }
-
-      #academyToast[data-type="error"] {
-        background:#9b3434;
-      }
-
-      #academyToast[data-type="success"] {
-        background:#176b50;
-      }
-
-      @media(max-width:600px) {
-        #s-academy { padding:9px; }
-        #s-academy .academy-header { padding:17px; }
-      }
-      
-#s-academy .academy-search-grid {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(min(100%, 260px), 1fr)
-  );
-  gap: 13px;
-  margin: 12px 0;
-}
-
-#s-academy .academy-course-result {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  border: 1px solid var(--border, #334155);
-  border-radius: 15px;
-  padding: 15px;
-  background: var(--card, #182334);
-  box-shadow: 0 3px 12px rgba(0,0,0,.10);
-}
-
-#s-academy .academy-course-platform {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-#s-academy .academy-platform-icon,
-#s-academy .academy-platform-fallback {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
-  box-sizing: border-box;
-  border-radius: 11px;
-}
-
-#s-academy .academy-platform-icon {
-  object-fit: contain;
-  background: #fff;
-  padding: 5px;
-}
-
-#s-academy .academy-platform-fallback {
-  display: grid;
-  place-items: center;
-  background: #26384d;
-  font-size: 23px;
-}
-
-#s-academy .academy-course-result h4 {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-#s-academy .academy-course-result p {
-  margin: 0;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-}
-
-#s-academy .academy-analysis {
-  overflow-x: auto;
-  line-height: 1.9;
-}
-
-/* تحسين عرض البحث والنتائج */
-#s-academy .academy-search-box,
-#s-academy .academy-results-box {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-#s-academy .academy-search-box {
-  overflow: hidden;
-}
-
-#s-academy .academy-results-box {
-  overflow: hidden;
-}
-
-#s-academy .academy-search-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  width: 100%;
-  min-width: 0;
-  gap: 12px;
-}
-
-#s-academy .academy-course-result {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-#s-academy .academy-course-result * {
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-#s-academy .academy-course-result h4,
-#s-academy .academy-course-result p,
-#s-academy .academy-course-result a {
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-#s-academy .academy-analysis {
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-#s-academy .academy-analysis table {
-  min-width: 500px;
-  border-collapse: collapse;
-}
-
-@media (max-width: 600px) {
-  #s-academy .academy-search-box {
-    padding: 13px;
-  }
-
-  #s-academy .academy-course-result {
-    padding: 12px;
-  }
-
-  #s-academy .academy-course-result h4 {
-    font-size: 15px;
-  }
-
-  #s-academy .academy-course-platform {
-    flex-wrap: wrap;
-  }
-}
-
-/* GEO Teacher Chat Design */
-
-#s-academy .academy-teacher {
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  min-width:0;
-}
-
-#s-academy .teacher-header {
-  display:flex;
-  align-items:center;
-  gap:13px;
-  padding:17px;
-  border:1px solid var(--border,#334155);
-  border-radius:17px;
-  background:linear-gradient(135deg,#142b48,#174b68);
-}
-
-#s-academy .teacher-header h3 {
-  margin:0 0 5px;
-  font-size:19px;
-}
-
-#s-academy .teacher-header p {
-  margin:0 0 7px;
-  font-size:13px;
-  opacity:.85;
-}
-
-#s-academy .teacher-avatar {
-  width:48px;
-  height:48px;
-  flex:0 0 48px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:#ffffff20;
-  font-size:26px;
-}
-
-#s-academy .teacher-online {
-  color:#7ee7b0;
-  font-size:12px;
-}
-
-#s-academy .teacher-subject {
-  padding:12px;
-  border:1px solid var(--border,#334155);
-  border-radius:13px;
-  background:var(--card,#182334);
-}
-
-#s-academy .teacher-subject label {
-  display:block;
-  font-weight:700;
-}
-
-#s-academy .academy-teacher-messages {
-  display:flex;
-  flex-direction:column;
-  gap:15px;
-  min-height:260px;
-  max-height:65vh;
-  overflow-y:auto;
-  padding:14px;
-  border:1px solid var(--border,#334155);
-  border-radius:16px;
-  background:var(--bg,#101827);
-  scroll-behavior:smooth;
-}
-
-#s-academy .teacher-welcome,
-#s-academy .teacher-message {
-  display:flex;
-  align-items:flex-start;
-  gap:9px;
-  min-width:0;
-}
-
-
-#s-academy .teacher-bubble {
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  padding:16px;
-  border:1px solid var(--ln,#1e293b);
-  border-radius:16px;
-  background:var(--cd,#0f172a);
-  line-height:1.9;
-  overflow-wrap:anywhere;
-  box-sizing:border-box;
-}
-
-#s-academy .teacher-bubble p {
-  margin:10px 0;
-}
-
-
-#s-academy .teacher-composer {
-  padding:12px;
-  border:1px solid var(--border,#334155);
-  border-radius:16px;
-  background:var(--card,#182334);
-}
-
-#s-academy .teacher-composer textarea {
-  min-height:85px;
-  margin:0 0 9px;
-}
-
-#s-academy .teacher-composer button {
-  width:100%;
-  min-height:45px;
-  font-weight:700;
-}
-
-@media(max-width:600px) {
-  #s-academy .academy-teacher-messages {
-    padding:9px;
-    max-height:60vh;
-  }
-
-  #s-academy .teacher-bubble {
-    max-width:94%;
-    font-size:14px;
-  }
-#s-academy .academy-card h3 {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-#s-academy .academy-card h3 svg {
-  width:21px;
-  height:21px;
-  flex-shrink:0;
-  color:#38bdf8;
-  stroke-width:1.8;
-}
-
-#s-academy .academy-course-title {
-  flex-wrap:wrap;
-}
-  #s-academy .teacher-header {
-    padding:13px;
-  }
-}
-#s-academy .academy-tab {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  white-space:nowrap;
-}
-
-#s-academy .academy-tab svg {
-  width:17px;
-  height:17px;
-  flex-shrink:0;
-  stroke-width:1.8;
-}
-
-#s-academy .academy-tab.active svg {
-  color:#fff;
-}
-
-/* =====================================
-   GeoDev Academy — Unified Visual Theme
-   ===================================== */
-
-#s-academy {
-  padding: 16px;
-  color: var(--tx);
-  direction: rtl;
-  animation: academyEnter .35s ease both;
-}
-
-@keyframes academyEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* رأس الأكاديمية */
-#s-academy .academy-header,
-#s-academy .teacher-header {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb,var(--bl) 30%,var(--ln));
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 10% 10%, color-mix(in srgb,var(--bl) 20%,transparent), transparent 45%),
-    linear-gradient(145deg,var(--cd),color-mix(in srgb,var(--cd) 82%,var(--bl)));
-  box-shadow: 0 12px 35px rgba(0,0,0,.12);
-}
-
-#s-academy .academy-header::after {
-  content: "";
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  left: -40px;
-  bottom: -65px;
-  border: 1px solid color-mix(in srgb,var(--bl) 30%,transparent);
-  border-radius: 35% 65% 55% 45%;
-  transform: rotate(35deg);
-  pointer-events: none;
-}
-
-#s-academy .academy-header h2 {
-  color: var(--tx);
-  font-weight: 900;
-  font-size: 23px;
-}
-
-#s-academy .academy-header h2 svg {
-  color: var(--bl);
-}
-
-#s-academy .academy-header p {
-  color: var(--mt);
-  line-height: 1.9;
-}
-
-/* التبويبات */
-#s-academy .academy-tabs {
-  gap: 9px;
-  padding: 9px 2px 15px;
-  scrollbar-width: thin;
-}
-
-#s-academy .academy-tab {
-  border: 1px solid var(--ln);
-  border-radius: 13px;
-  background: color-mix(in srgb,var(--cd) 94%,var(--bl));
-  color: var(--mt);
-  padding: 11px 16px;
-  font-weight: 700;
-  transition: all .25s ease;
-}
-
-#s-academy .academy-tab:hover {
-  border-color: var(--bl);
-  color: var(--tx);
-  transform: translateY(-2px);
-}
-
-#s-academy .academy-tab.active {
-  background: color-mix(in srgb,var(--bl) 17%,var(--cd));
-  color: var(--bl);
-  border-color: color-mix(in srgb,var(--bl) 55%,var(--ln));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--bl) 12%,transparent);
-}
-
-#s-academy .academy-tab.active svg {
-  color: var(--bl);
-}
-
-/* البطاقات */
-#s-academy .academy-card,
-#s-academy .academy-course-result {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(145deg,
-    color-mix(in srgb,var(--cd) 96%,var(--bl)),
-    var(--cd));
-  border: 1px solid color-mix(in srgb,var(--ln) 85%,var(--bl));
-  border-radius: 19px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.09);
-  transition: transform .25s ease,border-color .25s ease,box-shadow .25s ease;
-}
-
-#s-academy .academy-card::before,
-#s-academy .academy-course-result::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 18px;
-  width: 48px;
-  height: 3px;
-  border-radius: 0 0 8px 8px;
-  background: linear-gradient(90deg,var(--bl),var(--gr));
-}
-
-#s-academy .academy-card:hover,
-#s-academy .academy-course-result:hover {
-  transform: translateY(-3px);
-  border-color: var(--bl);
-  box-shadow: 0 14px 32px rgba(0,0,0,.16);
-}
-
-#s-academy .academy-card h3,
-#s-academy .academy-course-result h4 {
-  color: var(--tx);
-  font-weight: 900;
-  line-height: 1.7;
-}
-
-#s-academy .academy-card p,
-#s-academy .academy-course-result p {
-  color: var(--mt);
-  line-height: 1.9;
-}
-
-/* أيقونات التخصصات */
-#s-academy .academy-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 17px;
-  color: var(--bl);
-  background: color-mix(in srgb,var(--bl) 13%,var(--cd));
-  border: 1px solid color-mix(in srgb,var(--bl) 25%,var(--ln));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-}
-
-/* الأزرار */
-#s-academy .academy-btn {
-  border: 1px solid color-mix(in srgb,var(--bl) 25%,var(--ln));
-  border-radius: 12px;
-  padding: 10px 16px;
-  background: var(--bl);
-  color: #fff;
-  font-weight: 800;
-  transition: transform .2s ease,filter .2s ease;
-}
-
-#s-academy .academy-btn:hover {
-  filter: brightness(1.12);
-  transform: translateY(-2px);
-}
-
-#s-academy .academy-btn.secondary {
-  background: color-mix(in srgb,var(--cd) 80%,var(--bl));
-  color: var(--tx);
-  border-color: var(--ln);
-}
-
-#s-academy .academy-btn.danger {
-  background: #991b1b;
-  color: #fff;
-}
-
-/* حقول الإدخال والبحث */
-#s-academy .academy-input,
-#s-academy .academy-textarea,
-#s-academy input,
-#s-academy select,
-#s-academy textarea {
-  background: var(--bg);
-  color: var(--tx);
-  border: 1px solid var(--ln);
-  border-radius: 13px;
-  font-family: inherit;
-  transition: border-color .2s ease,box-shadow .2s ease;
-}
-
-#s-academy .academy-input:focus,
-#s-academy .academy-textarea:focus,
-#s-academy input:focus,
-#s-academy select:focus,
-#s-academy textarea:focus {
-  outline: none;
-  border-color: var(--bl);
-  box-shadow: 0 0 0 3px color-mix(in srgb,var(--bl) 17%,transparent);
-}
-
-/* حالة التقدم والرسائل */
-#s-academy .academy-status,
-#s-academy .teacher-subject {
-  background: color-mix(in srgb,var(--cd) 92%,var(--bl));
-  border: 1px solid var(--ln);
-  border-radius: 15px;
-  color: var(--tx);
-}
-
-#s-academy .academy-progress {
-  background: var(--ln);
-  height: 9px;
-  border-radius: 20px;
-}
-
-#s-academy .academy-progress > span {
-  background: linear-gradient(90deg,var(--bl),var(--gr));
-  border-radius: 20px;
-}
-
-/* المدرس الذكي */
-#s-academy .teacher-header {
-  padding: 18px;
-}
-
-#s-academy .teacher-avatar {
-  background: color-mix(in srgb,var(--bl) 20%,var(--cd));
-  border: 1px solid color-mix(in srgb,var(--bl) 35%,var(--ln));
-  color: var(--bl);
-}
-
-#s-academy .academy-teacher-messages {
-  background: var(--bg);
-  border: 1px solid var(--ln);
-  border-radius: 18px;
-}
-
-#s-academy .teacher-bubble {
-  background: var(--cd);
-  border: 1px solid var(--ln);
-  color: var(--tx);
-  border-radius: 16px;
-  line-height: 1.95;
-}
-
-#s-academy .teacher-composer {
-  background: var(--cd);
-  border: 1px solid var(--ln);
-  border-radius: 17px;
-  box-shadow: 0 8px 25px rgba(0,0,0,.08);
-}
-
-/* نتائج البحث */
-#s-academy .academy-search-box,
-#s-academy .academy-results-box {
-  background: transparent;
-  border-radius: 18px;
-}
-
-#s-academy .academy-platform-fallback {
-  background: color-mix(in srgb,var(--bl) 15%,var(--cd));
-  color: var(--bl);
-  border: 1px solid var(--ln);
-}
-
-/* الجداول والنتائج */
-#s-academy .academy-analysis {
-  color: var(--tx);
-  line-height: 1.95;
-}
-
-#s-academy .academy-analysis table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-#s-academy .academy-analysis th,
-#s-academy .academy-analysis td {
-  border: 1px solid var(--ln);
-  padding: 10px;
-}
-
-#s-academy .academy-analysis th {
-  background: color-mix(in srgb,var(--bl) 14%,var(--cd));
-  color: var(--bl);
-}
-
-/* الموبايل */
-@media(max-width:768px) {
-  #s-academy {
-    padding: 10px 7px;
-  }
-
-  #s-academy .academy-header {
-    padding: 17px;
-    border-radius: 17px;
-  }
-
-  #s-academy .academy-header h2 {
-    font-size: 19px;
-  }
-
-  #s-academy .academy-grid {
-    grid-template-columns: minmax(0,1fr);
-    gap: 11px;
-  }
-
-  #s-academy .academy-card {
-    padding: 14px;
-  }
-
-  #s-academy .academy-tabs {
-    margin-inline: -3px;
-    padding-inline: 3px;
-  }
-
-  #s-academy .academy-tab {
-    padding: 10px 13px;
-    font-size: 12px;
-  }
-
-  #s-academy .teacher-bubble {
-    max-width: 96%;
-    font-size: 13px;
-  }
-
-  #s-academy .academy-teacher-messages {
-    max-height: 58vh;
-  }
-}
-
-@media(prefers-reduced-motion:reduce) {
-  #s-academy,
-  #s-academy * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* ===== GEO TEACHER ANSWER - GENERAL ASSISTANT STYLE ===== */
-
-#s-academy .teacher-assistant {
-  width:100%;
-  align-items:flex-start;
-}
-
-#s-academy .teacher-assistant .teacher-bubble {
-  flex:1;
-  width:100%;
-  max-width:100%;
-  background:transparent;
-  border:0;
-  padding:8px 4px 18px;
-  border-radius:0;
-  color:var(--tx,#f1f5f9);
-  font-size:15px;
-  line-height:2;
-}
-
-#s-academy .teacher-assistant .teacher-bubble > strong {
-  display:block;
-  color:var(--bl,#3b82f6);
-  font-size:14px;
-  margin-bottom:12px;
-}
-
-#s-academy .teacher-answer-content {
-  width:100%;
-  overflow-wrap:anywhere;
-  word-break:normal;
-  line-height:2;
-}
-
-#s-academy .teacher-answer-content h1,
-#s-academy .teacher-answer-content h2,
-#s-academy .teacher-answer-content h3,
-#s-academy .teacher-answer-content h4 {
-  color:var(--tx,#f1f5f9);
-  font-weight:750;
-  line-height:1.6;
-  margin:24px 0 12px;
-}
-
-#s-academy .teacher-answer-content h1 {font-size:23px}
-#s-academy .teacher-answer-content h2 {
-  font-size:20px;
-  padding-bottom:9px;
-  border-bottom:1px solid var(--ln);
-}
-#s-academy .teacher-answer-content h3 {font-size:17px}
-#s-academy .teacher-answer-content h4 {font-size:15px}
-
-#s-academy .teacher-answer-content p {
-  margin:12px 0;
-  line-height:2;
-}
-
-#s-academy .teacher-answer-content ul,
-#s-academy .teacher-answer-content ol {
-  padding-right:25px;
-  margin:12px 0;
-}
-
-#s-academy .teacher-answer-content li {
-  margin:8px 0;
-  padding-right:3px;
-  line-height:1.9;
-}
-
-#s-academy .teacher-answer-content strong {
-  color:#60a5fa;
-  font-weight:750;
-}
-
-#s-academy .teacher-answer-content blockquote {
-  margin:16px 0;
-  padding:12px 16px;
-  border-right:3px solid var(--bl);
-  background:rgba(59,130,246,.08);
-  border-radius:8px;
-}
-
-#s-academy .teacher-answer-content code {
-  direction:ltr;
-  unicode-bidi:embed;
-  background:#1e293b;
-  color:#7dd3fc;
-  padding:3px 7px;
-  border-radius:6px;
-  font-size:.9em;
-}
-
-#s-academy .teacher-answer-content pre {
-  direction:ltr;
-  text-align:left;
-  overflow-x:auto;
-  padding:15px;
-  margin:16px 0;
-  background:#080d18;
-  border:1px solid var(--ln);
-  border-radius:12px;
-  line-height:1.7;
-}
-
-#s-academy .teacher-answer-content pre code {
-  background:transparent;
-  padding:0;
-  color:#e2e8f0;
-}
-
-#s-academy .teacher-answer-content table {
-  width:100%;
-  border-collapse:collapse;
-  margin:16px 0;
-  display:block;
-  overflow-x:auto;
-}
-
-#s-academy .teacher-answer-content th,
-#s-academy .teacher-answer-content td {
-  border:1px solid var(--ln);
-  padding:10px;
-  text-align:right;
-  min-width:100px;
-}
-
-#s-academy .teacher-answer-content th {
-  background:#172554;
-  color:#bfdbfe;
-}
-
-#s-academy .teacher-answer-content a {
-  color:#60a5fa;
-  text-decoration:none;
-  overflow-wrap:anywhere;
-}
-
-#s-academy .teacher-answer-content hr {
-  border:0;
-  border-top:1px solid var(--ln);
-  margin:22px 0;
-}
-
-@media(max-width:600px) {
-  #s-academy .teacher-assistant .teacher-bubble {
-    padding:6px 2px 15px;
-    font-size:14px;
-  }
-
-  #s-academy .teacher-answer-content h1 {font-size:20px}
-  #s-academy .teacher-answer-content h2 {font-size:18px}
-  #s-academy .teacher-answer-content h3 {font-size:16px}
-
-  #s-academy .teacher-answer-content pre {
-    font-size:12px;
-  }
-}
-
     `;
 
     document.head.appendChild(style);
@@ -1145,24 +630,7 @@ function refreshAcademyIcons(root = document) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.t = "academy";
-      button.innerHTML = `
-  <span class="nav-icon">
-    <svg viewBox="0 0 24 24"
-         width="22" height="22"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="1.7"
-         stroke-linecap="round"
-         stroke-linejoin="round">
-      <path d="M12 3a8 8 0 0 0-4 14.9V21h8v-3.1A8 8 0 0 0 12 3Z"/>
-      <path d="M9 8.5c1.2-1.5 2.8-1.5 3.5-.2 1.2-1.1 2.8-.4 2.8 1"/>
-      <path d="M12 8v7"/>
-      <path d="m17 16 4-4 1.5 1.5-4 4-2 .5.5-2Z"/>
-    </svg>
-  </span>
-  الأكاديمية
-`;
-
+      button.innerHTML = `<span class="nav-icon"><i data-lucide="graduation-cap"></i></span>الأكاديمية`;
       button.addEventListener("click", () => {
         if (typeof window.go === "function") {
           window.go("academy");
@@ -1172,7 +640,6 @@ function refreshAcademyIcons(root = document) {
           });
         }
       });
-
       nav.appendChild(button);
     }
 
@@ -1183,35 +650,32 @@ function refreshAcademyIcons(root = document) {
 
       section.innerHTML = `
         <div class="academy-header">
-          <h2>🎓 الأكاديمية الجغرافية</h2>
-          <p>منصة تعليمية لتنظيم دراستك وملاحظاتك وتقدمك في الجغرافيا والجيوماتكس.</p>
+          <h2><i data-lucide="graduation-cap"></i> الأكاديمية الجغرافية</h2>
+          <p>اختر القسم المناسب من البطاقات السبع بالأسفل لبدء التعلم، البحث الذكي، أو متابعة الدورات والشروحات التطبيقية.</p>
         </div>
 
         <div id="academyStatus" class="academy-status">
           جاري التحقق من تسجيل الدخول...
         </div>
 
-        <div class="academy-tabs">
-          <button class="academy-tab" data-academy-tab="smart-search">
-  <i data-lucide="search"></i> الباحث الذكي
-</button>
-<button class="academy-tab active" data-academy-tab="courses">
-  <i data-lucide="graduation-cap"></i> الكورسات
-</button>
-<button class="academy-tab" data-academy-tab="notes">
-  <i data-lucide="notebook-pen"></i> ملاحظاتي
-</button>
-<button class="academy-tab" data-academy-tab="memory">
-  <i data-lucide="brain"></i> ذاكرتي
-</button>
-<button class="academy-tab" data-academy-tab="progress">
-  <i data-lucide="chart-no-axes-column-increasing"></i> تقدمي
-</button>
-<button class="academy-tab" data-academy-tab="teacher">
-  <i data-lucide="bot"></i> المدرس الذكي
-</button></div>
+        <!-- البطاقات السبع الرئيسية للأكاديمية -->
+        <div id="academyHubGrid" class="academy-hub-grid">
+          ${academySections.map(sec => `
+            <button type="button"
+              class="academy-hub-card ${sec.id === activeTab ? "active" : ""}"
+              data-academy-tab="${sec.id}">
+              <div class="hub-card-top">
+                <div class="academy-icon"><i data-lucide="${sec.icon}"></i></div>
+                <span class="hub-card-badge">${sec.badge}</span>
+              </div>
+              <h3 class="hub-card-title">${sec.title}</h3>
+              <p class="hub-card-desc">${sec.desc}</p>
+            </button>
+          `).join("")}
+        </div>
 
-        <div id="academyContent"></div>
+        <!-- منطقة عرض محتوى البطاقة المختارة -->
+        <div id="academyContent" class="academy-active-stage"></div>
       `;
 
       main.appendChild(section);
@@ -1226,31 +690,212 @@ function refreshAcademyIcons(root = document) {
     if (element) element.textContent = message;
   }
 
+  /* =========================================================
+     إدارة الدورات المرفوعة من الأدمن + التعليقات في Firestore
+     ========================================================= */
+
+  function getDb() {
+    if (window.firebase && typeof firebase.firestore === "function") {
+      return firebase.firestore();
+    }
+    return null;
+  }
+
+  async function loadUploadedCourses() {
+    const db = getDb();
+    if (!db) return;
+    try {
+      const snap = await db.collection("geodev_academy_courses")
+        .orderBy("createdAt", "desc")
+        .get();
+      uploadedCourses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (_) {
+      uploadedCourses = JSON.parse(localStorage.getItem("gd_academy_uploaded_courses") || "[]");
+    }
+  }
+
+  async function loadCommentsForCourse(courseId) {
+    courseComments = [];
+    const db = getDb();
+    if (!db || !courseId) return;
+    try {
+      const snap = await db.collection("geodev_academy_courses")
+        .doc(courseId)
+        .collection("comments")
+        .orderBy("createdAt", "desc")
+        .get();
+      courseComments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (_) {}
+  }
+
+  function buildVideoEmbedHTML(url) {
+    const clean = safeURL(url);
+    if (!clean) return "";
+    // دعم روابط يوتيوب وتحويلها لمشغل مدمج
+    const ytMatch = clean.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+    if (ytMatch) {
+      return `<div class="course-video-frame"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
+    }
+    // دعم ملفات الفيديو المباشرة أو روابط Storage
+    return `<div class="course-video-frame"><video src="${clean}" controls preload="metadata"></video></div>`;
+  }
+
+  function renderAdminUploadCardHTML() {
+    if (!isAdminUser) return "";
+    return `
+      <div class="academy-card admin-upload-card">
+        <h3><i data-lucide="upload-cloud"></i> رفع فيديو أو دورة جديدة (لوحة الأدمن)</h3>
+        <p class="academy-muted">ارفع فيديو تعليمي مباشرة من جهازك أو عبر رابط، وأرفق معه ملف PDF ورابط ملفات Google Drive أو MediaFire.</p>
+
+        <form id="academyAdminCourseForm">
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">عنوان الفيديو أو الدورة *</label>
+              <input type="text" id="acUpTitle" class="academy-input" placeholder="مثال: شرح أتمتة AutoCAD بالذكاء الاصطناعي" required>
+            </div>
+            <div>
+              <label class="academy-muted">التخصص *</label>
+              <select id="acUpCategory" class="academy-input">
+                <option value="AutoCAD + AI">AutoCAD + AI</option>
+                <option value="AutoCAD">AutoCAD</option>
+                <option value="Civil 3D">Civil 3D</option>
+                <option value="GIS">نظم المعلومات الجغرافية GIS</option>
+                <option value="Surveying">المساحة والرفع المساحي</option>
+                <option value="Remote Sensing">الاستشعار عن بعد</option>
+                <option value="Programming">برمجة GIS و Python</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="academy-muted">وصف وتفاصيل الدرس *</label>
+          <textarea id="acUpDesc" class="academy-textarea" placeholder="اكتب تفاصيل ومحتوى الفيديو والمحاور التي يشرحها..." required></textarea>
+
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">رفع ملف الفيديو من جهازك (حتى 500MB)</label>
+              <input type="file" id="acUpVideoFile" class="academy-input" accept="video/*">
+            </div>
+            <div>
+              <label class="academy-muted">أو رابط الفيديو (YouTube / MP4)</label>
+              <input type="url" id="acUpVideoUrl" class="academy-input" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">رفع ملف PDF مرفق مع الفيديو</label>
+              <input type="file" id="acUpPdfFile" class="academy-input" accept=".pdf,application/pdf">
+            </div>
+            <div>
+              <label class="academy-muted">رابط ملفات (Google Drive أو MediaFire)</label>
+              <input type="url" id="acUpDriveUrl" class="academy-input" placeholder="https://drive.google.com/... أو mediafire.com/...">
+            </div>
+          </div>
+
+          <button type="submit" id="acUpSubmitBtn" class="academy-btn gold" style="width:100%;margin-top:6px;">
+            <i data-lucide="plus-circle"></i> نشر الدورة والفيديو في الأكاديمية الآن
+          </button>
+        </form>
+      </div>
+    `;
+  }
+
+  function renderSelectedCourseDetailHTML() {
+    if (!selectedCourseDetailId) return "";
+    const item = uploadedCourses.find(c => c.id === selectedCourseDetailId);
+    if (!item) return "";
+
+    return `
+      <div class="academy-card course-detail-box" id="academyCourseDetailBox">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
+          <button type="button" class="academy-btn secondary" id="academyCloseCourseDetail">
+            ✕ إغلاق تفاصيل الفيديو
+          </button>
+        </div>
+
+        <h3 style="font-size:19px;margin-top:10px;">🎬 ${escapeHTML(item.title)}</h3>
+        <p style="white-space:pre-line;">${escapeHTML(item.desc || "")}</p>
+
+        ${buildVideoEmbedHTML(item.videoUrl)}
+
+        <div class="course-attachments-bar">
+          ${safeURL(item.pdfUrl) ? `
+            <a href="${safeURL(item.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(item.pdfName || item.title + ".pdf")}" class="academy-btn pdf-btn">
+              <i data-lucide="file-text"></i> تحميل ملف PDF المرفق
+            </a>
+          ` : ""}
+          ${safeURL(item.driveUrl) ? `
+            <a href="${safeURL(item.driveUrl)}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn">
+              <i data-lucide="folder-down"></i> تحميل الملفات (Google Drive / MediaFire)
+            </a>
+          ` : ""}
+          ${isAdminUser ? `
+            <button type="button" class="academy-btn danger" data-delete-uploaded-course="${escapeHTML(item.id)}">
+              <i data-lucide="trash-2"></i> حذف الدورة (أدمن)
+            </button>
+          ` : ""}
+        </div>
+
+        <!-- قسم التعليقات أسفل تفاصيل الفيديو -->
+        <div class="comments-section">
+          <h4>💬 التعليقات والمناقشات (${courseComments.length})</h4>
+
+          <div style="margin:10px 0 14px;">
+            <textarea id="academyNewCommentText" class="academy-textarea" style="min-height:72px;" placeholder="اكتب تعليقك أو سؤالك حول هذا الفيديو..."></textarea>
+            <button type="button" class="academy-btn" id="academyPostCommentBtn" data-course-id="${escapeHTML(item.id)}">
+              <i data-lucide="send"></i> نشر التعليق
+            </button>
+          </div>
+
+          <div id="academyCommentsList">
+            ${courseComments.length ? courseComments.map(cm => `
+              <div class="comment-item">
+                <div class="comment-head">
+                  <strong>👤 ${escapeHTML(cm.userName || "مستخدم")}</strong>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="academy-muted">${escapeHTML(cm.dateText || "")}</span>
+                    ${(isAdminUser || (currentUser && cm.uid === currentUser.uid)) ? `
+                      <button type="button" class="academy-btn danger" style="padding:3px 8px;font-size:11px;"
+                        data-delete-comment="${escapeHTML(cm.id)}" data-course-id="${escapeHTML(item.id)}">
+                        حذف
+                      </button>
+                    ` : ""}
+                  </div>
+                </div>
+                <div style="line-height:1.75;white-space:pre-line;">${escapeHTML(cm.text || "")}</div>
+              </div>
+            `).join("") : `<div class="academy-muted">لا توجد تعليقات حتى الآن. كن أول من يكتب تعليقاً!</div>`}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+     1. عرض تبويب الكورسات والدورات (الأول)
+     ========================================================= */
   function renderCourses(query = "") {
     const content = $("academyContent");
     if (!content) return;
 
     const catalog = window.GEOAcademyContent;
-
-    if (!catalog) {
-      content.innerHTML = `
-        <div class="academy-empty">
-          تعذر تحميل دليل الكورسات. تأكد من إضافة ملف geo-academy-content.js.
-        </div>
-      `;
-      return;
-    }
-
-    const categories = catalog.getAllCategories();
     const search = String(query || "").trim().toLowerCase();
 
+    const filteredUploaded = uploadedCourses.filter(c =>
+      !search ||
+      String(c.title || "").toLowerCase().includes(search) ||
+      String(c.desc || "").toLowerCase().includes(search) ||
+      String(c.category || "").toLowerCase().includes(search)
+    );
+
+    const categories = catalog ? catalog.getAllCategories() : [];
     const filtered = categories.filter(category =>
       category.name.toLowerCase().includes(search) ||
       category.topics.some(topic => topic.toLowerCase().includes(search))
     );
 
-    const realCourses = catalog.getCourses();
-
+    const realCourses = catalog ? catalog.getCourses() : [];
     const filteredCourses = realCourses.filter(course =>
       !search ||
       course.title.toLowerCase().includes(search) ||
@@ -1259,8 +904,34 @@ function refreshAcademyIcons(root = document) {
     );
 
     content.innerHTML = `
+      ${renderAdminUploadCardHTML()}
+      ${renderSelectedCourseDetailHTML()}
+
+      <div class="academy-card" style="margin-bottom:15px;">
+        <h3>🎬 الكورسات والفيديوهات المرفوعة في المنصة (${filteredUploaded.length})</h3>
+        <p class="academy-muted">اضغط على أي دورة لفتح الفيديو، تحميل ملفات PDF وروابط Drive / MediaFire، والمشاركة في التعليقات.</p>
+
+        <div class="academy-grid">
+          ${filteredUploaded.length ? filteredUploaded.map(item => `
+            <div class="academy-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span class="hub-card-badge">${escapeHTML(item.category || "دورة")}</span>
+                ${safeURL(item.pdfUrl) ? `<span class="academy-muted">📄 PDF</span>` : ""}
+              </div>
+              <h3>${escapeHTML(item.title)}</h3>
+              <p>${escapeHTML(String(item.desc || "").slice(0, 120))}${String(item.desc || "").length > 120 ? "..." : ""}</p>
+              <button type="button" class="academy-btn gold" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
+                <i data-lucide="play-circle"></i> مشاهدة التفاصيل والتعليقات
+              </button>
+            </div>
+          `).join("") : `
+            <div class="academy-empty">لم يتم رفع دورات فيديو خاصة بعد.</div>
+          `}
+        </div>
+      </div>
+
       <div class="academy-card">
-        <h3>🌐 مكتبة الكورسات العالمية</h3>
+        <h3>🌐 مكتبة الكورسات العالمية ودليل التخصصات</h3>
         <p>ابحث عن الدورات التعليمية في GIS والمساحة والاستشعار عن بعد والبرمجة والتصميم الهندسي.</p>
 
         <input
@@ -1291,8 +962,7 @@ function refreshAcademyIcons(root = document) {
               <a class="academy-btn"
                 href="${safeURL(course.url)}"
                 target="_blank"
-                rel="noopener noreferrer"
-                style="display:inline-block;text-decoration:none">
+                rel="noopener noreferrer">
                 فتح الكورس الأصلي ↗
               </a>
             </div>
@@ -1302,15 +972,15 @@ function refreshAcademyIcons(root = document) {
         </div>
       </div>
 
-      <div class="academy-grid">
+      <div class="academy-grid" style="margin-top:15px;">
         ${filtered.length ? filtered.map(category => {
-          const sources = catalog.getSources(category.id);
+          const sources = catalog ? catalog.getSources(category.id) : [];
 
           return `
             <div class="academy-card">
               <div class="academy-icon">
-  <i data-lucide="book-open"></i>
-</div>v>
+                <i data-lucide="book-open"></i>
+              </div>
               <h3>${escapeHTML(category.name)}</h3>
               <p class="academy-muted">${category.topics.length} موضوعًا تعليميًا</p>
               <h4>الموضوعات</h4>
@@ -1318,7 +988,7 @@ function refreshAcademyIcons(root = document) {
               <div style="display:flex;flex-wrap:wrap;gap:6px">
                 ${category.topics.map(topic => `
                   <a class="academy-btn secondary"
-                    style="text-decoration:none;font-size:11px"
+                    style="font-size:11px"
                     target="_blank"
                     rel="noopener noreferrer"
                     href="${safeURL(catalog.searchUrl("youtube", topic))}">
@@ -1327,7 +997,7 @@ function refreshAcademyIcons(root = document) {
                 `).join("")}
               </div>
 
-              <hr style="border-color:var(--border,#334155);margin:15px 0">
+              <hr style="border-color:var(--ln,#334155);margin:15px 0">
               <h4>المصادر والمنصات</h4>
 
               ${sources.map(source => `
@@ -1342,7 +1012,7 @@ function refreshAcademyIcons(root = document) {
                     target="_blank"
                     rel="noopener noreferrer"
                     class="academy-btn"
-                    style="display:inline-block;text-decoration:none;margin-top:7px">
+                    style="margin-top:7px">
                     زيارة المصدر ↗
                   </a>
                 </div>
@@ -1350,9 +1020,8 @@ function refreshAcademyIcons(root = document) {
 
               <h4>ابحث في المنصات التعليمية</h4>
               <div style="display:flex;flex-wrap:wrap;gap:6px">
-                ${["youtube","coursera","udemy","edx"].map(platform => `
+                ${["youtube", "coursera", "udemy", "edx"].map(platform => `
                   <a class="academy-btn secondary"
-                    style="text-decoration:none"
                     target="_blank"
                     rel="noopener noreferrer"
                     href="${safeURL(catalog.searchUrl(platform, category.name))}">
@@ -1368,21 +1037,83 @@ function refreshAcademyIcons(root = document) {
           <div class="academy-empty">لا توجد تخصصات مطابقة للبحث.</div>
         `}
       </div>
+    `;
 
-      <div class="academy-card" style="margin-top:15px">
-        <h3>ℹ️ معلومات عن الدليل</h3>
-        <p class="academy-muted">
-          يعرض الدليل روابط المصادر الأصلية ونتائج البحث عن الكورسات.
-          الأسعار والتوافر قد يتغيران حسب المنصة والبلد.
-        </p>
-      </div>
-  
-    
-        `;
-
+    bindCourseUploadForm();
     refreshAcademyIcons(content);
   }
 
+  /* =========================================================
+     2. بطاقة الكتب والمراجع الهندسية
+     ========================================================= */
+  function renderBooks() {
+    const content = $("academyContent");
+    if (!content) return;
+
+    const referenceLibrary = [
+      {
+        title: "دليل نظم المعلومات الجغرافية المتكامل (ArcGIS Pro)",
+        category: "GIS",
+        desc: "مرجع شامل لإنشاء قواعد البيانات الجغرافية، التحليل المكاني، وإخراج الخرائط الاحترافية.",
+        url: "https://pro.arcgis.com/en/pro-app/latest/get-started/get-started.htm"
+      },
+      {
+        title: "المرجع الرسمي لبرنامج QGIS التدريبي",
+        category: "GIS مفتوح المصدر",
+        desc: "دليل عملي خطوة بخطوة للتعامل مع الطبقات المتجهة والشبكية والتحليل الهيدرولوجي.",
+        url: "https://docs.qgis.org/latest/en/docs/training_manual/"
+      },
+      {
+        title: "أساسيات المساحة المستوية والجيوديسية والتوقيع",
+        category: "المساحة",
+        desc: "مرجع حسابات الترافيرس، الميزانية، أرصاد GNSS، ومعادلات التحويل بين المراجع.",
+        url: "https://www.esa.gov.eg/"
+      },
+      {
+        title: "دليل الاستشعار عن بعد ومعالجة المرئيات الفضائية",
+        category: "Remote Sensing",
+        desc: "شرح التصنيف المراقب وغير المراقب، المؤشرات الطيفية NDVI/NDWI، وتحليل بيانات Sentinel.",
+        url: "https://training.narss.sci.eg/"
+      },
+      {
+        title: "مرجع أوامر AutoCAD و AutoLISP للمكاتب الفنية",
+        category: "CAD & Automation",
+        desc: "دليل اختصارات الأوتوكاد وأساسيات كتابة الليسبات لأتمتة اللوحات المساحية.",
+        url: "https://www.autodesk.com/learn"
+      },
+      {
+        title: "دليل بايثون للتحليل المكاني (GeoPandas & ArcPy)",
+        category: "برمجة GIS",
+        desc: "مرجع أتمتة المعالجة المكانية وتحليل البيانات الجغرافية بلغة Python.",
+        url: "https://courses.spatialthoughts.com/"
+      }
+    ];
+
+    content.innerHTML = `
+      <div class="academy-card" style="margin-bottom:15px;">
+        <h3>📚 مكتبة الكتب والمراجع الهندسية</h3>
+        <p>مجموعة مختارة من الأدلة الرسمية والمراجع العلمية في المساحة ونظم المعلومات الجغرافية والاستشعار عن بعد.</p>
+      </div>
+
+      <div class="academy-grid">
+        ${referenceLibrary.map(book => `
+          <div class="academy-card">
+            <span class="hub-card-badge">${escapeHTML(book.category)}</span>
+            <h3>📖 ${escapeHTML(book.title)}</h3>
+            <p>${escapeHTML(book.desc)}</p>
+            <a href="${safeURL(book.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;">
+              فتح المرجع الرسمي ↗
+            </a>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    refreshAcademyIcons(content);
+  }
+
+  /* =========================================================
+     3. ملاحظاتي الدراسية
+     ========================================================= */
   function renderNotes() {
     const content = $("academyContent");
 
@@ -1394,7 +1125,7 @@ function refreshAcademyIcons(root = document) {
         <button class="academy-btn" id="academySaveNote">حفظ الملاحظة</button>
       </div>
 
-      <h3>ملاحظاتي المحفوظة</h3>
+      <h3 style="margin-top:16px;">ملاحظاتي المحفوظة</h3>
       <div class="academy-grid">
         ${notes.length ? notes.map(note => `
           <div class="academy-card">
@@ -1409,6 +1140,9 @@ function refreshAcademyIcons(root = document) {
     $("academySaveNote").addEventListener("click", saveNote);
   }
 
+  /* =========================================================
+     4. ذاكرتي التعليمية
+     ========================================================= */
   function renderMemory() {
     const content = $("academyContent");
 
@@ -1428,7 +1162,7 @@ function refreshAcademyIcons(root = document) {
         <button class="academy-btn" id="academySaveMemory">حفظ في الذاكرة</button>
       </div>
 
-      <h3>المعلومات المحفوظة</h3>
+      <h3 style="margin-top:16px;">المعلومات المحفوظة</h3>
       <div class="academy-grid">
         ${memories.length ? memories.map(item => `
           <div class="academy-card">
@@ -1443,11 +1177,14 @@ function refreshAcademyIcons(root = document) {
     $("academySaveMemory").addEventListener("click", saveMemory);
   }
 
+  /* =========================================================
+     5. تقدمي التعليمي
+     ========================================================= */
   function renderProgress() {
     const content = $("academyContent");
 
     content.innerHTML = `
-      <div class="academy-card">
+      <div class="academy-card" style="margin-bottom:14px;">
         <h3>📊 تقدمك التعليمي</h3>
         <p>هنا ستجد المسارات التي سجلت إتمامها.</p>
       </div>
@@ -1458,15 +1195,18 @@ function refreshAcademyIcons(root = document) {
 
           return `
             <div class="academy-card">
-             <h3>
-  <i data-lucide="${course.icon}"></i>
-  ${escapeHTML(course.title)}
-</h3>
+              <h3>
+                <i data-lucide="${course.icon}"></i>
+                ${escapeHTML(course.title)}
+              </h3>
               <div class="academy-progress"><span style="width:${percent}%"></span></div>
               <p>${percent}% مكتمل</p>
               <div class="academy-muted">
                 ${percent >= 100 ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}
               </div>
+              <button type="button" class="academy-btn secondary" style="margin-top:8px;" data-course="${escapeHTML(course.id)}">
+                تسجيل إتمام المسار ✓
+              </button>
             </div>
           `;
         }).join("")}
@@ -1475,74 +1215,67 @@ function refreshAcademyIcons(root = document) {
     refreshAcademyIcons(content);
   }
 
+  /* =========================================================
+     6. المدرس الذكي (GEO Teacher)
+     ========================================================= */
+  function renderTeacher() {
+    const content = $("academyContent");
+    if (!content) return;
 
-
-function renderTeacher() {
-  const content = $("academyContent");
-  if (!content) return;
-
-  content.innerHTML = `
-    <section class="academy-teacher">
-
-      <header class="teacher-header">
-        <div class="teacher-avatar">👨‍🏫</div>
-        <div>
-          <h3>GEO Teacher</h3>
-          <p>مدرسك الذكي في الجغرافيا والجيوماتكس</p>
-          <span class="teacher-online">● متصل بالمحرك الذكي</span>
-        </div>
-      </header>
-
-      <div class="teacher-subject">
-        <label for="academyTeacherSubject">التخصص الدراسي</label>
-        <select id="academyTeacherSubject" class="academy-input">
-          <option value="الجغرافيا العامة">الجغرافيا العامة</option>
-          <option value="نظم المعلومات الجغرافية GIS">GIS</option>
-          <option value="المساحة والرفع المساحي">المساحة</option>
-          <option value="الاستشعار عن بعد ERDAS">الاستشعار عن بعد</option>
-          <option value="AutoCAD و Civil 3D">AutoCAD و Civil 3D</option>
-          <option value="Python و GIS Programming">برمجة GIS</option>
-          <option value="الخرائط والكارتوجرافيا">الخرائط والكارتوجرافيا</option>
-          <option value="موضوع عام">موضوع آخر</option>
-        </select>
-      </div>
-
-      <div id="academyTeacherMessages"
-           class="academy-teacher-messages"
-           aria-live="polite">
-
-        <div class="teacher-welcome">
+    content.innerHTML = `
+      <section class="academy-teacher">
+        <header class="teacher-header">
           <div class="teacher-avatar">👨‍🏫</div>
-          <div class="teacher-bubble">
-            <strong>أهلاً بك في GEO Teacher!</strong>
-            <p>أنا مدرسك الذكي. اسألني عن أي درس وسأشرحه لك خطوة بخطوة مع الأمثلة والتطبيقات.</p>
+          <div>
+            <h3>GEO Teacher</h3>
+            <p>مدرسك الذكي في الجغرافيا والجيوماتكس</p>
+            <span class="teacher-online">● متصل بالمحرك الذكي</span>
+          </div>
+        </header>
+
+        <div class="teacher-subject">
+          <label for="academyTeacherSubject">التخصص الدراسي</label>
+          <select id="academyTeacherSubject" class="academy-input">
+            <option value="الجغرافيا العامة">الجغرافيا العامة</option>
+            <option value="نظم المعلومات الجغرافية GIS">GIS</option>
+            <option value="المساحة والرفع المساحي">المساحة</option>
+            <option value="الاستشعار عن بعد ERDAS">الاستشعار عن بعد</option>
+            <option value="AutoCAD و Civil 3D">AutoCAD و Civil 3D</option>
+            <option value="Python و GIS Programming">برمجة GIS</option>
+            <option value="الخرائط والكارتوجرافيا">الخرائط والكارتوجرافيا</option>
+            <option value="موضوع عام">موضوع آخر</option>
+          </select>
+        </div>
+
+        <div id="academyTeacherMessages" class="academy-teacher-messages" aria-live="polite">
+          <div class="teacher-welcome">
+            <div class="teacher-avatar">👨‍🏫</div>
+            <div class="teacher-bubble">
+              <strong>أهلاً بك في GEO Teacher!</strong>
+              <p>أنا مدرسك الذكي. اسألني عن أي درس وسأشرحه لك خطوة بخطوة مع الأمثلة والتطبيقات.</p>
+            </div>
           </div>
         </div>
 
-      </div>
+        <div class="teacher-composer">
+          <textarea
+            id="academyTeacherQuestion"
+            class="academy-textarea"
+            rows="3"
+            placeholder="اكتب سؤالك أو اسم الدرس هنا..."
+          ></textarea>
 
-      <div class="teacher-composer">
-        <textarea
-          id="academyTeacherQuestion"
-          class="academy-textarea"
-          rows="3"
-          placeholder="اكتب سؤالك أو اسم الدرس هنا..."
-        ></textarea>
+          <button type="button" class="academy-btn" id="academyTeacherSend" style="width:100%;">
+            إرسال السؤال ➤
+          </button>
+        </div>
+      </section>
+    `;
+  }
 
-        <button type="button"
-                class="academy-btn"
-                id="academyTeacherSend">
-          إرسال السؤال ➤
-        </button>
-      </div>
-
-    </section>
-  `;
-}
-
-
-
-
+  /* =========================================================
+     7. الباحث الذكي
+     ========================================================= */
   function renderSmartSearch() {
     const content = $("academyContent");
     if (!content) return;
@@ -1573,12 +1306,9 @@ function renderTeacher() {
     `;
   }
 
-
   function renderTab() {
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
-      refreshAcademyIcons($("s-academy"));
-  
     });
 
     if (!currentUser) {
@@ -1587,15 +1317,18 @@ function renderTeacher() {
           يجب تسجيل الدخول أولًا لاستخدام الأكاديمية وحفظ بياناتك.
         </div>
       `;
+      refreshAcademyIcons($("s-academy"));
       return;
     }
 
     if (activeTab === "courses") renderCourses();
+    if (activeTab === "smart-search") renderSmartSearch();
+    if (activeTab === "books") renderBooks();
+    if (activeTab === "teacher") renderTeacher();
     if (activeTab === "notes") renderNotes();
     if (activeTab === "memory") renderMemory();
     if (activeTab === "progress") renderProgress();
-    if (activeTab === "teacher") renderTeacher();
-    if (activeTab === "smart-search") renderSmartSearch();
+
     refreshAcademyIcons($("s-academy"));
   }
 
@@ -1603,7 +1336,6 @@ function renderTeacher() {
     if (!currentUser) return;
 
     const api = window.GEOAcademy;
-
     if (!api || !api.ready) {
       setStatus("تعذر تشغيل خدمة الأكاديمية. تأكد من تحميل ملف geo-academy.js.");
       return;
@@ -1615,7 +1347,8 @@ function renderTeacher() {
       const results = await Promise.all([
         api.getNotes(),
         api.getMemory(100),
-        api.getProgress()
+        api.getProgress(),
+        loadUploadedCourses()
       ]);
 
       notes = Array.isArray(results[0]) ? results[0] : [];
@@ -1631,481 +1364,45 @@ function renderTeacher() {
     }
   }
 
-  async function saveNote() {
-    const title = $("academyNoteTitle").value.trim();
-    const content = $("academyNoteContent").value.trim();
+  /* =========================================================
+     رفع الدورة (فيديو + PDF + Drive/MediaFire) للأدمن
+     ========================================================= */
+  function bindCourseUploadForm() {
+    const form = $("academyAdminCourseForm");
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
 
-    if (!title || !content) {
-      notify("اكتب عنوان الملاحظة ومحتواها أولًا.", "error");
-      return;
-    }
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!isAdminUser) return;
 
-    try {
-      await window.GEOAcademy.saveNote(title, content);
-      notify("تم حفظ الملاحظة بنجاح.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("لم يتم حفظ الملاحظة: " + (error.message || ""), "error");
-    }
-  }
+      const btn = $("acUpSubmitBtn");
+      const title = $("acUpTitle")?.value.trim();
+      const category = $("acUpCategory")?.value || "AutoCAD + AI";
+      const desc = $("acUpDesc")?.value.trim();
+      const videoFile = $("acUpVideoFile")?.files?.[0];
+      let videoUrl = $("acUpVideoUrl")?.value.trim();
+      const pdfFile = $("acUpPdfFile")?.files?.[0];
+      const driveUrl = $("acUpDriveUrl")?.value.trim();
 
-  async function saveMemory() {
-    const content = $("academyMemoryContent").value.trim();
-    const category = $("academyMemoryCategory").value;
-
-    if (!content) {
-      notify("اكتب المعلومة التي تريد حفظها.", "error");
-      return;
-    }
-
-    try {
-      await window.GEOAcademy.saveMemory(content, category);
-      notify("تم حفظ المعلومة في ذاكرتك.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("لم يتم حفظ المعلومة: " + (error.message || ""), "error");
-    }
-  }
-
-  async function completeCourse(courseId) {
-    const course = courses.find(item => item.id === courseId);
-    if (!course) return;
-
-    try {
-      await window.GEOAcademy.saveProgress(courseId, 100);
-      notify("تم تسجيل إتمام المسار بنجاح.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
-    }
-  }
-
-  async function deleteNote(id) {
-    if (!confirm("هل تريد حذف هذه الملاحظة؟")) return;
-
-    try {
-      await window.GEOAcademy.deleteNote(id);
-      notify("تم حذف الملاحظة.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("تعذر حذف الملاحظة.", "error");
-    }
-  }
-
-  async function deleteMemory(id) {
-    if (!confirm("هل تريد حذف هذه المعلومة من الذاكرة؟")) return;
-
-    try {
-      await window.GEOAcademy.deleteMemory(id);
-      notify("تم حذف المعلومة.", "success");
-      await refreshData();
-    } catch (error) {
-      console.error(error);
-      notify("تعذر حذف المعلومة.", "error");
-    }
-  }
-
-  
-function getPlatformInfo(rawUrl) {
-  let host = "";
-
-  try {
-    const parsed = new URL(String(rawUrl || ""));
-    if (!["https:", "http:"].includes(parsed.protocol)) {
-      throw new Error("Invalid URL");
-    }
-    host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-  } catch (_) {
-    return { name: "مصدر تعليمي", emoji: "🌐", icon: "" };
-  }
-
-  const platforms = [
-    { match: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/, name: "YouTube", emoji: "▶️" },
-    { match: /(^|\.)coursera\.org$/, name: "Coursera", emoji: "🎓" },
-    { match: /(^|\.)udemy\.com$/, name: "Udemy", emoji: "🟣" },
-    { match: /(^|\.)autodesk\.com$/, name: "Autodesk", emoji: "🅰️" },
-    { match: /(^|\.)edx\.org$/, name: "edX", emoji: "🎓" },
-    { match: /(^|\.)linkedin\.com$/, name: "LinkedIn Learning", emoji: "in" },
-    { match: /(^|\.)m3aarf\.com$/, name: "معارف", emoji: "📚" },
-    { match: /(^|\.)teracourses\.com$/, name: "Teracourses", emoji: "📖" },
-    { match: /(^|\.)skillshare\.com$/, name: "Skillshare", emoji: "✏️" },
-    { match: /(^|\.)esri\.com$/, name: "Esri", emoji: "🌍" }
-  ];
-
-  const found = platforms.find(p => p.match.test(host));
-
-  return {
-    name: found ? found.name : host,
-    emoji: found ? found.emoji : "🌐",
-    icon: "https://www.google.com/s2/favicons?domain=" +
-      encodeURIComponent(host) + "&sz=64"
-  };
-}
-
-
-function renderAnalysisMarkdown(markdown) {
-  const source = String(markdown || "");
-  if (!source) return "";
-
-  if (
-    window.marked &&
-    typeof window.marked.parse === "function" &&
-    window.DOMPurify &&
-    typeof window.DOMPurify.sanitize === "function"
-  ) {
-    return window.DOMPurify.sanitize(
-      window.marked.parse(source)
-    );
-  }
-
-  return `<p>${escapeHTML(source)
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>")}</p>`;
-}
-
-
-  
-
-
-
-function renderSearchResults(data) {
-  const results = Array.isArray(data.results) ? data.results : [];
-
-  const analysis = data.analysis
-    ? `
-      <div class="academy-card" style="margin-bottom:14px">
-        <h3>🤖 تحليل GEO AI</h3>
-        <div class="academy-analysis">
-          ${renderAnalysisMarkdown(data.analysis)}
-        </div>
-      </div>
-    `
-    : "";
-
-  const summary = data.answer
-    ? `
-      <div class="academy-card" style="margin-bottom:14px">
-        <h3>📝 ملخص البحث</h3>
-        <p>${escapeHTML(data.answer)}</p>
-      </div>
-    `
-    : "";
-
-  const cards = results.map((item, index) => {
-    const platform = getPlatformInfo(item.url);
-    const title = escapeHTML(
-      item.title || "مصدر تعليمي " + (index + 1)
-    );
-    const description = escapeHTML(
-      item.content || "لا يوجد وصف متاح."
-    );
-    const url = safeURL(item.url);
-
-    const icon = platform.icon
-      ? `<img class="academy-platform-icon"
-          src="${platform.icon}"
-          alt=""
-          loading="lazy"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
-      : "";
-
-    const fallback = `
-      <span class="academy-platform-fallback"
-        style="${platform.icon ? "display:none" : ""}">
-        ${escapeHTML(platform.emoji)}
-      </span>
-    `;
-
-    return `
-      <article class="academy-course-result">
-        <div class="academy-course-platform">
-          ${icon}
-          ${fallback}
-          <div>
-            <div class="academy-muted">المنصة التعليمية</div>
-            <strong>${escapeHTML(platform.name)}</strong>
-          </div>
-        </div>
-
-        <h4>${index + 1}. ${title}</h4>
-        <p>${description}</p>
-
-        ${
-          url
-            ? `<a href="${url}" target="_blank"
-                rel="noopener noreferrer"
-                class="academy-btn"
-                style="display:block;text-align:center;text-decoration:none;margin-top:auto">
-                فتح المصدر على ${escapeHTML(platform.name)} ↗
-              </a>`
-            : `<span class="academy-muted">الرابط غير متاح</span>`
-        }
-      </article>
-    `;
-  }).join("");
-
-  return `
-    <h3>🎓 نتائج البحث (${results.length})</h3>
-
-    <div class="academy-search-grid">
-      ${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}
-    </div>
-
-    ${summary}
-    ${analysis}
-  `;
-}
-
-
-
-  function bindEvents() {
-    document.addEventListener("click", async event => {
-      const tab = event.target.closest("[data-academy-tab]");
-
-      if (tab) {
-        activeTab = tab.dataset.academyTab;
-        renderTab();
+      if (!title || !desc) {
+        notify("اكتب عنوان الدورة ووصفها أولاً.", "error");
         return;
       }
 
-      const smartBtn = event.target.closest("#academySmartSearchBtn");
+      btn.disabled = true;
+      btn.textContent = "⏳ جاري رفع ونشر الدورة...";
 
-      if (smartBtn) {
-        const query = $("academySmartQuery")?.value.trim();
-        const output = $("academySmartResults");
-
-        if (!query) {
-          output.textContent = "اكتب موضوع الكورس الذي تريد البحث عنه أولاً.";
-          return;
-        }
-
-        smartBtn.disabled = true;
-        smartBtn.textContent = "⏳ جاري البحث والتحليل...";
-        output.textContent = "يبحث GEO 5.2 ULTRA على الويب، ثم يحلل GEO 3.8 FLASH النتائج...";
-
-        try {
-          const data = await window.GEOAcademyEngines.search(query);
-
-          if (!data || data.success === false) {
-            throw new Error(data?.message || "لم يتم إرجاع نتائج البحث.");
+      try {
+        // رفع الفيديو إذا تم اختياره من الجهاز
+        if (videoFile) {
+          if (videoFile.size > 500 * 1024 * 1024) {
+            throw new Error("حجم الفيديو يتجاوز 500 ميجابايت.");
           }
-
-          output.innerHTML = renderSearchResults(data);
-
-        } catch (error) {
-          console.error("Academy search error:", error);
-          output.textContent = "حدث خطأ: " + (error.message || "تعذر البحث.");
-        } finally {
-          smartBtn.disabled = false;
-          smartBtn.textContent = "🔍 ابدأ البحث الذكي";
-        }
-
-        return;
-      }
-
-      
-const teacherBtn = event.target.closest("#academyTeacherSend");
-
-if (teacherBtn) {
-  const questionInput = $("academyTeacherQuestion");
-  const subjectInput = $("academyTeacherSubject");
-  const messagesBox = $("academyTeacherMessages");
-
-  const question = questionInput?.value.trim();
-  const subject = subjectInput?.value || "الجغرافيا العامة";
-
-  if (!question) {
-    notify("اكتب سؤالك للمدرس أولاً.", "warning");
-    return;
-  }
-
-  if (!messagesBox || !window.GEOAcademyEngines?.teacherChat) {
-    notify("محرك المدرس الذكي غير متصل.", "error");
-    return;
-  }
-
-  teacherBtn.disabled = true;
-  teacherBtn.textContent = "⏳ جاري إعداد الإجابة...";
-
-  // رسالة الطالب
-  const userRow = document.createElement("div");
-  userRow.className = "teacher-message teacher-user";
-
-  const userBubble = document.createElement("div");
-  userBubble.className = "teacher-bubble";
-  userBubble.textContent = question;
-
-  userRow.appendChild(userBubble);
-  messagesBox.appendChild(userRow);
-
-  teacherMessages.push({
-    role: "user",
-    content: question
-  });
-
-  // مؤشر انتظار المدرس
-  const loading = document.createElement("div");
-  loading.className = "teacher-message teacher-assistant";
-
-  const loadingBubble = document.createElement("div");
-  loadingBubble.className = "teacher-bubble";
-  loadingBubble.textContent = "⏳ المدرس يجهز الشرح...";
-
-  loading.appendChild(loadingBubble);
-  messagesBox.appendChild(loading);
-
-  messagesBox.scrollTop = messagesBox.scrollHeight;
-
-  try {
-    const answer = await window.GEOAcademyEngines.teacherChat(
-      teacherMessages,
-      subject
-    );
-
-    loading.remove();
-
-    teacherMessages.push({
-      role: "assistant",
-      content: answer
-    });
-
-    // إجابة المدرس
-    const assistantRow = document.createElement("div");
-    assistantRow.className = "teacher-message teacher-assistant";
-
-    const avatar = document.createElement("div");
-    avatar.className = "teacher-avatar";
-    avatar.textContent = "👨‍🏫";
-
-    const assistantBubble = document.createElement("div");
-    assistantBubble.className = "teacher-bubble";
-
-    const teacherName = document.createElement("strong");
-    teacherName.textContent = "GEO Teacher";
-
-    const answerContent = document.createElement("div");
-    answerContent.className = "teacher-answer-content";
-    answerContent.innerHTML = renderAnalysisMarkdown(answer);
-
-    assistantBubble.appendChild(teacherName);
-    assistantBubble.appendChild(answerContent);
-
-    assistantRow.appendChild(avatar);
-    assistantRow.appendChild(assistantBubble);
-
-    messagesBox.appendChild(assistantRow);
-
-    questionInput.value = "";
-    messagesBox.scrollTop = messagesBox.scrollHeight;
-
-  } catch (error) {
-    loading.remove();
-    teacherMessages.pop();
-
-    notify(
-      error.message || "حدث خطأ أثناء سؤال المدرس.",
-      "error"
-    );
-
-  } finally {
-    teacherBtn.disabled = false;
-    teacherBtn.textContent = "إرسال السؤال ➤";
-  }
-
-  return;
-}
-
-      const course = event.target.closest("[data-course]");
-
-      if (course) {
-        completeCourse(course.dataset.course);
-        return;
-      }
-
-      const note = event.target.closest("[data-delete-note]");
-
-      if (note) {
-        deleteNote(note.dataset.deleteNote);
-        return;
-      }
-
-      const memory = event.target.closest("[data-delete-memory]");
-
-      if (memory) {
-        deleteMemory(memory.dataset.deleteMemory);
-      }
-    });
-  }
-
-  function startAuthListener() {
-    if (!window.firebase || !firebase.apps.length) {
-      setStatus("Firebase لم يتم تحميله. راجع ترتيب ملفات JavaScript.");
-      return;
-    }
-
-    const api = window.GEOAcademy;
-
-    if (!api || !api.init()) {
-      setStatus("تعذر تهيئة خدمة الأكاديمية.");
-      return;
-    }
-
-    firebase.auth().onAuthStateChanged(async user => {
-      currentUser = user || null;
-
-      if (!user) {
-        notes = [];
-        memories = [];
-        progress = [];
-        setStatus("سجل الدخول لاستخدام الأكاديمية.");
-        renderTab();
-        return;
-      }
-
-      setStatus("مرحبًا بك في الأكاديمية. جاري تحميل بياناتك...");
-      await refreshData();
-    });
-  }
-
-  function init() {
-    if (!injectInterface()) return;
-
-    bindEvents();
-    renderTab();
-    startAuthListener();
-
-    window.GEOAcademyUI.ready = true;
-  }
-
-  window.GEOAcademyUI = {
-    init,
-    refresh: refreshData,
-
-    search(query) {
-      const input = $("academyCatalogSearch");
-      const position = input?.selectionStart ?? String(query).length;
-
-      renderCourses(query);
-
-      const nextInput = $("academyCatalogSearch");
-
-      if (nextInput) {
-        nextInput.focus();
-        nextInput.setSelectionRange(position, position);
-      }
-    },
-
-    ready: false
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
-})();
+          if (window.firebase && typeof firebase.storage === "function") {
+            const ref = firebase.storage().ref(`academy_courses_videos/${Date.now()}_${videoFile.name}`);
+            await ref.put(videoFile);
+            videoUrl = await ref.getDownloadURL();
+          } else {
+            videoUrl = URL.createObjectURL(videoFile);
+          }
