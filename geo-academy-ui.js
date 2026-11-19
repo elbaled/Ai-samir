@@ -1,7 +1,11 @@
+/* ============================================================================
+   GEO Academy UI - النسخة الكاملة والمستقرة
+   - البطاقات السبع الرئيسية (الكورسات، البحث الذكي، الكتب، المدرس، ملاحظاتي، ذاكرتي، تقدمي)
+   - رفع الفيديوهات والدورات + PDF + Google Drive / MediaFire (حصري للأدمن)
+   - نظام التعليقات التفاعلي أسفل تفاصيل كل فيديو
+   ============================================================================ */
 (function () {
   "use strict";
-
-  if (window.GEOAcademyUI) return;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
 
@@ -16,7 +20,6 @@
     { id: "autocad-ai", title: "AutoCAD + AI", icon: "bot", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
   ];
 
-  // البطاقات السبع الرئيسية للأكاديمية بالترتيب المطلوب
   const academySections = [
     {
       id: "courses",
@@ -79,17 +82,19 @@
   let selectedCourseDetailId = null;
   let courseComments = [];
   let activeTab = "courses";
+  let eventsBound = false;
 
   const $ = id => document.getElementById(id);
 
   function refreshAcademyIcons(root = document) {
-    if (!window.lucide || typeof window.lucide.createIcons !== "function") {
-      return;
-    }
-    window.lucide.createIcons({
-      root,
-      attrs: { "stroke-width": 1.8 }
-    });
+    try {
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons({
+          root,
+          attrs: { "stroke-width": 1.8 }
+        });
+      }
+    } catch (_) {}
   }
 
   function escapeHTML(value) {
@@ -128,24 +133,14 @@
 
   function injectStyles() {
     if ($("academyStyles")) return;
-
     const style = document.createElement("style");
     style.id = "academyStyles";
-
     style.textContent = `
       #s-academy {
         padding: 16px;
         direction: rtl;
         color: var(--tx, #e8edf7);
-        animation: academyEnter .35s ease both;
       }
-
-      @keyframes academyEnter {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      /* رأس الأكاديمية */
       #s-academy .academy-header,
       #s-academy .teacher-header {
         position: relative;
@@ -159,7 +154,6 @@
           linear-gradient(145deg, var(--cd, #182334), color-mix(in srgb, var(--cd, #182334) 82%, var(--bl, #38bdf8)));
         box-shadow: 0 12px 35px rgba(0,0,0,.12);
       }
-
       #s-academy .academy-header h2 {
         margin: 0 0 8px;
         font-size: 22px;
@@ -169,28 +163,23 @@
         gap: 10px;
         color: var(--tx, #f8fafc);
       }
-
       #s-academy .academy-header h2 svg {
         width: 27px;
         height: 27px;
         color: var(--bl, #38bdf8);
         flex-shrink: 0;
       }
-
       #s-academy .academy-header p {
         margin: 0;
         color: var(--mt, #94a3b8);
         line-height: 1.85;
       }
-
-      /* شبكة البطاقات السبع الرئيسية للأكاديمية */
       #s-academy .academy-hub-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
         gap: 12px;
         margin-bottom: 18px;
       }
-
       #s-academy .academy-hub-card {
         position: relative;
         text-align: right;
@@ -206,25 +195,21 @@
         gap: 8px;
         transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
-
       #s-academy .academy-hub-card:hover {
         transform: translateY(-2px);
         border-color: var(--bl, #38bdf8);
       }
-
       #s-academy .academy-hub-card.active {
         border: 2px solid #e09f24;
         background: linear-gradient(145deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
         box-shadow: 0 10px 26px rgba(224, 159, 36, 0.18);
       }
-
       #s-academy .hub-card-top {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
       }
-
       #s-academy .hub-card-badge {
         font-size: 11px;
         font-weight: 800;
@@ -234,40 +219,33 @@
         color: var(--bl, #38bdf8);
         border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 30%, var(--ln, #334155));
       }
-
       #s-academy .academy-hub-card.active .hub-card-badge {
         background: #e09f24;
         color: #0f172a;
         border-color: #e09f24;
       }
-
       #s-academy .hub-card-title {
         margin: 0;
         font-size: 16px;
         font-weight: 900;
         color: var(--tx, #f8fafc);
       }
-
       #s-academy .hub-card-desc {
         margin: 0;
         font-size: 12.5px;
         line-height: 1.7;
         color: var(--mt, #94a3b8);
       }
-
-      /* الحاوية الديناميكية للمحتوى النشط */
       #s-academy .academy-active-stage {
         border-top: 2px dashed color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
         padding-top: 16px;
         margin-top: 6px;
       }
-
       #s-academy .academy-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 255px), 1fr));
         gap: 13px;
       }
-
       #s-academy .academy-card,
       #s-academy .academy-course-result {
         position: relative;
@@ -280,7 +258,6 @@
         overflow-wrap: anywhere;
         box-shadow: 0 8px 24px rgba(0,0,0,.09);
       }
-
       #s-academy .academy-card h3,
       #s-academy .academy-course-result h4 {
         font-size: 16.5px;
@@ -291,13 +268,11 @@
         align-items: center;
         gap: 8px;
       }
-
       #s-academy .academy-card p,
       #s-academy .academy-course-result p {
         line-height: 1.85;
         color: var(--mt, #cbd5e1);
       }
-
       #s-academy .academy-icon {
         width: 46px;
         height: 46px;
@@ -309,31 +284,24 @@
         background: color-mix(in srgb, var(--bl, #38bdf8) 14%, var(--cd, #182334));
         border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 28%, var(--ln, #334155));
       }
-
       #s-academy .academy-icon svg {
         width: 23px;
         height: 23px;
       }
-
-      /* كارت رفع دورة جديدة للأدمن */
       #s-academy .admin-upload-card {
         border: 2px solid #e09f24;
         background: linear-gradient(145deg, color-mix(in srgb, #e09f24 10%, var(--cd, #182334)), var(--cd, #182334));
         margin-bottom: 18px;
       }
-
       #s-academy .admin-upload-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
         gap: 10px;
       }
-
-      /* مشغل الفيديو وتفاصيل الدورة + التعليقات */
       #s-academy .course-detail-box {
         border: 2px solid var(--bl, #38bdf8);
         margin-bottom: 18px;
       }
-
       #s-academy .course-video-frame {
         width: 100%;
         border-radius: 14px;
@@ -342,7 +310,6 @@
         margin: 12px 0;
         border: 1px solid var(--ln, #334155);
       }
-
       #s-academy .course-video-frame video,
       #s-academy .course-video-frame iframe {
         width: 100%;
@@ -350,20 +317,17 @@
         display: block;
         border: 0;
       }
-
       #s-academy .course-attachments-bar {
         display: flex;
         flex-wrap: wrap;
         gap: 9px;
         margin: 12px 0;
       }
-
       #s-academy .comments-section {
         margin-top: 16px;
         padding-top: 14px;
         border-top: 1px solid var(--ln, #334155);
       }
-
       #s-academy .comment-item {
         padding: 11px 13px;
         border-radius: 13px;
@@ -371,7 +335,6 @@
         border: 1px solid var(--ln, #334155);
         margin-bottom: 9px;
       }
-
       #s-academy .comment-head {
         display: flex;
         align-items: center;
@@ -380,8 +343,6 @@
         margin-bottom: 5px;
         font-size: 12.5px;
       }
-
-      /* الأزرار والحقول */
       #s-academy .academy-btn {
         display: inline-flex;
         align-items: center;
@@ -396,44 +357,16 @@
         font-family: inherit;
         cursor: pointer;
         text-decoration: none;
-        transition: transform .18s ease, filter .18s ease;
       }
-
-      #s-academy .academy-btn:hover {
-        filter: brightness(1.1);
-        transform: translateY(-1px);
-      }
-
-      #s-academy .academy-btn.gold {
-        background: #e09f24;
-        color: #0f172a;
-        border-color: #e09f24;
-      }
-
-      #s-academy .academy-btn.pdf-btn {
-        background: #dc2626;
-        color: #fff;
-        border-color: #dc2626;
-      }
-
-      #s-academy .academy-btn.drive-btn {
-        background: #16a34a;
-        color: #fff;
-        border-color: #16a34a;
-      }
-
+      #s-academy .academy-btn.gold { background: #e09f24; color: #0f172a; border-color: #e09f24; }
+      #s-academy .academy-btn.pdf-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
+      #s-academy .academy-btn.drive-btn { background: #16a34a; color: #fff; border-color: #16a34a; }
       #s-academy .academy-btn.secondary {
         background: color-mix(in srgb, var(--cd, #182334) 80%, var(--bl, #38bdf8));
         color: var(--tx, #e8edf7);
         border-color: var(--ln, #334155);
       }
-
-      #s-academy .academy-btn.danger {
-        background: #991b1b;
-        color: #fff;
-        border-color: #991b1b;
-      }
-
+      #s-academy .academy-btn.danger { background: #991b1b; color: #fff; border-color: #991b1b; }
       #s-academy .academy-input,
       #s-academy .academy-textarea,
       #s-academy select {
@@ -447,17 +380,8 @@
         margin: 6px 0 11px;
         font: inherit;
       }
-
-      #s-academy .academy-textarea {
-        min-height: 95px;
-        resize: vertical;
-      }
-
-      #s-academy .academy-muted {
-        opacity: .75;
-        font-size: 12.5px;
-      }
-
+      #s-academy .academy-textarea { min-height: 95px; resize: vertical; }
+      #s-academy .academy-muted { opacity: .75; font-size: 12.5px; }
       #s-academy .academy-progress {
         height: 9px;
         background: var(--ln, #344256);
@@ -465,19 +389,12 @@
         overflow: hidden;
         margin: 12px 0;
       }
-
       #s-academy .academy-progress > span {
         display: block;
         height: 100%;
         background: linear-gradient(90deg, var(--bl, #38bdf8), var(--gr, #27b58b));
       }
-
-      #s-academy .academy-empty {
-        text-align: center;
-        padding: 22px 12px;
-        opacity: .75;
-      }
-
+      #s-academy .academy-empty { text-align: center; padding: 22px 12px; opacity: .75; }
       #s-academy .academy-status {
         padding: 10px 14px;
         border-radius: 12px;
@@ -486,143 +403,61 @@
         margin-bottom: 14px;
         font-size: 13px;
       }
-
-      /* المدرس الذكي */
-      #s-academy .academy-teacher {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      #s-academy .teacher-header {
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        padding: 16px;
-      }
+      #s-academy .academy-teacher { display: flex; flex-direction: column; gap: 14px; }
+      #s-academy .teacher-header { display: flex; align-items: center; gap: 13px; padding: 16px; }
       #s-academy .teacher-avatar {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 48px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--bl, #38bdf8) 20%, var(--cd, #182334));
-        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155));
-        font-size: 24px;
+        width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center;
+        border-radius: 50%; background: color-mix(in srgb, var(--bl, #38bdf8) 20%, var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155)); font-size: 24px;
       }
       #s-academy .teacher-online { color: #4ade80; font-size: 12px; }
       #s-academy .teacher-subject {
-        padding: 12px;
-        border: 1px solid var(--ln, #334155);
-        border-radius: 14px;
-        background: var(--cd, #182334);
+        padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 14px; background: var(--cd, #182334);
       }
       #s-academy .academy-teacher-messages {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        min-height: 240px;
-        max-height: 62vh;
-        overflow-y: auto;
-        padding: 14px;
-        border: 1px solid var(--ln, #334155);
-        border-radius: 16px;
-        background: var(--bg, #101827);
+        display: flex; flex-direction: column; gap: 14px; min-height: 240px; max-height: 62vh;
+        overflow-y: auto; padding: 14px; border: 1px solid var(--ln, #334155);
+        border-radius: 16px; background: var(--bg, #101827);
       }
       #s-academy .teacher-welcome,
-      #s-academy .teacher-message {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-      }
+      #s-academy .teacher-message { display: flex; align-items: flex-start; gap: 9px; }
       #s-academy .teacher-bubble {
-        width: 100%;
-        padding: 14px;
-        border: 1px solid var(--ln, #1e293b);
-        border-radius: 16px;
-        background: var(--cd, #0f172a);
-        line-height: 1.9;
-        overflow-wrap: anywhere;
+        width: 100%; padding: 14px; border: 1px solid var(--ln, #1e293b);
+        border-radius: 16px; background: var(--cd, #0f172a); line-height: 1.9; overflow-wrap: anywhere;
       }
       #s-academy .teacher-composer {
-        padding: 12px;
-        border: 1px solid var(--ln, #334155);
-        border-radius: 16px;
-        background: var(--cd, #182334);
+        padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 16px; background: var(--cd, #182334);
       }
-
-      /* نتائج البحث */
-      #s-academy .academy-search-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
-        margin: 12px 0;
-      }
-      #s-academy .academy-course-platform {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+      #s-academy .academy-search-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+      #s-academy .academy-course-platform { display: flex; align-items: center; gap: 10px; }
       #s-academy .academy-platform-icon,
-      #s-academy .academy-platform-fallback {
-        width: 40px;
-        height: 40px;
-        flex: 0 0 40px;
-        border-radius: 10px;
-      }
-      #s-academy .academy-platform-icon {
-        object-fit: contain;
-        background: #fff;
-        padding: 4px;
-      }
-      #s-academy .academy-platform-fallback {
-        display: grid;
-        place-items: center;
-        background: #26384d;
-        font-size: 20px;
-      }
-
+      #s-academy .academy-platform-fallback { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px; }
+      #s-academy .academy-platform-icon { object-fit: contain; background: #fff; padding: 4px; }
+      #s-academy .academy-platform-fallback { display: grid; place-items: center; background: #26384d; font-size: 20px; }
       #academyToast {
-        position: fixed;
-        z-index: 99999;
-        bottom: 20px;
-        right: 50%;
-        transform: translate(50%, 20px);
-        background: #26384d;
-        color: white;
-        padding: 12px 18px;
-        border-radius: 12px;
-        opacity: 0;
-        pointer-events: none;
-        transition: .2s;
-        max-width: 85%;
-        text-align: center;
+        position: fixed; z-index: 99999; bottom: 20px; right: 50%; transform: translate(50%, 20px);
+        background: #26384d; color: white; padding: 12px 18px; border-radius: 12px;
+        opacity: 0; pointer-events: none; transition: .2s; max-width: 85%; text-align: center;
       }
       #academyToast.show { opacity: 1; transform: translate(50%, 0); }
       #academyToast[data-type="error"] { background: #9b3434; }
       #academyToast[data-type="success"] { background: #176b50; }
-
       @media (max-width: 640px) {
         #s-academy { padding: 10px 7px; }
-        #s-academy .academy-hub-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 9px;
-        }
+        #s-academy .academy-hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
         #s-academy .academy-hub-card { padding: 12px; }
         #s-academy .hub-card-title { font-size: 14px; }
         #s-academy .hub-card-desc { font-size: 11.5px; }
       }
     `;
-
     document.head.appendChild(style);
   }
 
   function injectInterface() {
-    const nav = document.querySelector("nav");
-    const main = document.querySelector("main");
+    const nav = document.querySelector("nav") || document.querySelector(".nav, .bottom-nav, header nav");
+    const main = document.querySelector("main") || document.querySelector("#main, .main, .content");
 
     if (!nav || !main) {
-      console.error("GEO Academy: لم يتم العثور على nav أو main.");
       return false;
     }
 
@@ -658,7 +493,6 @@
           جاري التحقق من تسجيل الدخول...
         </div>
 
-        <!-- البطاقات السبع الرئيسية للأكاديمية -->
         <div id="academyHubGrid" class="academy-hub-grid">
           ${academySections.map(sec => `
             <button type="button"
@@ -674,7 +508,6 @@
           `).join("")}
         </div>
 
-        <!-- منطقة عرض محتوى البطاقة المختارة -->
         <div id="academyContent" class="academy-active-stage"></div>
       `;
 
@@ -682,6 +515,7 @@
     }
 
     injectStyles();
+    refreshAcademyIcons($("s-academy"));
     return true;
   }
 
@@ -690,20 +524,21 @@
     if (element) element.textContent = message;
   }
 
-  /* =========================================================
-     إدارة الدورات المرفوعة من الأدمن + التعليقات في Firestore
-     ========================================================= */
-
   function getDb() {
-    if (window.firebase && typeof firebase.firestore === "function") {
-      return firebase.firestore();
-    }
+    try {
+      if (window.firebase && typeof firebase.firestore === "function") {
+        return firebase.firestore();
+      }
+    } catch (_) {}
     return null;
   }
 
   async function loadUploadedCourses() {
     const db = getDb();
-    if (!db) return;
+    if (!db) {
+      uploadedCourses = JSON.parse(localStorage.getItem("gd_academy_uploaded_courses") || "[]");
+      return;
+    }
     try {
       const snap = await db.collection("geodev_academy_courses")
         .orderBy("createdAt", "desc")
@@ -731,12 +566,10 @@
   function buildVideoEmbedHTML(url) {
     const clean = safeURL(url);
     if (!clean) return "";
-    // دعم روابط يوتيوب وتحويلها لمشغل مدمج
     const ytMatch = clean.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
     if (ytMatch) {
       return `<div class="course-video-frame"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
     }
-    // دعم ملفات الفيديو المباشرة أو روابط Storage
     return `<div class="course-video-frame"><video src="${clean}" controls preload="metadata"></video></div>`;
   }
 
@@ -837,7 +670,6 @@
           ` : ""}
         </div>
 
-        <!-- قسم التعليقات أسفل تفاصيل الفيديو -->
         <div class="comments-section">
           <h4>💬 التعليقات والمناقشات (${courseComments.length})</h4>
 
@@ -872,9 +704,6 @@
     `;
   }
 
-  /* =========================================================
-     1. عرض تبويب الكورسات والدورات (الأول)
-     ========================================================= */
   function renderCourses(query = "") {
     const content = $("academyContent");
     if (!content) return;
@@ -975,67 +804,41 @@
       <div class="academy-grid" style="margin-top:15px;">
         ${filtered.length ? filtered.map(category => {
           const sources = catalog ? catalog.getSources(category.id) : [];
-
           return `
             <div class="academy-card">
-              <div class="academy-icon">
-                <i data-lucide="book-open"></i>
-              </div>
+              <div class="academy-icon"><i data-lucide="book-open"></i></div>
               <h3>${escapeHTML(category.name)}</h3>
               <p class="academy-muted">${category.topics.length} موضوعًا تعليميًا</p>
               <h4>الموضوعات</h4>
-
               <div style="display:flex;flex-wrap:wrap;gap:6px">
                 ${category.topics.map(topic => `
-                  <a class="academy-btn secondary"
-                    style="font-size:11px"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <a class="academy-btn secondary" style="font-size:11px" target="_blank" rel="noopener noreferrer"
                     href="${safeURL(catalog.searchUrl("youtube", topic))}">
                     ${escapeHTML(topic)} 🔎
                   </a>
                 `).join("")}
               </div>
-
               <hr style="border-color:var(--ln,#334155);margin:15px 0">
               <h4>المصادر والمنصات</h4>
-
               ${sources.map(source => `
                 <div style="margin:9px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
                   <b>${escapeHTML(source.name)}</b>
-                  <div class="academy-muted">
-                    ${escapeHTML(source.platform)}
-                    • ${escapeHTML(source.language || "لغات متعددة")}
-                    ${source.price === "free" ? " • مجاني" : ""}
-                  </div>
-                  <a href="${safeURL(source.url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="academy-btn"
-                    style="margin-top:7px">
-                    زيارة المصدر ↗
-                  </a>
+                  <div class="academy-muted">${escapeHTML(source.platform)} • ${escapeHTML(source.language || "لغات متعددة")}${source.price === "free" ? " • مجاني" : ""}</div>
+                  <a href="${safeURL(source.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="margin-top:7px">زيارة المصدر ↗</a>
                 </div>
               `).join("")}
-
               <h4>ابحث في المنصات التعليمية</h4>
               <div style="display:flex;flex-wrap:wrap;gap:6px">
                 ${["youtube", "coursera", "udemy", "edx"].map(platform => `
-                  <a class="academy-btn secondary"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <a class="academy-btn secondary" target="_blank" rel="noopener noreferrer"
                     href="${safeURL(catalog.searchUrl(platform, category.name))}">
-                    ${platform === "youtube" ? "YouTube" :
-                      platform === "coursera" ? "Coursera" :
-                      platform === "udemy" ? "Udemy" : "edX"}
+                    ${platform === "youtube" ? "YouTube" : platform === "coursera" ? "Coursera" : platform === "udemy" ? "Udemy" : "edX"}
                   </a>
                 `).join("")}
               </div>
             </div>
           `;
-        }).join("") : `
-          <div class="academy-empty">لا توجد تخصصات مطابقة للبحث.</div>
-        `}
+        }).join("") : `<div class="academy-empty">لا توجد تخصصات مطابقة للبحث.</div>`}
       </div>
     `;
 
@@ -1043,9 +846,6 @@
     refreshAcademyIcons(content);
   }
 
-  /* =========================================================
-     2. بطاقة الكتب والمراجع الهندسية
-     ========================================================= */
   function renderBooks() {
     const content = $("academyContent");
     if (!content) return;
@@ -1094,7 +894,6 @@
         <h3>📚 مكتبة الكتب والمراجع الهندسية</h3>
         <p>مجموعة مختارة من الأدلة الرسمية والمراجع العلمية في المساحة ونظم المعلومات الجغرافية والاستشعار عن بعد.</p>
       </div>
-
       <div class="academy-grid">
         ${referenceLibrary.map(book => `
           <div class="academy-card">
@@ -1111,12 +910,8 @@
     refreshAcademyIcons(content);
   }
 
-  /* =========================================================
-     3. ملاحظاتي الدراسية
-     ========================================================= */
   function renderNotes() {
     const content = $("academyContent");
-
     content.innerHTML = `
       <div class="academy-card">
         <h3>📝 إضافة ملاحظة دراسية</h3>
@@ -1124,7 +919,6 @@
         <textarea id="academyNoteContent" class="academy-textarea" maxlength="10000" placeholder="اكتب ملاحظتك هنا..."></textarea>
         <button class="academy-btn" id="academySaveNote">حفظ الملاحظة</button>
       </div>
-
       <h3 style="margin-top:16px;">ملاحظاتي المحفوظة</h3>
       <div class="academy-grid">
         ${notes.length ? notes.map(note => `
@@ -1136,16 +930,11 @@
         `).join("") : '<div class="academy-empty">لا توجد ملاحظات محفوظة حتى الآن.</div>'}
       </div>
     `;
-
     $("academySaveNote").addEventListener("click", saveNote);
   }
 
-  /* =========================================================
-     4. ذاكرتي التعليمية
-     ========================================================= */
   function renderMemory() {
     const content = $("academyContent");
-
     content.innerHTML = `
       <div class="academy-card">
         <h3>🧠 الذاكرة التعليمية الشخصية</h3>
@@ -1161,7 +950,6 @@
         </select>
         <button class="academy-btn" id="academySaveMemory">حفظ في الذاكرة</button>
       </div>
-
       <h3 style="margin-top:16px;">المعلومات المحفوظة</h3>
       <div class="academy-grid">
         ${memories.length ? memories.map(item => `
@@ -1173,16 +961,11 @@
         `).join("") : '<div class="academy-empty">ذاكرتك التعليمية فارغة حاليًا.</div>'}
       </div>
     `;
-
     $("academySaveMemory").addEventListener("click", saveMemory);
   }
 
-  /* =========================================================
-     5. تقدمي التعليمي
-     ========================================================= */
   function renderProgress() {
     const content = $("academyContent");
-
     content.innerHTML = `
       <div class="academy-card" style="margin-bottom:14px;">
         <h3>📊 تقدمك التعليمي</h3>
@@ -1192,18 +975,12 @@
         ${courses.map(course => {
           const item = progress.find(p => p.id === course.id);
           const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
-
           return `
             <div class="academy-card">
-              <h3>
-                <i data-lucide="${course.icon}"></i>
-                ${escapeHTML(course.title)}
-              </h3>
+              <h3><i data-lucide="${course.icon}"></i> ${escapeHTML(course.title)}</h3>
               <div class="academy-progress"><span style="width:${percent}%"></span></div>
               <p>${percent}% مكتمل</p>
-              <div class="academy-muted">
-                ${percent >= 100 ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}
-              </div>
+              <div class="academy-muted">${percent >= 100 ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}</div>
               <button type="button" class="academy-btn secondary" style="margin-top:8px;" data-course="${escapeHTML(course.id)}">
                 تسجيل إتمام المسار ✓
               </button>
@@ -1215,13 +992,9 @@
     refreshAcademyIcons(content);
   }
 
-  /* =========================================================
-     6. المدرس الذكي (GEO Teacher)
-     ========================================================= */
   function renderTeacher() {
     const content = $("academyContent");
     if (!content) return;
-
     content.innerHTML = `
       <section class="academy-teacher">
         <header class="teacher-header">
@@ -1232,7 +1005,6 @@
             <span class="teacher-online">● متصل بالمحرك الذكي</span>
           </div>
         </header>
-
         <div class="teacher-subject">
           <label for="academyTeacherSubject">التخصص الدراسي</label>
           <select id="academyTeacherSubject" class="academy-input">
@@ -1246,7 +1018,6 @@
             <option value="موضوع عام">موضوع آخر</option>
           </select>
         </div>
-
         <div id="academyTeacherMessages" class="academy-teacher-messages" aria-live="polite">
           <div class="teacher-welcome">
             <div class="teacher-avatar">👨‍🏫</div>
@@ -1256,67 +1027,39 @@
             </div>
           </div>
         </div>
-
         <div class="teacher-composer">
-          <textarea
-            id="academyTeacherQuestion"
-            class="academy-textarea"
-            rows="3"
-            placeholder="اكتب سؤالك أو اسم الدرس هنا..."
-          ></textarea>
-
-          <button type="button" class="academy-btn" id="academyTeacherSend" style="width:100%;">
-            إرسال السؤال ➤
-          </button>
+          <textarea id="academyTeacherQuestion" class="academy-textarea" rows="3" placeholder="اكتب سؤالك أو اسم الدرس هنا..."></textarea>
+          <button type="button" class="academy-btn" id="academyTeacherSend" style="width:100%;">إرسال السؤال ➤</button>
         </div>
       </section>
     `;
   }
 
-  /* =========================================================
-     7. الباحث الذكي
-     ========================================================= */
   function renderSmartSearch() {
     const content = $("academyContent");
     if (!content) return;
-
     content.innerHTML = `
       <div class="academy-card academy-search-box">
         <h3>🔎 الباحث الذكي عن الكورسات</h3>
-        <p class="academy-muted">
-          ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.
-        </p>
-
-        <textarea id="academySmartQuery"
-          class="academy-textarea"
-          rows="4"
+        <p class="academy-muted">ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.</p>
+        <textarea id="academySmartQuery" class="academy-textarea" rows="4"
           placeholder="مثال: ابحث عن أفضل كورسات AutoCAD من الصفر باللغة العربية، المجانية والمدفوعة..."></textarea>
-
-        <button type="button" class="academy-btn"
-          id="academySmartSearchBtn"
-          style="margin-top:12px;width:100%">
-          🔍 ابدأ البحث الذكي
-        </button>
+        <button type="button" class="academy-btn" id="academySmartSearchBtn" style="margin-top:12px;width:100%">🔍 ابدأ البحث الذكي</button>
       </div>
-
-      <div id="academySmartResults"
-        class="academy-results-box"
-        style="margin-top:16px;width:100%">
-      </div>
+      <div id="academySmartResults" class="academy-results-box" style="margin-top:16px;width:100%"></div>
     `;
   }
 
   function renderTab() {
+    const content = $("academyContent");
+    if (!content) return;
+
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
     });
 
     if (!currentUser) {
-      $("academyContent").innerHTML = `
-        <div class="academy-empty">
-          يجب تسجيل الدخول أولًا لاستخدام الأكاديمية وحفظ بياناتك.
-        </div>
-      `;
+      content.innerHTML = `<div class="academy-empty">يجب تسجيل الدخول أولًا لاستخدام الأكاديمية وحفظ بياناتك.</div>`;
       refreshAcademyIcons($("s-academy"));
       return;
     }
@@ -1334,39 +1077,34 @@
 
   async function refreshData() {
     if (!currentUser) return;
-
     const api = window.GEOAcademy;
     if (!api || !api.ready) {
-      setStatus("تعذر تشغيل خدمة الأكاديمية. تأكد من تحميل ملف geo-academy.js.");
+      await loadUploadedCourses();
+      setStatus("تم تحميل الدورات المرفوعة في الأكاديمية.");
+      renderTab();
       return;
     }
 
     try {
       await api.getProfile() || await api.createProfile();
-
       const results = await Promise.all([
         api.getNotes(),
         api.getMemory(100),
         api.getProgress(),
         loadUploadedCourses()
       ]);
-
       notes = Array.isArray(results[0]) ? results[0] : [];
       memories = Array.isArray(results[1]) ? results[1] : [];
       progress = Array.isArray(results[2]) ? results[2] : [];
-
       setStatus("تم الاتصال بقاعدة بيانات الأكاديمية.");
       renderTab();
     } catch (error) {
       console.error("Academy loading error:", error);
-      setStatus("حدث خطأ أثناء تحميل بيانات الأكاديمية: " + (error.message || "خطأ غير معروف"));
-      notify("تعذر تحميل بيانات الأكاديمية.", "error");
+      setStatus("حدث خطأ أثناء تحميل بيانات الأكاديمية.");
+      renderTab();
     }
   }
 
-  /* =========================================================
-     رفع الدورة (فيديو + PDF + Drive/MediaFire) للأدمن
-     ========================================================= */
   function bindCourseUploadForm() {
     const form = $("academyAdminCourseForm");
     if (!form || form.dataset.bound) return;
@@ -1394,7 +1132,6 @@
       btn.textContent = "⏳ جاري رفع ونشر الدورة...";
 
       try {
-        // رفع الفيديو إذا تم اختياره من الجهاز
         if (videoFile) {
           if (videoFile.size > 500 * 1024 * 1024) {
             throw new Error("حجم الفيديو يتجاوز 500 ميجابايت.");
@@ -1406,3 +1143,464 @@
           } else {
             videoUrl = URL.createObjectURL(videoFile);
           }
+        }
+
+        let pdfUrl = "";
+        let pdfName = "";
+        if (pdfFile) {
+          pdfName = pdfFile.name;
+          if (window.firebase && typeof firebase.storage === "function") {
+            const pdfRef = firebase.storage().ref(`academy_courses_pdfs/${Date.now()}_${pdfFile.name}`);
+            await pdfRef.put(pdfFile);
+            pdfUrl = await pdfRef.getDownloadURL();
+          }
+        }
+
+        const courseDoc = {
+          title,
+          category,
+          desc,
+          videoUrl: videoUrl || "",
+          pdfUrl,
+          pdfName,
+          driveUrl: driveUrl || "",
+          authorEmail: currentUser.email || ADMIN_EMAIL,
+          createdAt: Date.now()
+        };
+
+        const db = getDb();
+        if (db) {
+          const added = await db.collection("geodev_academy_courses").add(courseDoc);
+          uploadedCourses.unshift({ id: added.id, ...courseDoc });
+        } else {
+          uploadedCourses.unshift({ id: "local_" + Date.now(), ...courseDoc });
+        }
+
+        localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+        notify("تم نشر الدورة والفيديو والملفات بنجاح!", "success");
+        renderCourses();
+      } catch (err) {
+        notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="plus-circle"></i> نشر الدورة والفيديو في الأكاديمية الآن`;
+        refreshAcademyIcons(form);
+      }
+    });
+  }
+
+  async function saveNote() {
+    const title = $("academyNoteTitle").value.trim();
+    const content = $("academyNoteContent").value.trim();
+    if (!title || !content) return notify("اكتب عنوان الملاحظة ومحتواها أولًا.", "error");
+    try {
+      await window.GEOAcademy.saveNote(title, content);
+      notify("تم حفظ الملاحظة بنجاح.", "success");
+      await refreshData();
+    } catch (error) {
+      notify("لم يتم حفظ الملاحظة: " + (error.message || ""), "error");
+    }
+  }
+
+  async function saveMemory() {
+    const content = $("academyMemoryContent").value.trim();
+    const category = $("academyMemoryCategory").value;
+    if (!content) return notify("اكتب المعلومة التي تريد حفظها.", "error");
+    try {
+      await window.GEOAcademy.saveMemory(content, category);
+      notify("تم حفظ المعلومة في ذاكرتك.", "success");
+      await refreshData();
+    } catch (error) {
+      notify("لم يتم حفظ المعلومة: " + (error.message || ""), "error");
+    }
+  }
+
+  async function completeCourse(courseId) {
+    if (!courses.find(item => item.id === courseId)) return;
+    try {
+      await window.GEOAcademy.saveProgress(courseId, 100);
+      notify("تم تسجيل إتمام المسار بنجاح.", "success");
+      await refreshData();
+    } catch (error) {
+      notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
+    }
+  }
+
+  async function deleteNote(id) {
+    if (!confirm("هل تريد حذف هذه الملاحظة؟")) return;
+    try {
+      await window.GEOAcademy.deleteNote(id);
+      notify("تم حذف الملاحظة.", "success");
+      await refreshData();
+    } catch (error) {
+      notify("تعذر حذف الملاحظة.", "error");
+    }
+  }
+
+  async function deleteMemory(id) {
+    if (!confirm("هل تريد حذف هذه المعلومة من الذاكرة؟")) return;
+    try {
+      await window.GEOAcademy.deleteMemory(id);
+      notify("تم حذف المعلومة.", "success");
+      await refreshData();
+    } catch (error) {
+      notify("تعذر حذف المعلومة.", "error");
+    }
+  }
+
+  function getPlatformInfo(rawUrl) {
+    let host = "";
+    try {
+      const parsed = new URL(String(rawUrl || ""));
+      if (!["https:", "http:"].includes(parsed.protocol)) throw new Error("Invalid URL");
+      host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    } catch (_) {
+      return { name: "مصدر تعليمي", emoji: "🌐", icon: "" };
+    }
+    const platforms = [
+      { match: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/, name: "YouTube", emoji: "▶️" },
+      { match: /(^|\.)coursera\.org$/, name: "Coursera", emoji: "🎓" },
+      { match: /(^|\.)udemy\.com$/, name: "Udemy", emoji: "🟣" },
+      { match: /(^|\.)autodesk\.com$/, name: "Autodesk", emoji: "🅰️" },
+      { match: /(^|\.)edx\.org$/, name: "edX", emoji: "🎓" },
+      { match: /(^|\.)linkedin\.com$/, name: "LinkedIn Learning", emoji: "in" },
+      { match: /(^|\.)m3aarf\.com$/, name: "معارف", emoji: "📚" },
+      { match: /(^|\.)teracourses\.com$/, name: "Teracourses", emoji: "📖" },
+      { match: /(^|\.)skillshare\.com$/, name: "Skillshare", emoji: "✏️" },
+      { match: /(^|\.)esri\.com$/, name: "Esri", emoji: "🌍" }
+    ];
+    const found = platforms.find(p => p.match.test(host));
+    return {
+      name: found ? found.name : host,
+      emoji: found ? found.emoji : "🌐",
+      icon: "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(host) + "&sz=64"
+    };
+  }
+
+  function renderAnalysisMarkdown(markdown) {
+    const source = String(markdown || "");
+    if (!source) return "";
+    if (window.marked && typeof window.marked.parse === "function" && window.DOMPurify && typeof window.DOMPurify.sanitize === "function") {
+      return window.DOMPurify.sanitize(window.marked.parse(source));
+    }
+    return `<p>${escapeHTML(source).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>")}</p>`;
+  }
+
+  function renderSearchResults(data) {
+    const results = Array.isArray(data.results) ? data.results : [];
+    const analysis = data.analysis
+      ? `<div class="academy-card" style="margin-bottom:14px"><h3>🤖 تحليل GEO AI</h3><div class="academy-analysis">${renderAnalysisMarkdown(data.analysis)}</div></div>`
+      : "";
+    const summary = data.answer
+      ? `<div class="academy-card" style="margin-bottom:14px"><h3>📝 ملخص البحث</h3><p>${escapeHTML(data.answer)}</p></div>`
+      : "";
+
+    const cards = results.map((item, index) => {
+      const platform = getPlatformInfo(item.url);
+      const title = escapeHTML(item.title || "مصدر تعليمي " + (index + 1));
+      const description = escapeHTML(item.content || "لا يوجد وصف متاح.");
+      const url = safeURL(item.url);
+      const icon = platform.icon
+        ? `<img class="academy-platform-icon" src="${platform.icon}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
+        : "";
+      const fallback = `<span class="academy-platform-fallback" style="${platform.icon ? "display:none" : ""}">${escapeHTML(platform.emoji)}</span>`;
+
+      return `
+        <article class="academy-course-result">
+          <div class="academy-course-platform">
+            ${icon}
+            ${fallback}
+            <div>
+              <div class="academy-muted">المنصة التعليمية</div>
+              <strong>${escapeHTML(platform.name)}</strong>
+            </div>
+          </div>
+          <h4>${index + 1}. ${title}</h4>
+          <p>${description}</p>
+          ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;margin-top:auto">فتح المصدر على ${escapeHTML(platform.name)} ↗</a>` : `<span class="academy-muted">الرابط غير متاح</span>`}
+        </article>
+      `;
+    }).join("");
+
+    return `<h3>🎓 نتائج البحث (${results.length})</h3><div class="academy-search-grid">${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}</div>${summary}${analysis}`;
+  }
+
+  function bindEvents() {
+    if (eventsBound) return;
+    eventsBound = true;
+
+    document.addEventListener("click", async event => {
+      const tab = event.target.closest("[data-academy-tab]");
+      if (tab) {
+        activeTab = tab.dataset.academyTab;
+        renderTab();
+        const stage = $("academyContent");
+        if (stage) stage.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+
+      const openCourseBtn = event.target.closest("[data-open-uploaded-course]");
+      if (openCourseBtn) {
+        selectedCourseDetailId = openCourseBtn.dataset.openUploadedCourse;
+        await loadCommentsForCourse(selectedCourseDetailId);
+        renderCourses($("academyCatalogSearch")?.value || "");
+        const detailBox = $("academyCourseDetailBox");
+        if (detailBox) detailBox.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+
+      if (event.target.closest("#academyCloseCourseDetail")) {
+        selectedCourseDetailId = null;
+        renderCourses($("academyCatalogSearch")?.value || "");
+        return;
+      }
+
+      const postCommentBtn = event.target.closest("#academyPostCommentBtn");
+      if (postCommentBtn) {
+        const courseId = postCommentBtn.dataset.courseId;
+        const text = $("academyNewCommentText")?.value.trim();
+        if (!text) return notify("اكتب تعليقك أولاً قبل النشر.", "error");
+        if (!currentUser) return notify("يجب تسجيل الدخول لكتابة تعليق.", "error");
+
+        postCommentBtn.disabled = true;
+        try {
+          const commentObj = {
+            uid: currentUser.uid,
+            userName: currentUser.displayName || currentUser.email?.split("@")[0] || "مستخدم",
+            text,
+            dateText: new Date().toLocaleDateString("ar-EG"),
+            createdAt: Date.now()
+          };
+          const db = getDb();
+          if (db) {
+            await db.collection("geodev_academy_courses").doc(courseId).collection("comments").add(commentObj);
+          }
+          await loadCommentsForCourse(courseId);
+          notify("تم نشر تعليقك بنجاح!", "success");
+          renderCourses($("academyCatalogSearch")?.value || "");
+        } catch (err) {
+          notify("تعذر نشر التعليق: " + (err.message || ""), "error");
+        } finally {
+          postCommentBtn.disabled = false;
+        }
+        return;
+      }
+
+      const delCommentBtn = event.target.closest("[data-delete-comment]");
+      if (delCommentBtn) {
+        if (!confirm("هل تريد حذف هذا التعليق؟")) return;
+        const commentId = delCommentBtn.dataset.deleteComment;
+        const courseId = delCommentBtn.dataset.courseId;
+        const db = getDb();
+        if (db) {
+          await db.collection("geodev_academy_courses").doc(courseId).collection("comments").doc(commentId).delete();
+          await loadCommentsForCourse(courseId);
+          notify("تم حذف التعليق.", "success");
+          renderCourses($("academyCatalogSearch")?.value || "");
+        }
+        return;
+      }
+
+      const delCourseBtn = event.target.closest("[data-delete-uploaded-course]");
+      if (delCourseBtn && isAdminUser) {
+        if (!confirm("هل تريد حذف هذه الدورة نهائياً من الأكاديمية؟")) return;
+        const courseId = delCourseBtn.dataset.deleteUploadedCourse;
+        const db = getDb();
+        if (db) {
+          await db.collection("geodev_academy_courses").doc(courseId).delete();
+        }
+        uploadedCourses = uploadedCourses.filter(c => c.id !== courseId);
+        localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+        if (selectedCourseDetailId === courseId) selectedCourseDetailId = null;
+        notify("تم حذف الدورة بنجاح.", "success");
+        renderCourses();
+        return;
+      }
+
+      const smartBtn = event.target.closest("#academySmartSearchBtn");
+      if (smartBtn) {
+        const query = $("academySmartQuery")?.value.trim();
+        const output = $("academySmartResults");
+        if (!query) {
+          output.textContent = "اكتب موضوع الكورس الذي تريد البحث عنه أولاً.";
+          return;
+        }
+        smartBtn.disabled = true;
+        smartBtn.textContent = "⏳ جاري البحث والتحليل...";
+        output.textContent = "يبحث GEO 5.2 ULTRA على الويب، ثم يحلل GEO 3.8 FLASH النتائج...";
+        try {
+          const data = await window.GEOAcademyEngines.search(query);
+          if (!data || data.success === false) throw new Error(data?.message || "لم يتم إرجاع نتائج البحث.");
+          output.innerHTML = renderSearchResults(data);
+        } catch (error) {
+          output.textContent = "حدث خطأ: " + (error.message || "تعذر البحث.");
+        } finally {
+          smartBtn.disabled = false;
+          smartBtn.textContent = "🔍 ابدأ البحث الذكي";
+        }
+        return;
+      }
+
+      const teacherBtn = event.target.closest("#academyTeacherSend");
+      if (teacherBtn) {
+        const questionInput = $("academyTeacherQuestion");
+        const subjectInput = $("academyTeacherSubject");
+        const messagesBox = $("academyTeacherMessages");
+
+        const question = questionInput?.value.trim();
+        const subject = subjectInput?.value || "الجغرافيا العامة";
+
+        if (!question) return notify("اكتب سؤالك للمدرس أولاً.", "warning");
+        if (!messagesBox || !window.GEOAcademyEngines?.teacherChat) return notify("محرك المدرس الذكي غير متصل.", "error");
+
+        teacherBtn.disabled = true;
+        teacherBtn.textContent = "⏳ جاري إعداد الإجابة...";
+
+        const userRow = document.createElement("div");
+        userRow.className = "teacher-message teacher-user";
+        const userBubble = document.createElement("div");
+        userBubble.className = "teacher-bubble";
+        userBubble.textContent = question;
+        userRow.appendChild(userBubble);
+        messagesBox.appendChild(userRow);
+
+        teacherMessages.push({ role: "user", content: question });
+
+        const loading = document.createElement("div");
+        loading.className = "teacher-message teacher-assistant";
+        const loadingBubble = document.createElement("div");
+        loadingBubble.className = "teacher-bubble";
+        loadingBubble.textContent = "⏳ المدرس يجهز الشرح...";
+        loading.appendChild(loadingBubble);
+        messagesBox.appendChild(loading);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        try {
+          const answer = await window.GEOAcademyEngines.teacherChat(teacherMessages, subject);
+          loading.remove();
+          teacherMessages.push({ role: "assistant", content: answer });
+
+          const assistantRow = document.createElement("div");
+          assistantRow.className = "teacher-message teacher-assistant";
+          const avatar = document.createElement("div");
+          avatar.className = "teacher-avatar";
+          avatar.textContent = "👨‍🏫";
+          const assistantBubble = document.createElement("div");
+          assistantBubble.className = "teacher-bubble";
+          const teacherName = document.createElement("strong");
+          teacherName.textContent = "GEO Teacher";
+          const answerContent = document.createElement("div");
+          answerContent.className = "teacher-answer-content";
+          answerContent.innerHTML = renderAnalysisMarkdown(answer);
+
+          assistantBubble.appendChild(teacherName);
+          assistantBubble.appendChild(answerContent);
+          assistantRow.appendChild(avatar);
+          assistantRow.appendChild(assistantBubble);
+          messagesBox.appendChild(assistantRow);
+
+          questionInput.value = "";
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        } catch (error) {
+          loading.remove();
+          teacherMessages.pop();
+          notify(error.message || "حدث خطأ أثناء سؤال المدرس.", "error");
+        } finally {
+          teacherBtn.disabled = false;
+          teacherBtn.textContent = "إرسال السؤال ➤";
+        }
+        return;
+      }
+
+      const course = event.target.closest("[data-course]");
+      if (course) return completeCourse(course.dataset.course);
+
+      const note = event.target.closest("[data-delete-note]");
+      if (note) return deleteNote(note.dataset.deleteNote);
+
+      const memory = event.target.closest("[data-delete-memory]");
+      if (memory) return deleteMemory(memory.dataset.deleteMemory);
+    });
+  }
+
+  function startAuthListener() {
+    const check = () => {
+      if (window.firebase && firebase.apps && firebase.apps.length) {
+        const api = window.GEOAcademy;
+        if (api && typeof api.init === "function") api.init();
+
+        firebase.auth().onAuthStateChanged(async user => {
+          currentUser = user || null;
+          isAdminUser = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+
+          if (!user) {
+            notes = [];
+            memories = [];
+            progress = [];
+            setStatus("سجل الدخول لاستخدام الأكاديمية.");
+            renderTab();
+            return;
+          }
+
+          setStatus("مرحبًا بك في الأكاديمية. جاري تحميل بياناتك...");
+          await refreshData();
+        });
+        return true;
+      }
+      return false;
+    };
+
+    if (!check()) {
+      const iv = setInterval(() => {
+        if (check()) clearInterval(iv);
+      }, 350);
+      setTimeout(() => clearInterval(iv), 12000);
+    }
+  }
+
+  function bootAcademy() {
+    bindEvents();
+    renderTab();
+    startAuthListener();
+    if (window.GEOAcademyUI) window.GEOAcademyUI.ready = true;
+  }
+
+  function init() {
+    if (injectInterface()) {
+      bootAcademy();
+      return;
+    }
+    let tries = 0;
+    const retryTimer = setInterval(() => {
+      tries++;
+      if (injectInterface()) {
+        clearInterval(retryTimer);
+        bootAcademy();
+      } else if (tries >= 35) {
+        clearInterval(retryTimer);
+      }
+    }, 300);
+  }
+
+  window.GEOAcademyUI = {
+    init,
+    refresh: refreshData,
+    search(query) {
+      const input = $("academyCatalogSearch");
+      const position = input?.selectionStart ?? String(query).length;
+      renderCourses(query);
+      const nextInput = $("academyCatalogSearch");
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.setSelectionRange(position, position);
+      }
+    },
+    ready: false
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
