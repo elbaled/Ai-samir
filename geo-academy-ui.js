@@ -1,10 +1,10 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الاحترافية المتكاملة (V7)
-   - البطاقات الثماني الرئيسية للأكاديمية
-   - قسم "الكورسات والدورات": بانر التخصصات الستة + اسم المحاضر + بطاقات المحاضرين التفصيلية
-   - قفل تتابعي للمحاضرات + زر إكمال يظهر بعد مشاهدة الفيديو بالكامل
-   - ربط تلقائي مع "تقدمي التعليمي" + إشعارات ذكية
-   - فتح الفيديوهات للمشتركين بالكود من جميع حقول Firebase وشارة PRO
+   GEO Academy UI - النسخة الكاملة والنهائية (V8)
+   - 8 بطاقات رئيسية: (الكورسات والدورات، كورسات رسمية، البحث الذكي، الكتب، المدرس، ملاحظاتي، ذاكرتي، تقدمي)
+   - قسم الكورسات والدورات: بانر التخصصات الستة + اسم المحاضر + بطاقات المحاضرين التفصيلية
+   - قفل تتابعي للمحاضرات + زر إكمال يظهر فقط بعد مشاهدة الفيديو بالكامل
+   - ربط تلقائي مع "تقدمي التعليمي" + إشعار ذكي علوي عند رفع محاضرة جديدة
+   - قفل الفيديوهات والمرفقات على المشتركين بالكود فقط (استبعاد التجريبي 3 أيام)
    ============================================================================ */
 (function () {
   "use strict";
@@ -542,7 +542,7 @@
     return null;
   }
 
-    async function checkCodeSubscriptionStatus(user) {
+  async function checkCodeSubscriptionStatus(user) {
     if (!user) {
       isAdminUser = false;
       isCodeSubscriber = false;
@@ -595,11 +595,22 @@
         const now = Date.now();
 
         const plan = String(data.plan || data.tier || data.subscription || data.status || "").toLowerCase();
-        const isProFlag = data.isPro === true || data.pro === true || data.activated === true || Boolean(data.activationCode || data.code);
+        const isProFlag =
+          data.isPro === true ||
+          data.pro === true ||
+          data.activated === true ||
+          Boolean(data.activationCode || data.code);
 
         const rawExpiry =
-          data.pro_until || data.proUntil || data.pro_end || data.proEnd ||
-          data.expiresAt || data.expiry || data.trial_end || data.trialEnd || 0;
+          data.pro_until ||
+          data.proUntil ||
+          data.pro_end ||
+          data.proEnd ||
+          data.expiresAt ||
+          data.expiry ||
+          data.trial_end ||
+          data.trialEnd ||
+          0;
 
         let expiryMs = 0;
         if (rawExpiry && typeof rawExpiry.toMillis === "function") {
@@ -626,7 +637,6 @@
     isCodeSubscriber = false;
     return false;
   }
-
 
   async function loadInstructors() {
     const db = getDb();
@@ -1772,6 +1782,7 @@
           selectedTrackFilter = targetLecture.category || "all";
           selectedInstructorFilter = "all";
           if (isLectureUnlocked(targetLecture)) {
+            await checkCodeSubscriptionStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
             videoFinishedWatching = false;
             await loadCommentsForCourse(selectedCourseDetailId);
@@ -1855,16 +1866,7 @@
           notify("🔒 يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
           return;
         }
-        selectedCourseDetailId = lectureId;
-        videoFinishedWatching = false;
-        await loadCommentsForCourse(selectedCourseDetailId);
-        renderCourses();
-        const detailBox = $("academyCourseDetailBox");
-        if (detailBox) detailBox.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-    
-
-        }
+        await checkCodeSubscriptionStatus(currentUser);
         selectedCourseDetailId = lectureId;
         videoFinishedWatching = false;
         await loadCommentsForCourse(selectedCourseDetailId);
