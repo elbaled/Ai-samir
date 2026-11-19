@@ -1,32 +1,44 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الكاملة والمستقرة
-   - البطاقات السبع الرئيسية (الكورسات، البحث الذكي، الكتب، المدرس، ملاحظاتي، ذاكرتي، تقدمي)
-   - رفع الفيديوهات والدورات + PDF + Google Drive / MediaFire (حصري للأدمن)
-   - نظام التعليقات التفاعلي أسفل تفاصيل كل فيديو
+   GEO Academy UI - النسخة الاحترافية المتكاملة (V5)
+   1. 8 بطاقات رئيسية: (الكورسات والدورات، كورسات رسمية، البحث الذكي، الكتب، المدرس، ملاحظاتي، ذاكرتي، تقدمي)
+   2. بانر فلترة التخصصات الستة داخل قسم الكورسات الخاصة بنا
+   3. قفل تتابعي للمحاضرات + زر إكمال يظهر فقط بعد مشاهدة الفيديو بالكامل
+   4. ربط لحظي مع قسم "تقدمي التعليمي" ونسب الإنجاز التلقائية
+   5. إشعار ذكي مباشر للمستخدمين عند رفع فيديو جديد ينقلهم إليه عند الضغط
+   6. قفل تشغيل الفيديوهات على المشتركين بالكود فقط (استبعاد التجريبي 3 أيام)
    ============================================================================ */
 (function () {
   "use strict";
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
+  const ADMIN_WHATSAPP = "201015912371";
+  const FOUR_DAYS_MS = 4 * 24 * 60 * 60 * 1000;
 
-  const courses = [
-    { id: "gis", title: "نظم المعلومات الجغرافية GIS", icon: "globe", desc: "تعلم GIS والخرائط والتحليل المكاني." },
-    { id: "surveying", title: "المساحة والرفع المساحي", icon: "ruler", desc: "أساسيات المساحة والأجهزة والحسابات." },
-    { id: "remote-sensing", title: "الاستشعار عن بعد", icon: "satellite", desc: "الأقمار الصناعية والصور الفضائية وتحليلها." },
-    { id: "civil3d", title: "Civil 3D", icon: "drafting-compass", desc: "تصميم الطرق والأعمال المساحية." },
-    { id: "python-gis", title: "Python for GIS", icon: "code", desc: "برمجة وتحليل البيانات الجغرافية." },
-    { id: "gis-programming", title: "GIS Programming", icon: "terminal", desc: "برمجة نظم المعلومات باستخدام Python وArcPy وPyQGIS." },
-    { id: "autocad", title: "AutoCAD", icon: "pencil-ruler", desc: "الرسم الهندسي ثنائي وثلاثي الأبعاد." },
-    { id: "autocad-ai", title: "AutoCAD + AI", icon: "bot", desc: "تطبيق الذكاء الاصطناعي في الرسم والأتمتة الهندسية." }
+  // التخصصات الستة الأساسية في بانر الكورسات الخاصة بنا
+  const ourTracks = [
+    { id: "AutoCAD + AI", title: "AutoCAD + AI", icon: "bot", desc: "ربط الأوتوكاد بالذكاء الاصطناعي وأتمتة الليسبات." },
+    { id: "GIS", title: "نظم المعلومات الجغرافية GIS", icon: "globe", desc: "ArcGIS Pro و QGIS والتحليل المكاني وإخراج الخرائط." },
+    { id: "Surveying", title: "المساحة والرفع المساحي", icon: "ruler", desc: "الترافيرس، الميزانية، GNSS، وحسابات المكتب الفني." },
+    { id: "Civil 3D", title: "Civil 3D", icon: "drafting-compass", desc: "تصميم الطرق والأسطح وحساب كميات الحفر والردم." },
+    { id: "Remote Sensing", title: "الاستشعار عن بعد", icon: "satellite", desc: "معالجة المرئيات الفضائية والمؤشرات الطيفية." },
+    { id: "Programming", title: "برمجة GIS و Python", icon: "code", desc: "أتمتة المعالجة المكانية باستخدام Python و ArcPy." }
   ];
 
+  // البطاقات الثماني الرئيسية للأكاديمية
   const academySections = [
     {
       id: "courses",
       title: "الكورسات والدورات",
       icon: "graduation-cap",
-      badge: "الأساسي",
-      desc: "الدورات المرفوعة، الشروحات التطبيقية، ومكتبة الكورسات العالمية."
+      badge: "حصري PRO",
+      desc: "كورسات ومحاضرات المنصة التفاعلية بنظام فتح المحاضرات التتابعي."
+    },
+    {
+      id: "official-courses",
+      title: "كورسات رسمية",
+      icon: "award",
+      badge: "دليل عالمي",
+      desc: "مكتبة الكورسات الرسمية المعتمدة من Esri و Autodesk و NARSS."
     },
     {
       id: "smart-search",
@@ -67,19 +79,23 @@
       id: "progress",
       title: "تقدمي التعليمي",
       icon: "chart-no-axes-column-increasing",
-      badge: "إحصائيات",
-      desc: "تابع نسبة إنجازك في مسارات الجيوماتكس والبرمجة الهندسية."
+      badge: "مرتبط بالدورات",
+      desc: "تابع نسبة إنجازك الفعلية في كل كورس ومحاضرة أكملتها."
     }
   ];
 
   let currentUser = null;
   let isAdminUser = false;
+  let isCodeSubscriber = false; // مشترك فعلي بالكود (وليس فترة تجريبية 3 أيام)
   let notes = [];
   let memories = [];
-  let progress = [];
+  let completedLectures = []; // مصفوفة IDs للمحاضرات المكتملة
   let teacherMessages = [];
   let uploadedCourses = [];
+  let selectedTrackFilter = "all";
   let selectedCourseDetailId = null;
+  let videoFinishedWatching = false; // يظهر زر الإكمال فقط بعد إنهاء الفيديو
+  let ytWatchTimer = null;
   let courseComments = [];
   let activeTab = "courses";
   let eventsBound = false;
@@ -128,7 +144,7 @@
     box.dataset.type = type;
     box.classList.add("show");
     clearTimeout(box._timer);
-    box._timer = setTimeout(() => box.classList.remove("show"), 3500);
+    box._timer = setTimeout(() => box.classList.remove("show"), 4000);
   }
 
   function injectStyles() {
@@ -164,19 +180,31 @@
         color: var(--tx, #f8fafc);
       }
       #s-academy .academy-header h2 svg {
-        width: 27px;
-        height: 27px;
-        color: var(--bl, #38bdf8);
-        flex-shrink: 0;
+        width: 27px; height: 27px; color: var(--bl, #38bdf8); flex-shrink: 0;
       }
-      #s-academy .academy-header p {
-        margin: 0;
-        color: var(--mt, #94a3b8);
-        line-height: 1.85;
+      #s-academy .academy-header p { margin: 0; color: var(--mt, #94a3b8); line-height: 1.85; }
+
+      /* إشعار ذكي علوي للفيديوهات الجديدة */
+      #gdSmartVideoAlert {
+        background: linear-gradient(90deg, #0f172a, #1e293b);
+        color: #f8fafc;
+        border: 2px solid #e09f24;
+        border-radius: 14px;
+        padding: 11px 14px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        cursor: pointer;
+        box-shadow: 0 8px 22px rgba(224, 159, 36, 0.25);
       }
+
+      /* شبكة البطاقات الثماني الرئيسية */
       #s-academy .academy-hub-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr));
         gap: 12px;
         margin-bottom: 18px;
       }
@@ -187,12 +215,12 @@
         background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 95%, var(--bl, #38bdf8)), var(--cd, #182334));
         border: 1.5px solid var(--ln, #334155);
         border-radius: 18px;
-        padding: 15px;
+        padding: 14px;
         color: inherit;
         font-family: inherit;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
         transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
       #s-academy .academy-hub-card:hover {
@@ -224,18 +252,45 @@
         color: #0f172a;
         border-color: #e09f24;
       }
-      #s-academy .hub-card-title {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 900;
-        color: var(--tx, #f8fafc);
+      #s-academy .hub-card-title { margin: 0; font-size: 15.5px; font-weight: 900; color: var(--tx, #f8fafc); }
+      #s-academy .hub-card-desc { margin: 0; font-size: 12px; line-height: 1.65; color: var(--mt, #94a3b8); }
+
+      /* بانر التخصصات الستة داخل قسم الكورسات */
+      #s-academy .tracks-banner {
+        background: linear-gradient(135deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
+        border: 1.5px solid #e09f24;
+        border-radius: 18px;
+        padding: 15px;
+        margin-bottom: 16px;
       }
-      #s-academy .hub-card-desc {
-        margin: 0;
+      #s-academy .tracks-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      #s-academy .track-pill-btn {
+        border: 1.5px solid var(--ln, #334155);
+        background: var(--bg, #101827);
+        color: var(--tx, #e8edf7);
+        border-radius: 12px;
+        padding: 8px 13px;
         font-size: 12.5px;
-        line-height: 1.7;
-        color: var(--mt, #94a3b8);
+        font-weight: 800;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all .2s ease;
       }
+      #s-academy .track-pill-btn.active,
+      #s-academy .track-pill-btn:hover {
+        background: #e09f24;
+        color: #0f172a;
+        border-color: #e09f24;
+      }
+
       #s-academy .academy-active-stage {
         border-top: 2px dashed color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
         padding-top: 16px;
@@ -243,7 +298,7 @@
       }
       #s-academy .academy-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 255px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
         gap: 13px;
       }
       #s-academy .academy-card,
@@ -257,6 +312,10 @@
         min-width: 0;
         overflow-wrap: anywhere;
         box-shadow: 0 8px 24px rgba(0,0,0,.09);
+      }
+      #s-academy .academy-card.lecture-locked {
+        opacity: 0.78;
+        border-style: dashed;
       }
       #s-academy .academy-card h3,
       #s-academy .academy-course-result h4 {
@@ -274,20 +333,14 @@
         color: var(--mt, #cbd5e1);
       }
       #s-academy .academy-icon {
-        width: 46px;
-        height: 46px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 14px;
-        color: var(--bl, #38bdf8);
+        width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+        border-radius: 13px; color: var(--bl, #38bdf8);
         background: color-mix(in srgb, var(--bl, #38bdf8) 14%, var(--cd, #182334));
         border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 28%, var(--ln, #334155));
       }
-      #s-academy .academy-icon svg {
-        width: 23px;
-        height: 23px;
-      }
+      #s-academy .academy-icon svg { width: 22px; height: 22px; }
+
+      /* كارت رفع دورة جديدة للأدمن */
       #s-academy .admin-upload-card {
         border: 2px solid #e09f24;
         background: linear-gradient(145deg, color-mix(in srgb, #e09f24 10%, var(--cd, #182334)), var(--cd, #182334));
@@ -298,6 +351,8 @@
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
         gap: 10px;
       }
+
+      /* مشغل الفيديو وتفاصيل المحاضرة */
       #s-academy .course-detail-box {
         border: 2px solid var(--bl, #38bdf8);
         margin-bottom: 18px;
@@ -316,6 +371,15 @@
         max-height: 420px;
         display: block;
         border: 0;
+      }
+      #s-academy .locked-video-wall {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border: 2px solid #e09f24;
+        border-radius: 16px;
+        padding: 22px 16px;
+        text-align: center;
+        margin: 12px 0;
+        color: #f8fafc;
       }
       #s-academy .course-attachments-bar {
         display: flex;
@@ -359,8 +423,9 @@
         text-decoration: none;
       }
       #s-academy .academy-btn.gold { background: #e09f24; color: #0f172a; border-color: #e09f24; }
+      #s-academy .academy-btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
       #s-academy .academy-btn.pdf-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
-      #s-academy .academy-btn.drive-btn { background: #16a34a; color: #fff; border-color: #16a34a; }
+      #s-academy .academy-btn.drive-btn { background: #15803d; color: #fff; border-color: #15803d; }
       #s-academy .academy-btn.secondary {
         background: color-mix(in srgb, var(--cd, #182334) 80%, var(--bl, #38bdf8));
         color: var(--tx, #e8edf7);
@@ -381,9 +446,9 @@
         font: inherit;
       }
       #s-academy .academy-textarea { min-height: 95px; resize: vertical; }
-      #s-academy .academy-muted { opacity: .75; font-size: 12.5px; }
+      #s-academy .academy-muted { opacity: .78; font-size: 12.5px; }
       #s-academy .academy-progress {
-        height: 9px;
+        height: 10px;
         background: var(--ln, #344256);
         border-radius: 20px;
         overflow: hidden;
@@ -392,7 +457,8 @@
       #s-academy .academy-progress > span {
         display: block;
         height: 100%;
-        background: linear-gradient(90deg, var(--bl, #38bdf8), var(--gr, #27b58b));
+        background: linear-gradient(90deg, #e09f24, #22c55e);
+        transition: width .35s ease;
       }
       #s-academy .academy-empty { text-align: center; padding: 22px 12px; opacity: .75; }
       #s-academy .academy-status {
@@ -437,7 +503,7 @@
       #academyToast {
         position: fixed; z-index: 99999; bottom: 20px; right: 50%; transform: translate(50%, 20px);
         background: #26384d; color: white; padding: 12px 18px; border-radius: 12px;
-        opacity: 0; pointer-events: none; transition: .2s; max-width: 85%; text-align: center;
+        opacity: 0; pointer-events: none; transition: .2s; max-width: 88%; text-align: center;
       }
       #academyToast.show { opacity: 1; transform: translate(50%, 0); }
       #academyToast[data-type="error"] { background: #9b3434; }
@@ -446,7 +512,7 @@
         #s-academy { padding: 10px 7px; }
         #s-academy .academy-hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
         #s-academy .academy-hub-card { padding: 12px; }
-        #s-academy .hub-card-title { font-size: 14px; }
+        #s-academy .hub-card-title { font-size: 13.5px; }
         #s-academy .hub-card-desc { font-size: 11.5px; }
       }
     `;
@@ -456,10 +522,7 @@
   function injectInterface() {
     const nav = document.querySelector("nav") || document.querySelector(".nav, .bottom-nav, header nav");
     const main = document.querySelector("main") || document.querySelector("#main, .main, .content");
-
-    if (!nav || !main) {
-      return false;
-    }
+    if (!nav || !main) return false;
 
     if (!document.querySelector('[data-t="academy"]')) {
       const button = document.createElement("button");
@@ -484,9 +547,11 @@
       section.className = "sec";
 
       section.innerHTML = `
+        <div id="gdSmartVideoAlertWrap"></div>
+
         <div class="academy-header">
           <h2><i data-lucide="graduation-cap"></i> الأكاديمية الجغرافية</h2>
-          <p>اختر القسم المناسب من البطاقات السبع بالأسفل لبدء التعلم، البحث الذكي، أو متابعة الدورات والشروحات التطبيقية.</p>
+          <p>منظومة تعليمية متكاملة تجمع دورات المنصة التفاعلية، الكورسات الرسمية العالمية، الباحث الذكي، والمدرس الذكي.</p>
         </div>
 
         <div id="academyStatus" class="academy-status">
@@ -533,6 +598,50 @@
     return null;
   }
 
+  /* =========================================================
+     1. التحقق من أن المستخدم مشترك فعلي بالكود (فوق 4 أيام / PRO)
+     وليس فترة تجريبية 3 أيام
+     ========================================================= */
+  async function checkCodeSubscriptionStatus(user) {
+    if (!user) {
+      isAdminUser = false;
+      isCodeSubscriber = false;
+      return;
+    }
+
+    isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+    if (isAdminUser) {
+      isCodeSubscriber = true;
+      return;
+    }
+
+    const db = getDb();
+    if (!db) {
+      isCodeSubscriber = false;
+      return;
+    }
+
+    try {
+      const snap = await db.collection("users").doc(user.uid).get();
+      const data = snap.exists ? snap.data() : {};
+      const now = Date.now();
+      const plan = String(data.plan || "").toLowerCase();
+      const proUntil = Number(data.pro_until || 0);
+      const trialEnd = Number(data.trial_end || data.trialEnd || 0);
+
+      // يعتبر مشترك بالكود إذا كان لديه باقة مدفوعة (pro / pro_plus) سارية أو مدة تتجاوز 4 أيام من الآن
+      const hasPaidPlan = (plan === "pro" || plan === "pro_plus" || plan.includes("plus")) && (!proUntil || proUntil > now);
+      const hasMoreThan4Days = (proUntil - now) > FOUR_DAYS_MS || (trialEnd - now) > FOUR_DAYS_MS;
+
+      isCodeSubscriber = Boolean(hasPaidPlan || hasMoreThan4Days);
+    } catch (_) {
+      isCodeSubscriber = false;
+    }
+  }
+
+  /* =========================================================
+     2. تحميل الدورات المرفوعة وترتيبها تتابعياً حسب التخصص
+     ========================================================= */
   async function loadUploadedCourses() {
     const db = getDb();
     if (!db) {
@@ -541,12 +650,105 @@
     }
     try {
       const snap = await db.collection("geodev_academy_courses")
-        .orderBy("createdAt", "desc")
+        .orderBy("createdAt", "asc")
         .get();
       uploadedCourses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderSmartNotificationBanner();
     } catch (_) {
       uploadedCourses = JSON.parse(localStorage.getItem("gd_academy_uploaded_courses") || "[]");
     }
+  }
+
+  // إشعار ذكي علوي ينبّه المستخدمين بآخر فيديو تم رفعه وينقلهم إليه مباشرة عند الضغط
+  function renderSmartNotificationBanner() {
+    const wrap = $("gdSmartVideoAlertWrap");
+    if (!wrap || !uploadedCourses.length) return;
+
+    const latest = uploadedCourses[uploadedCourses.length - 1];
+    const dismissedId = localStorage.getItem("gd_dismissed_video_alert");
+    if (dismissedId === latest.id) {
+      wrap.innerHTML = "";
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div id="gdSmartVideoAlert" data-jump-to-video="${escapeHTML(latest.id)}">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">🔔</span>
+          <div>
+            <div style="font-size:11.5px;color:#fbbf24;font-weight:900;">محاضرة جديدة أُضيفت الآن في (${escapeHTML(latest.category || "الأكاديمية")})</div>
+            <div style="font-size:13.5px;font-weight:800;">${escapeHTML(latest.title)} — اضغط لفتح المحاضرة مباشرة ↗</div>
+          </div>
+        </div>
+        <button type="button" id="gdDismissVideoAlert" style="background:rgba(255,255,255,0.15);color:#fff;border:0;border-radius:8px;padding:4px 9px;cursor:pointer;">✕</button>
+      </div>
+    `;
+  }
+
+  /* =========================================================
+     3. حفظ واسترجاع تقدم المحاضرات المكتملة لكل مستخدم
+     ========================================================= */
+  async function loadUserCompletedLectures() {
+    if (!currentUser) {
+      completedLectures = [];
+      return;
+    }
+    const localKey = `gd_completed_lectures_${currentUser.uid}`;
+    completedLectures = JSON.parse(localStorage.getItem(localKey) || "[]");
+
+    const db = getDb();
+    if (!db) return;
+    try {
+      const snap = await db.collection("users")
+        .doc(currentUser.uid)
+        .collection("academy_completed_lectures")
+        .get();
+      if (!snap.empty) {
+        completedLectures = snap.docs.map(d => d.id);
+        localStorage.setItem(localKey, JSON.stringify(completedLectures));
+      }
+    } catch (_) {}
+  }
+
+  async function markLectureCompleted(lectureId) {
+    if (!currentUser || !lectureId) return;
+    if (!completedLectures.includes(lectureId)) {
+      completedLectures.push(lectureId);
+      localStorage.setItem(`gd_completed_lectures_${currentUser.uid}`, JSON.stringify(completedLectures));
+    }
+
+    const db = getDb();
+    if (db) {
+      try {
+        await db.collection("users")
+          .doc(currentUser.uid)
+          .collection("academy_completed_lectures")
+          .doc(lectureId)
+          .set({
+            lectureId,
+            completedAt: Date.now()
+          });
+      } catch (_) {}
+    }
+
+    // حساب نسبة التقدم في نفس التخصص وإظهار إشعار ذكي
+    const lecture = uploadedCourses.find(c => c.id === lectureId);
+    if (lecture) {
+      const trackLectures = uploadedCourses.filter(c => c.category === lecture.category);
+      const doneInTrack = trackLectures.filter(c => completedLectures.includes(c.id)).length;
+      const pct = trackLectures.length ? Math.round((doneInTrack / trackLectures.length) * 100) : 100;
+      notify(`🎉 أحسنت! أكملت المحاضرة، وتقدمك في (${lecture.category}) أصبح ${pct}% (${doneInTrack}/${trackLectures.length})`, "success");
+    }
+  }
+
+  // التحقق هل المحاضرة مفتوحة للمستخدم أم مقفولة لأن المحاضرة السابقة لم تكتمل بعد
+  function isLectureUnlocked(lectureItem) {
+    if (isAdminUser) return true;
+    const sameTrack = uploadedCourses.filter(c => c.category === lectureItem.category);
+    const idx = sameTrack.findIndex(c => c.id === lectureItem.id);
+    if (idx <= 0) return true; // المحاضرة الأولى دائماً مفتوحة للتصفح
+    const prevLecture = sameTrack[idx - 1];
+    return completedLectures.includes(prevLecture.id);
   }
 
   async function loadCommentsForCourse(courseId) {
@@ -563,45 +765,57 @@
     } catch (_) {}
   }
 
-  function buildVideoEmbedHTML(url) {
-    const clean = safeURL(url);
+  function buildVideoPlayerHTML(item) {
+    // قفل الفيديو تماماً عن أصحاب الفترة التجريبية (3 أيام) وغير المشتركين بالكود
+    if (!isCodeSubscriber && !isAdminUser) {
+      const msg = encodeURIComponent(`مرحبا، أريد الاشتراك بالكود في منصة GeoDev Studio Pro لفتح فيديوهات الأكاديمية (${item.title}).`);
+      return `
+        <div class="locked-video-wall">
+          <div style="font-size:34px;margin-bottom:8px;">🔒</div>
+          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:17px;">تشغيل الفيديوهات متاح للمشتركين بالكود فقط</h4>
+          <p style="margin:0 0 14px;font-size:13px;color:#cbd5e1;line-height:1.7;">
+            يمكنك تصفح تفاصيل الدورة والتعليقات بحرية، ولكن تشغيل المحاضرات ومشاهدة الشروحات التطبيقية حصري للمشتركين المفعّلين بكود المنصة (غير متاح للحسابات التجريبية).
+          </p>
+          <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${msg}" target="_blank" rel="noopener noreferrer" class="academy-btn gold">
+            💬 تواصل مع إدارة المنصة للحصول على كود التفعيل
+          </a>
+        </div>
+      `;
+    }
+
+    const clean = safeURL(item.videoUrl);
     if (!clean) return "";
+
     const ytMatch = clean.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
     if (ytMatch) {
-      return `<div class="course-video-frame"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
+      return `<div class="course-video-frame"><iframe id="academyYtIframe" src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
     }
-    return `<div class="course-video-frame"><video src="${clean}" controls preload="metadata"></video></div>`;
+    return `<div class="course-video-frame"><video id="academyHtml5Video" src="${clean}" controls preload="metadata"></video></div>`;
   }
 
   function renderAdminUploadCardHTML() {
     if (!isAdminUser) return "";
     return `
       <div class="academy-card admin-upload-card">
-        <h3><i data-lucide="upload-cloud"></i> رفع فيديو أو دورة جديدة (لوحة الأدمن)</h3>
-        <p class="academy-muted">ارفع فيديو تعليمي مباشرة من جهازك أو عبر رابط، وأرفق معه ملف PDF ورابط ملفات Google Drive أو MediaFire.</p>
+        <h3><i data-lucide="upload-cloud"></i> رفع محاضرة أو فيديو جديد في دوراتنا (لوحة الأدمن)</h3>
+        <p class="academy-muted">سيتم ترتيب المحاضرات تلقائياً داخل التخصص المختار، وإرسال إشعار ذكي لجميع المستخدمين فور النشر.</p>
 
         <form id="academyAdminCourseForm">
           <div class="admin-upload-grid">
             <div>
-              <label class="academy-muted">عنوان الفيديو أو الدورة *</label>
-              <input type="text" id="acUpTitle" class="academy-input" placeholder="مثال: شرح أتمتة AutoCAD بالذكاء الاصطناعي" required>
+              <label class="academy-muted">عنوان المحاضرة أو الفيديو *</label>
+              <input type="text" id="acUpTitle" class="academy-input" placeholder="مثال: المحاضرة 1 - أساسيات ربط AutoCAD بالـ AI" required>
             </div>
             <div>
-              <label class="academy-muted">التخصص *</label>
+              <label class="academy-muted">التخصص (من المسارات الستة) *</label>
               <select id="acUpCategory" class="academy-input">
-                <option value="AutoCAD + AI">AutoCAD + AI</option>
-                <option value="AutoCAD">AutoCAD</option>
-                <option value="Civil 3D">Civil 3D</option>
-                <option value="GIS">نظم المعلومات الجغرافية GIS</option>
-                <option value="Surveying">المساحة والرفع المساحي</option>
-                <option value="Remote Sensing">الاستشعار عن بعد</option>
-                <option value="Programming">برمجة GIS و Python</option>
+                ${ourTracks.map(t => `<option value="${t.id}">${t.title}</option>`).join("")}
               </select>
             </div>
           </div>
 
-          <label class="academy-muted">وصف وتفاصيل الدرس *</label>
-          <textarea id="acUpDesc" class="academy-textarea" placeholder="اكتب تفاصيل ومحتوى الفيديو والمحاور التي يشرحها..." required></textarea>
+          <label class="academy-muted">وصف وتفاصيل المحاضرة *</label>
+          <textarea id="acUpDesc" class="academy-textarea" placeholder="اكتب شرح المحاضرة والمحاور التي تغطيها..." required></textarea>
 
           <div class="admin-upload-grid">
             <div>
@@ -616,7 +830,7 @@
 
           <div class="admin-upload-grid">
             <div>
-              <label class="academy-muted">رفع ملف PDF مرفق مع الفيديو</label>
+              <label class="academy-muted">رفع ملف PDF مرفق</label>
               <input type="file" id="acUpPdfFile" class="academy-input" accept=".pdf,application/pdf">
             </div>
             <div>
@@ -626,7 +840,7 @@
           </div>
 
           <button type="submit" id="acUpSubmitBtn" class="academy-btn gold" style="width:100%;margin-top:6px;">
-            <i data-lucide="plus-circle"></i> نشر الدورة والفيديو في الأكاديمية الآن
+            <i data-lucide="plus-circle"></i> نشر المحاضرة وإرسال إشعار للمستخدمين
           </button>
         </form>
       </div>
@@ -638,43 +852,67 @@
     const item = uploadedCourses.find(c => c.id === selectedCourseDetailId);
     if (!item) return "";
 
+    const isCompleted = completedLectures.includes(item.id);
+    const canShowCompleteBtn = isCompleted || videoFinishedWatching || isAdminUser;
+
     return `
       <div class="academy-card course-detail-box" id="academyCourseDetailBox">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
           <button type="button" class="academy-btn secondary" id="academyCloseCourseDetail">
-            ✕ إغلاق تفاصيل الفيديو
+            ✕ إغلاق المحاضرة
           </button>
         </div>
 
         <h3 style="font-size:19px;margin-top:10px;">🎬 ${escapeHTML(item.title)}</h3>
         <p style="white-space:pre-line;">${escapeHTML(item.desc || "")}</p>
 
-        ${buildVideoEmbedHTML(item.videoUrl)}
+        ${buildVideoPlayerHTML(item)}
 
+        <!-- زر إكمال المحاضرة (يظهر فقط بعد انتهاء مشاهدة الفيديو بالكامل) -->
+        ${isCodeSubscriber || isAdminUser ? `
+          <div style="margin:12px 0;padding:12px;border-radius:14px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
+            ${isCompleted ? `
+              <div style="color:#4ade80;font-weight:900;font-size:14px;">
+                ✅ تم إكمال هذه المحاضرة بنجاح وفتح المحاضرة التالية!
+              </div>
+            ` : canShowCompleteBtn ? `
+              <button type="button" class="academy-btn success" style="width:100%;" data-complete-lecture="${escapeHTML(item.id)}">
+                ✓ إكمال المحاضرة وفتح المحاضرة التالية
+              </button>
+            ` : `
+              <div class="academy-muted" style="text-align:center;">
+                ⏳ شاهد المحاضرة كاملة حتى النهاية ليظهر لك زر <b>«إكمال المحاضرة»</b> وتُفتح المحاضرة التالية.
+              </div>
+            `}
+          </div>
+        ` : ""}
+
+        <!-- المرفقات (تُفتح للمشتركين بالكود فقط) -->
         <div class="course-attachments-bar">
-          ${safeURL(item.pdfUrl) ? `
+          ${safeURL(item.pdfUrl) && (isCodeSubscriber || isAdminUser) ? `
             <a href="${safeURL(item.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(item.pdfName || item.title + ".pdf")}" class="academy-btn pdf-btn">
               <i data-lucide="file-text"></i> تحميل ملف PDF المرفق
             </a>
           ` : ""}
-          ${safeURL(item.driveUrl) ? `
+          ${safeURL(item.driveUrl) && (isCodeSubscriber || isAdminUser) ? `
             <a href="${safeURL(item.driveUrl)}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn">
               <i data-lucide="folder-down"></i> تحميل الملفات (Google Drive / MediaFire)
             </a>
           ` : ""}
           ${isAdminUser ? `
             <button type="button" class="academy-btn danger" data-delete-uploaded-course="${escapeHTML(item.id)}">
-              <i data-lucide="trash-2"></i> حذف الدورة (أدمن)
+              <i data-lucide="trash-2"></i> حذف المحاضرة (أدمن)
             </button>
           ` : ""}
         </div>
 
+        <!-- قسم التعليقات أسفل تفاصيل الفيديو -->
         <div class="comments-section">
           <h4>💬 التعليقات والمناقشات (${courseComments.length})</h4>
 
           <div style="margin:10px 0 14px;">
-            <textarea id="academyNewCommentText" class="academy-textarea" style="min-height:72px;" placeholder="اكتب تعليقك أو سؤالك حول هذا الفيديو..."></textarea>
+            <textarea id="academyNewCommentText" class="academy-textarea" style="min-height:72px;" placeholder="اكتب تعليقك أو سؤالك حول هذه المحاضرة..."></textarea>
             <button type="button" class="academy-btn" id="academyPostCommentBtn" data-course-id="${escapeHTML(item.id)}">
               <i data-lucide="send"></i> نشر التعليق
             </button>
@@ -704,28 +942,136 @@
     `;
   }
 
-  function renderCourses(query = "") {
+  /* =========================================================
+     1. قسم "الكورسات والدورات" (دوراتنا الخاصة + البانر السداسي + القفل التتابعي)
+     ========================================================= */
+  function renderCourses() {
+    const content = $("academyContent");
+    if (!content) return;
+
+    const filteredLectures = uploadedCourses.filter(c =>
+      selectedTrackFilter === "all" || c.category === selectedTrackFilter
+    );
+
+    content.innerHTML = `
+      ${renderAdminUploadCardHTML()}
+
+      <!-- بانر التخصصات الستة داخل قسم كورساتنا -->
+      <div class="tracks-banner">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;font-size:16px;font-weight:900;">🎯 مسارات وتخصصات المنصة (6 تخصصات تطبيقية)</h3>
+          <span class="hub-card-badge">${uploadedCourses.length} محاضرة مرفوعة</span>
+        </div>
+        <p class="academy-muted" style="margin:6px 0 0;">اختر التخصص لعرض محاضراته مرتبة بالتسلسل (يجب إكمال كل محاضرة لفتح المحاضرة التي تليها):</p>
+
+        <div class="tracks-pills">
+          <button type="button" class="track-pill-btn ${selectedTrackFilter === "all" ? "active" : ""}" data-filter-track="all">
+            📚 جميع التخصصات (${uploadedCourses.length})
+          </button>
+          ${ourTracks.map(tr => {
+            const count = uploadedCourses.filter(c => c.category === tr.id).length;
+            return `
+              <button type="button" class="track-pill-btn ${selectedTrackFilter === tr.id ? "active" : ""}" data-filter-track="${tr.id}">
+                <i data-lucide="${tr.icon}" style="width:15px;height:15px;"></i>
+                ${tr.id} (${count})
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      ${renderSelectedCourseDetailHTML()}
+
+      <div class="academy-card">
+        <h3>🎬 محاضرات ودروس المنصة (${filteredLectures.length})</h3>
+        <p class="academy-muted">التصفح متاح للجميع، وتشغيل الفيديوهات متاح للمشتركين بالكود فقط.</p>
+
+        <div class="academy-grid">
+          ${filteredLectures.length ? filteredLectures.map((item, idx) => {
+            const unlocked = isLectureUnlocked(item);
+            const done = completedLectures.includes(item.id);
+            const trackList = uploadedCourses.filter(c => c.category === item.category);
+            const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
+
+            return `
+              <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                  <span class="hub-card-badge">${escapeHTML(item.category)} • محاضرة ${lectureNum}</span>
+                  ${done ? `<span style="color:#4ade80;font-size:12px;font-weight:900;">✅ مكتملة</span>` : unlocked ? `<span style="color:#38bdf8;font-size:12px;font-weight:800;">🔓 مفتوحة</span>` : `<span style="color:#f87171;font-size:12px;font-weight:800;">🔒 مقفولة</span>`}
+                </div>
+                <h3>${escapeHTML(item.title)}</h3>
+                <p>${escapeHTML(String(item.desc || "").slice(0, 115))}${String(item.desc || "").length > 115 ? "..." : ""}</p>
+
+                ${unlocked ? `
+                  <button type="button" class="academy-btn gold" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
+                    <i data-lucide="play-circle"></i> فتح المحاضرة والتفاصيل
+                  </button>
+                ` : `
+                  <button type="button" class="academy-btn secondary" style="width:100%;" disabled>
+                    🔒 أكمل المحاضرة رقم ${lectureNum - 1} أولاً لفتحها
+                  </button>
+                `}
+              </div>
+            `;
+          }).join("") : `
+            <div class="academy-empty">لا توجد محاضرات مرفوعة في هذا التخصص حالياً.</div>
+          `}
+        </div>
+      </div>
+    `;
+
+    bindCourseUploadForm();
+    setupVideoWatchCompletionWatcher();
+    refreshAcademyIcons(content);
+  }
+
+  // مراقبة انتهاء الفيديو لإظهار زر "إكمال المحاضرة"
+  function setupVideoWatchCompletionWatcher() {
+    clearTimeout(ytWatchTimer);
+    if (!selectedCourseDetailId || videoFinishedWatching) return;
+
+    const html5Vid = $("academyHtml5Video");
+    if (html5Vid) {
+      html5Vid.addEventListener("ended", () => {
+        videoFinishedWatching = true;
+        renderCourses();
+        notify("✔ أتممت مشاهدة المحاضرة! يمكنك الآن الضغط على زر «إكمال المحاضرة».", "success");
+      });
+      return;
+    }
+
+    // في حالة فيديو YouTube المدمج: يُفعّل زر الإكمال بعد 45 ثانية من فتح المحاضرة ومشاهدتها
+    const ytFrame = $("academyYtIframe");
+    if (ytFrame) {
+      ytWatchTimer = setTimeout(() => {
+        videoFinishedWatching = true;
+        if (activeTab === "courses" && selectedCourseDetailId) {
+          renderCourses();
+        }
+      }, 45000);
+    }
+  }
+
+  /* =========================================================
+     2. بطاقة "كورسات رسمية" (المكتبة العالمية المنفصلة)
+     ========================================================= */
+  function renderOfficialCourses(query = "") {
     const content = $("academyContent");
     if (!content) return;
 
     const catalog = window.GEOAcademyContent;
+    if (!catalog) {
+      content.innerHTML = `<div class="academy-empty">تعذر تحميل دليل الكورسات الرسمية.</div>`;
+      return;
+    }
+
     const search = String(query || "").trim().toLowerCase();
-
-    const filteredUploaded = uploadedCourses.filter(c =>
-      !search ||
-      String(c.title || "").toLowerCase().includes(search) ||
-      String(c.desc || "").toLowerCase().includes(search) ||
-      String(c.category || "").toLowerCase().includes(search)
-    );
-
-    const categories = catalog ? catalog.getAllCategories() : [];
-    const filtered = categories.filter(category =>
+    const categories = catalog.getAllCategories().filter(category =>
       category.name.toLowerCase().includes(search) ||
       category.topics.some(topic => topic.toLowerCase().includes(search))
     );
 
-    const realCourses = catalog ? catalog.getCourses() : [];
-    const filteredCourses = realCourses.filter(course =>
+    const realCourses = catalog.getCourses().filter(course =>
       !search ||
       course.title.toLowerCase().includes(search) ||
       course.provider.toLowerCase().includes(search) ||
@@ -733,84 +1079,46 @@
     );
 
     content.innerHTML = `
-      ${renderAdminUploadCardHTML()}
-      ${renderSelectedCourseDetailHTML()}
-
-      <div class="academy-card" style="margin-bottom:15px;">
-        <h3>🎬 الكورسات والفيديوهات المرفوعة في المنصة (${filteredUploaded.length})</h3>
-        <p class="academy-muted">اضغط على أي دورة لفتح الفيديو، تحميل ملفات PDF وروابط Drive / MediaFire، والمشاركة في التعليقات.</p>
-
-        <div class="academy-grid">
-          ${filteredUploaded.length ? filteredUploaded.map(item => `
-            <div class="academy-card">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                <span class="hub-card-badge">${escapeHTML(item.category || "دورة")}</span>
-                ${safeURL(item.pdfUrl) ? `<span class="academy-muted">📄 PDF</span>` : ""}
-              </div>
-              <h3>${escapeHTML(item.title)}</h3>
-              <p>${escapeHTML(String(item.desc || "").slice(0, 120))}${String(item.desc || "").length > 120 ? "..." : ""}</p>
-              <button type="button" class="academy-btn gold" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
-                <i data-lucide="play-circle"></i> مشاهدة التفاصيل والتعليقات
-              </button>
-            </div>
-          `).join("") : `
-            <div class="academy-empty">لم يتم رفع دورات فيديو خاصة بعد.</div>
-          `}
-        </div>
-      </div>
-
       <div class="academy-card">
-        <h3>🌐 مكتبة الكورسات العالمية ودليل التخصصات</h3>
-        <p>ابحث عن الدورات التعليمية في GIS والمساحة والاستشعار عن بعد والبرمجة والتصميم الهندسي.</p>
+        <h3>🌐 مكتبة الكورسات الرسمية العالمية</h3>
+        <p>روابط مباشرة للدورات التدريبية المعتمدة من الجهات الرسمية (Esri, Autodesk, NARSS, Spatial Thoughts).</p>
 
         <input
           id="academyCatalogSearch"
           class="academy-input"
-          placeholder="ابحث عن ArcGIS أو AutoCAD أو Python..."
+          placeholder="ابحث عن ArcGIS أو AutoCAD أو Civil 3D..."
           value="${escapeHTML(query)}"
           oninput="window.GEOAcademyUI.search(this.value)"
         >
-
-        <div class="academy-muted">${filtered.length} تخصص متاح في الدليل</div>
+        <div class="academy-muted">${realCourses.length} كورس رسمي متاح</div>
       </div>
 
-      <div class="academy-card" style="margin-top:15px">
-        <h3>🎓 الكورسات الفعلية</h3>
-        <p class="academy-muted">${filteredCourses.length} كورس متاح حاليًا في الفهرس</p>
-
-        <div class="academy-grid">
-          ${filteredCourses.length ? filteredCourses.map(course => `
-            <div class="academy-card">
-              <h3>${escapeHTML(course.title)}</h3>
-              <p>🏫 ${escapeHTML(course.provider)}</p>
-              <p class="academy-muted">
-                المستوى: ${escapeHTML(course.level)}
-                <br>اللغة: ${escapeHTML(course.language)}
-                <br>السعر: ${escapeHTML(course.price)}
-              </p>
-              <a class="academy-btn"
-                href="${safeURL(course.url)}"
-                target="_blank"
-                rel="noopener noreferrer">
-                فتح الكورس الأصلي ↗
-              </a>
-            </div>
-          `).join("") : `
-            <div class="academy-empty">لا توجد كورسات مطابقة للبحث.</div>
-          `}
-        </div>
+      <div class="academy-grid" style="margin-top:14px;">
+        ${realCourses.length ? realCourses.map(course => `
+          <div class="academy-card">
+            <h3>${escapeHTML(course.title)}</h3>
+            <p>🏫 ${escapeHTML(course.provider)}</p>
+            <p class="academy-muted">
+              المستوى: ${escapeHTML(course.level)}<br>
+              اللغة: ${escapeHTML(course.language)}<br>
+              السعر: ${escapeHTML(course.price)}
+            </p>
+            <a class="academy-btn" href="${safeURL(course.url)}" target="_blank" rel="noopener noreferrer" style="width:100%;">
+              فتح الكورس الأصلي ↗
+            </a>
+          </div>
+        `).join("") : `<div class="academy-empty">لا توجد كورسات رسمية مطابقة للبحث.</div>`}
       </div>
 
       <div class="academy-grid" style="margin-top:15px;">
-        ${filtered.length ? filtered.map(category => {
-          const sources = catalog ? catalog.getSources(category.id) : [];
+        ${categories.map(category => {
+          const sources = catalog.getSources(category.id);
           return `
             <div class="academy-card">
               <div class="academy-icon"><i data-lucide="book-open"></i></div>
               <h3>${escapeHTML(category.name)}</h3>
               <p class="academy-muted">${category.topics.length} موضوعًا تعليميًا</p>
-              <h4>الموضوعات</h4>
-              <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                 ${category.topics.map(topic => `
                   <a class="academy-btn secondary" style="font-size:11px" target="_blank" rel="noopener noreferrer"
                     href="${safeURL(catalog.searchUrl("youtube", topic))}">
@@ -818,75 +1126,36 @@
                   </a>
                 `).join("")}
               </div>
-              <hr style="border-color:var(--ln,#334155);margin:15px 0">
-              <h4>المصادر والمنصات</h4>
+              <h4>المصادر الرسمية</h4>
               ${sources.map(source => `
-                <div style="margin:9px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
+                <div style="margin:8px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
                   <b>${escapeHTML(source.name)}</b>
-                  <div class="academy-muted">${escapeHTML(source.platform)} • ${escapeHTML(source.language || "لغات متعددة")}${source.price === "free" ? " • مجاني" : ""}</div>
-                  <a href="${safeURL(source.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="margin-top:7px">زيارة المصدر ↗</a>
+                  <div class="academy-muted">${escapeHTML(source.platform)} • ${escapeHTML(source.language || "لغات متعددة")}</div>
+                  <a href="${safeURL(source.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="margin-top:6px">زيارة المصدر ↗</a>
                 </div>
               `).join("")}
-              <h4>ابحث في المنصات التعليمية</h4>
-              <div style="display:flex;flex-wrap:wrap;gap:6px">
-                ${["youtube", "coursera", "udemy", "edx"].map(platform => `
-                  <a class="academy-btn secondary" target="_blank" rel="noopener noreferrer"
-                    href="${safeURL(catalog.searchUrl(platform, category.name))}">
-                    ${platform === "youtube" ? "YouTube" : platform === "coursera" ? "Coursera" : platform === "udemy" ? "Udemy" : "edX"}
-                  </a>
-                `).join("")}
-              </div>
             </div>
           `;
-        }).join("") : `<div class="academy-empty">لا توجد تخصصات مطابقة للبحث.</div>`}
+        }).join("")}
       </div>
     `;
-
-    bindCourseUploadForm();
     refreshAcademyIcons(content);
   }
 
+  /* =========================================================
+     3. بطاقة الكتب والمراجع الهندسية
+     ========================================================= */
   function renderBooks() {
     const content = $("academyContent");
     if (!content) return;
 
     const referenceLibrary = [
-      {
-        title: "دليل نظم المعلومات الجغرافية المتكامل (ArcGIS Pro)",
-        category: "GIS",
-        desc: "مرجع شامل لإنشاء قواعد البيانات الجغرافية، التحليل المكاني، وإخراج الخرائط الاحترافية.",
-        url: "https://pro.arcgis.com/en/pro-app/latest/get-started/get-started.htm"
-      },
-      {
-        title: "المرجع الرسمي لبرنامج QGIS التدريبي",
-        category: "GIS مفتوح المصدر",
-        desc: "دليل عملي خطوة بخطوة للتعامل مع الطبقات المتجهة والشبكية والتحليل الهيدرولوجي.",
-        url: "https://docs.qgis.org/latest/en/docs/training_manual/"
-      },
-      {
-        title: "أساسيات المساحة المستوية والجيوديسية والتوقيع",
-        category: "المساحة",
-        desc: "مرجع حسابات الترافيرس، الميزانية، أرصاد GNSS، ومعادلات التحويل بين المراجع.",
-        url: "https://www.esa.gov.eg/"
-      },
-      {
-        title: "دليل الاستشعار عن بعد ومعالجة المرئيات الفضائية",
-        category: "Remote Sensing",
-        desc: "شرح التصنيف المراقب وغير المراقب، المؤشرات الطيفية NDVI/NDWI، وتحليل بيانات Sentinel.",
-        url: "https://training.narss.sci.eg/"
-      },
-      {
-        title: "مرجع أوامر AutoCAD و AutoLISP للمكاتب الفنية",
-        category: "CAD & Automation",
-        desc: "دليل اختصارات الأوتوكاد وأساسيات كتابة الليسبات لأتمتة اللوحات المساحية.",
-        url: "https://www.autodesk.com/learn"
-      },
-      {
-        title: "دليل بايثون للتحليل المكاني (GeoPandas & ArcPy)",
-        category: "برمجة GIS",
-        desc: "مرجع أتمتة المعالجة المكانية وتحليل البيانات الجغرافية بلغة Python.",
-        url: "https://courses.spatialthoughts.com/"
-      }
+      { title: "دليل نظم المعلومات الجغرافية المتكامل (ArcGIS Pro)", category: "GIS", desc: "مرجع شامل لإنشاء قواعد البيانات الجغرافية، التحليل المكاني، وإخراج الخرائط الاحترافية.", url: "https://pro.arcgis.com/en/pro-app/latest/get-started/get-started.htm" },
+      { title: "المرجع الرسمي لبرنامج QGIS التدريبي", category: "GIS مفتوح المصدر", desc: "دليل عملي خطوة بخطوة للتعامل مع الطبقات المتجهة والشبكية والتحليل الهيدرولوجي.", url: "https://docs.qgis.org/latest/en/docs/training_manual/" },
+      { title: "أساسيات المساحة المستوية والجيوديسية والتوقيع", category: "المساحة", desc: "مرجع حسابات الترافيرس، الميزانية، أرصاد GNSS، ومعادلات التحويل بين المراجع.", url: "https://www.esa.gov.eg/" },
+      { title: "دليل الاستشعار عن بعد ومعالجة المرئيات الفضائية", category: "Remote Sensing", desc: "شرح التصنيف المراقب وغير المراقب، المؤشرات الطيفية NDVI/NDWI، وتحليل بيانات Sentinel.", url: "https://training.narss.sci.eg/" },
+      { title: "مرجع أوامر AutoCAD و AutoLISP للمكاتب الفنية", category: "CAD & Automation", desc: "دليل اختصارات الأوتوكاد وأساسيات كتابة الليسبات لأتمتة اللوحات المساحية.", url: "https://www.autodesk.com/learn" },
+      { title: "دليل بايثون للتحليل المكاني (GeoPandas & ArcPy)", category: "برمجة GIS", desc: "مرجع أتمتة المعالجة المكانية وتحليل البيانات الجغرافية بلغة Python.", url: "https://courses.spatialthoughts.com/" }
     ];
 
     content.innerHTML = `
@@ -900,9 +1169,72 @@
             <span class="hub-card-badge">${escapeHTML(book.category)}</span>
             <h3>📖 ${escapeHTML(book.title)}</h3>
             <p>${escapeHTML(book.desc)}</p>
-            <a href="${safeURL(book.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;">
-              فتح المرجع الرسمي ↗
-            </a>
+            <a href="${safeURL(book.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;">فتح المرجع الرسمي ↗</a>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    refreshAcademyIcons(content);
+  }
+
+  /* =========================================================
+     4. قسم "تقدمي التعليمي" المرتبط تلقائياً بالدورات والمحاضرات المرفوعة
+     ========================================================= */
+  function renderProgress() {
+    const content = $("academyContent");
+    if (!content) return;
+
+    // تجميع التخصصات التي تحتوي على محاضرات مرفوعة + المسارات الستة الأساسية
+    const dynamicTracks = ourTracks.map(track => {
+      const trackLectures = uploadedCourses.filter(c => c.category === track.id);
+      const total = trackLectures.length;
+      const done = trackLectures.filter(c => completedLectures.includes(c.id)).length;
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      return {
+        ...track,
+        total,
+        done,
+        percent
+      };
+    });
+
+    const totalAllLectures = uploadedCourses.length;
+    const totalAllCompleted = uploadedCourses.filter(c => completedLectures.includes(c.id)).length;
+    const overallPct = totalAllLectures > 0 ? Math.round((totalAllCompleted / totalAllLectures) * 100) : 0;
+
+    content.innerHTML = `
+      <div class="academy-card" style="margin-bottom:15px;border-color:#e09f24;">
+        <h3>📊 تقدمك التعليمي العام في المنصة (${overallPct}%)</h3>
+        <p>يتم تحديث بطاقات التقدم تلقائياً مع كل محاضرة جديدة تُرفع في الأكاديمية أو تُكمل مشاهدتها.</p>
+        <div class="academy-progress"><span style="width:${overallPct}%"></span></div>
+        <div class="academy-muted">أتممت <b>${totalAllCompleted}</b> من أصل <b>${totalAllLectures}</b> محاضرة مرفوعة على المنصة.</div>
+      </div>
+
+      <div class="academy-grid">
+        ${dynamicTracks.map(tr => `
+          <div class="academy-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span class="hub-card-badge">${tr.done} / ${tr.total} محاضرة</span>
+              <strong style="color:#e09f24;font-size:15px;">${tr.percent}%</strong>
+            </div>
+            <h3>
+              <i data-lucide="${tr.icon}"></i>
+              ${escapeHTML(tr.title)}
+            </h3>
+            <div class="academy-progress"><span style="width:${tr.percent}%"></span></div>
+            <p class="academy-muted">
+              ${tr.total === 0
+                ? "لم تُرفع محاضرات في هذا الكورس بعد."
+                : tr.percent === 100
+                ? "🎉 أتممت جميع محاضرات هذا الكورس بنجاح!"
+                : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس بالكامل.`}
+            </p>
+            ${tr.total > 0 ? `
+              <button type="button" class="academy-btn secondary" style="width:100%;" data-jump-track="${escapeHTML(tr.id)}">
+                الذهاب لمحاضرات الكورس ↗
+              </button>
+            ` : ""}
           </div>
         `).join("")}
       </div>
@@ -962,34 +1294,6 @@
       </div>
     `;
     $("academySaveMemory").addEventListener("click", saveMemory);
-  }
-
-  function renderProgress() {
-    const content = $("academyContent");
-    content.innerHTML = `
-      <div class="academy-card" style="margin-bottom:14px;">
-        <h3>📊 تقدمك التعليمي</h3>
-        <p>هنا ستجد المسارات التي سجلت إتمامها.</p>
-      </div>
-      <div class="academy-grid">
-        ${courses.map(course => {
-          const item = progress.find(p => p.id === course.id);
-          const percent = Math.max(0, Math.min(100, Number(item?.progress ?? 0)));
-          return `
-            <div class="academy-card">
-              <h3><i data-lucide="${course.icon}"></i> ${escapeHTML(course.title)}</h3>
-              <div class="academy-progress"><span style="width:${percent}%"></span></div>
-              <p>${percent}% مكتمل</p>
-              <div class="academy-muted">${percent >= 100 ? "تم تسجيل إتمام هذا المسار." : "لم يتم تسجيل إتمام هذا المسار بعد."}</div>
-              <button type="button" class="academy-btn secondary" style="margin-top:8px;" data-course="${escapeHTML(course.id)}">
-                تسجيل إتمام المسار ✓
-              </button>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    `;
-    refreshAcademyIcons(content);
   }
 
   function renderTeacher() {
@@ -1065,6 +1369,7 @@
     }
 
     if (activeTab === "courses") renderCourses();
+    if (activeTab === "official-courses") renderOfficialCourses();
     if (activeTab === "smart-search") renderSmartSearch();
     if (activeTab === "books") renderBooks();
     if (activeTab === "teacher") renderTeacher();
@@ -1078,33 +1383,31 @@
   async function refreshData() {
     if (!currentUser) return;
     const api = window.GEOAcademy;
-    if (!api || !api.ready) {
-      await loadUploadedCourses();
-      setStatus("تم تحميل الدورات المرفوعة في الأكاديمية.");
-      renderTab();
-      return;
+
+    await Promise.all([
+      loadUploadedCourses(),
+      loadUserCompletedLectures()
+    ]);
+
+    if (api && api.ready) {
+      try {
+        await api.getProfile() || await api.createProfile();
+        const [n, m] = await Promise.all([
+          api.getNotes(),
+          api.getMemory(100)
+        ]);
+        notes = Array.isArray(n) ? n : [];
+        memories = Array.isArray(m) ? m : [];
+      } catch (_) {}
     }
 
-    try {
-      await api.getProfile() || await api.createProfile();
-      const results = await Promise.all([
-        api.getNotes(),
-        api.getMemory(100),
-        api.getProgress(),
-        loadUploadedCourses()
-      ]);
-      notes = Array.isArray(results[0]) ? results[0] : [];
-      memories = Array.isArray(results[1]) ? results[1] : [];
-      progress = Array.isArray(results[2]) ? results[2] : [];
-      setStatus("تم الاتصال بقاعدة بيانات الأكاديمية.");
-      renderTab();
-    } catch (error) {
-      console.error("Academy loading error:", error);
-      setStatus("حدث خطأ أثناء تحميل بيانات الأكاديمية.");
-      renderTab();
-    }
+    setStatus("تم الاتصال بقاعدة بيانات الأكاديمية.");
+    renderTab();
   }
 
+  /* =========================================================
+     رفع المحاضرة للأدمن + إرسال إشعار ذكي للمستخدمين
+     ========================================================= */
   function bindCourseUploadForm() {
     const form = $("academyAdminCourseForm");
     if (!form || form.dataset.bound) return;
@@ -1124,36 +1427,32 @@
       const driveUrl = $("acUpDriveUrl")?.value.trim();
 
       if (!title || !desc) {
-        notify("اكتب عنوان الدورة ووصفها أولاً.", "error");
+        notify("اكتب عنوان المحاضرة ووصفها أولاً.", "error");
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = "⏳ جاري رفع ونشر الدورة...";
+      btn.textContent = "⏳ جاري النشر وإرسال الإشعار للمستخدمين...";
 
       try {
+        const hasBucket = !!(window.firebase && firebase.app && firebase.app().options && firebase.app().options.storageBucket);
+
         if (videoFile) {
-          if (videoFile.size > 500 * 1024 * 1024) {
-            throw new Error("حجم الفيديو يتجاوز 500 ميجابايت.");
-          }
-          if (window.firebase && typeof firebase.storage === "function") {
-            const ref = firebase.storage().ref(`academy_courses_videos/${Date.now()}_${videoFile.name}`);
-            await ref.put(videoFile);
-            videoUrl = await ref.getDownloadURL();
-          } else {
-            videoUrl = URL.createObjectURL(videoFile);
-          }
+          if (videoFile.size > 500 * 1024 * 1024) throw new Error("حجم الفيديو يتجاوز 500 ميجابايت.");
+          if (!hasBucket) throw new Error("رفع الملفات المباشر غير مفعّل؛ ضع رابط الفيديو في خانة الرابط واترك اختيار الملف فارغاً.");
+          const ref = firebase.storage().ref(`academy_courses_videos/${Date.now()}_${videoFile.name}`);
+          await ref.put(videoFile);
+          videoUrl = await ref.getDownloadURL();
         }
 
         let pdfUrl = "";
         let pdfName = "";
         if (pdfFile) {
+          if (!hasBucket) throw new Error("رفع PDF المباشر غير مفعّل؛ ارفع الملف على Google Drive وضع رابطه في خانة الروابط.");
           pdfName = pdfFile.name;
-          if (window.firebase && typeof firebase.storage === "function") {
-            const pdfRef = firebase.storage().ref(`academy_courses_pdfs/${Date.now()}_${pdfFile.name}`);
-            await pdfRef.put(pdfFile);
-            pdfUrl = await pdfRef.getDownloadURL();
-          }
+          const pdfRef = firebase.storage().ref(`academy_courses_pdfs/${Date.now()}_${pdfFile.name}`);
+          await pdfRef.put(pdfFile);
+          pdfUrl = await pdfRef.getDownloadURL();
         }
 
         const courseDoc = {
@@ -1171,19 +1470,20 @@
         const db = getDb();
         if (db) {
           const added = await db.collection("geodev_academy_courses").add(courseDoc);
-          uploadedCourses.unshift({ id: added.id, ...courseDoc });
+          uploadedCourses.push({ id: added.id, ...courseDoc });
         } else {
-          uploadedCourses.unshift({ id: "local_" + Date.now(), ...courseDoc });
+          uploadedCourses.push({ id: "local_" + Date.now(), ...courseDoc });
         }
 
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
-        notify("تم نشر الدورة والفيديو والملفات بنجاح!", "success");
+        renderSmartNotificationBanner();
+        notify("✔ تم نشر المحاضرة وإرسال إشعار ذكي لجميع المستخدمين!", "success");
         renderCourses();
       } catch (err) {
         notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="plus-circle"></i> نشر الدورة والفيديو في الأكاديمية الآن`;
+        btn.innerHTML = `<i data-lucide="plus-circle"></i> نشر المحاضرة وإرسال إشعار للمستخدمين`;
         refreshAcademyIcons(form);
       }
     });
@@ -1212,17 +1512,6 @@
       await refreshData();
     } catch (error) {
       notify("لم يتم حفظ المعلومة: " + (error.message || ""), "error");
-    }
-  }
-
-  async function completeCourse(courseId) {
-    if (!courses.find(item => item.id === courseId)) return;
-    try {
-      await window.GEOAcademy.saveProgress(courseId, 100);
-      notify("تم تسجيل إتمام المسار بنجاح.", "success");
-      await refreshData();
-    } catch (error) {
-      notify("تعذر حفظ التقدم: " + (error.message || ""), "error");
     }
   }
 
@@ -1263,10 +1552,6 @@
       { match: /(^|\.)udemy\.com$/, name: "Udemy", emoji: "🟣" },
       { match: /(^|\.)autodesk\.com$/, name: "Autodesk", emoji: "🅰️" },
       { match: /(^|\.)edx\.org$/, name: "edX", emoji: "🎓" },
-      { match: /(^|\.)linkedin\.com$/, name: "LinkedIn Learning", emoji: "in" },
-      { match: /(^|\.)m3aarf\.com$/, name: "معارف", emoji: "📚" },
-      { match: /(^|\.)teracourses\.com$/, name: "Teracourses", emoji: "📖" },
-      { match: /(^|\.)skillshare\.com$/, name: "Skillshare", emoji: "✏️" },
       { match: /(^|\.)esri\.com$/, name: "Esri", emoji: "🌍" }
     ];
     const found = platforms.find(p => p.match.test(host));
@@ -1330,6 +1615,37 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
+      // 1. الضغط على الإشعار الذكي العلوي للفيديو الجديد
+      if (event.target.closest("#gdDismissVideoAlert")) {
+        event.stopPropagation();
+        if (uploadedCourses.length) {
+          localStorage.setItem("gd_dismissed_video_alert", uploadedCourses[uploadedCourses.length - 1].id);
+        }
+        const wrap = $("gdSmartVideoAlertWrap");
+        if (wrap) wrap.innerHTML = "";
+        return;
+      }
+
+      const jumpAlert = event.target.closest("[data-jump-to-video]");
+      if (jumpAlert) {
+        const targetId = jumpAlert.dataset.jumpToVideo;
+        const targetLecture = uploadedCourses.find(c => c.id === targetId);
+        if (targetLecture) {
+          activeTab = "courses";
+          selectedTrackFilter = targetLecture.category || "all";
+          if (isLectureUnlocked(targetLecture)) {
+            selectedCourseDetailId = targetLecture.id;
+            videoFinishedWatching = false;
+            await loadCommentsForCourse(selectedCourseDetailId);
+          } else {
+            notify("🔒 هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
+          }
+          renderTab();
+        }
+        return;
+      }
+
+      // 2. التنقل بين البطاقات الثماني للأكاديمية
       const tab = event.target.closest("[data-academy-tab]");
       if (tab) {
         activeTab = tab.dataset.academyTab;
@@ -1339,22 +1655,60 @@
         return;
       }
 
+      // 3. فلترة التخصصات الستة في البانر
+      const trackBtn = event.target.closest("[data-filter-track]");
+      if (trackBtn) {
+        selectedTrackFilter = trackBtn.dataset.filterTrack;
+        selectedCourseDetailId = null;
+        renderCourses();
+        return;
+      }
+
+      // 4. الانتقال من بطاقة "تقدمي التعليمي" إلى محاضرات التخصص
+      const jumpTrackBtn = event.target.closest("[data-jump-track]");
+      if (jumpTrackBtn) {
+        activeTab = "courses";
+        selectedTrackFilter = jumpTrackBtn.dataset.jumpTrack;
+        selectedCourseDetailId = null;
+        renderTab();
+        return;
+      }
+
+      // 5. فتح تفاصيل محاضرة مرفوعة
       const openCourseBtn = event.target.closest("[data-open-uploaded-course]");
       if (openCourseBtn) {
-        selectedCourseDetailId = openCourseBtn.dataset.openUploadedCourse;
+        const lectureId = openCourseBtn.dataset.openUploadedCourse;
+        const lectureObj = uploadedCourses.find(c => c.id === lectureId);
+        if (!lectureObj || !isLectureUnlocked(lectureObj)) {
+          notify("🔒 يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
+          return;
+        }
+        selectedCourseDetailId = lectureId;
+        videoFinishedWatching = false;
         await loadCommentsForCourse(selectedCourseDetailId);
-        renderCourses($("academyCatalogSearch")?.value || "");
+        renderCourses();
         const detailBox = $("academyCourseDetailBox");
         if (detailBox) detailBox.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
 
-      if (event.target.closest("#academyCloseCourseDetail")) {
-        selectedCourseDetailId = null;
-        renderCourses($("academyCatalogSearch")?.value || "");
+      // 6. إكمال المحاضرة وفتح التالية
+      const completeLecBtn = event.target.closest("[data-complete-lecture]");
+      if (completeLecBtn) {
+        const lecId = completeLecBtn.dataset.completeLecture;
+        await markLectureCompleted(lecId);
+        renderCourses();
         return;
       }
 
+      if (event.target.closest("#academyCloseCourseDetail")) {
+        selectedCourseDetailId = null;
+        clearTimeout(ytWatchTimer);
+        renderCourses();
+        return;
+      }
+
+      // 7. التعليقات
       const postCommentBtn = event.target.closest("#academyPostCommentBtn");
       if (postCommentBtn) {
         const courseId = postCommentBtn.dataset.courseId;
@@ -1377,7 +1731,7 @@
           }
           await loadCommentsForCourse(courseId);
           notify("تم نشر تعليقك بنجاح!", "success");
-          renderCourses($("academyCatalogSearch")?.value || "");
+          renderCourses();
         } catch (err) {
           notify("تعذر نشر التعليق: " + (err.message || ""), "error");
         } finally {
@@ -1396,14 +1750,14 @@
           await db.collection("geodev_academy_courses").doc(courseId).collection("comments").doc(commentId).delete();
           await loadCommentsForCourse(courseId);
           notify("تم حذف التعليق.", "success");
-          renderCourses($("academyCatalogSearch")?.value || "");
+          renderCourses();
         }
         return;
       }
 
       const delCourseBtn = event.target.closest("[data-delete-uploaded-course]");
       if (delCourseBtn && isAdminUser) {
-        if (!confirm("هل تريد حذف هذه الدورة نهائياً من الأكاديمية؟")) return;
+        if (!confirm("هل تريد حذف هذه المحاضرة نهائياً؟")) return;
         const courseId = delCourseBtn.dataset.deleteUploadedCourse;
         const db = getDb();
         if (db) {
@@ -1412,11 +1766,12 @@
         uploadedCourses = uploadedCourses.filter(c => c.id !== courseId);
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
         if (selectedCourseDetailId === courseId) selectedCourseDetailId = null;
-        notify("تم حذف الدورة بنجاح.", "success");
+        notify("تم حذف المحاضرة بنجاح.", "success");
         renderCourses();
         return;
       }
 
+      // 8. الباحث الذكي
       const smartBtn = event.target.closest("#academySmartSearchBtn");
       if (smartBtn) {
         const query = $("academySmartQuery")?.value.trim();
@@ -1441,6 +1796,7 @@
         return;
       }
 
+      // 9. المدرس الذكي
       const teacherBtn = event.target.closest("#academyTeacherSend");
       if (teacherBtn) {
         const questionInput = $("academyTeacherQuestion");
@@ -1512,9 +1868,6 @@
         return;
       }
 
-      const course = event.target.closest("[data-course]");
-      if (course) return completeCourse(course.dataset.course);
-
       const note = event.target.closest("[data-delete-note]");
       if (note) return deleteNote(note.dataset.deleteNote);
 
@@ -1531,18 +1884,24 @@
 
         firebase.auth().onAuthStateChanged(async user => {
           currentUser = user || null;
-          isAdminUser = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+          await checkCodeSubscriptionStatus(currentUser);
 
           if (!user) {
             notes = [];
             memories = [];
-            progress = [];
+            completedLectures = [];
             setStatus("سجل الدخول لاستخدام الأكاديمية.");
             renderTab();
             return;
           }
 
-          setStatus("مرحبًا بك في الأكاديمية. جاري تحميل بياناتك...");
+          setStatus(
+            isAdminUser
+              ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات مفعّلة."
+              : isCodeSubscriber
+              ? "مرحباً بك (اشتراك PRO مفعّل بالكود) — جميع المحاضرات متاحة لك."
+              : "مرحباً بك — تصفح تفاصيل الدورات متاح لك، وتشغيل الفيديوهات متاح للمشتركين بالكود فقط."
+          );
           await refreshData();
         });
         return true;
@@ -1588,7 +1947,7 @@
     search(query) {
       const input = $("academyCatalogSearch");
       const position = input?.selectionStart ?? String(query).length;
-      renderCourses(query);
+      renderOfficialCourses(query);
       const nextInput = $("academyCatalogSearch");
       if (nextInput) {
         nextInput.focus();
