@@ -492,6 +492,15 @@
         background: #26384d; color: white; padding: 12px 18px; border-radius: 12px;
         opacity: 0; pointer-events: none; transition: .2s; max-width: 88%; text-align: center;
       }
+            /* إخفاء أي حقن خارجي قديم داخل تبويب الكورسات والدورات الخاصة بالمنصة */
+      #s-academy[data-current-tab="courses"] #gdAcademyAiBridgeBox,
+      #s-academy[data-current-tab="courses"] #gdDawodCoursesBox,
+      #s-academy[data-current-tab="courses"] .dawod-courses-section,
+      #s-academy[data-current-tab="courses"] [id*="dawod"],
+      #s-academy[data-current-tab="courses"] [id*="ProPlus"] {
+        display: none !important;
+      }
+
       #academyToast.show { opacity: 1; transform: translate(50%, 0); }
       #academyToast[data-type="error"] { background: #9b3434; }
       #academyToast[data-type="success"] { background: #176b50; }
@@ -1553,6 +1562,9 @@
   }
 
   function renderTab() {
+         const sec = $("s-academy");
+    if (sec) sec.dataset.currentTab = activeTab;
+
     const content = $("academyContent");
     if (!content) return;
 
