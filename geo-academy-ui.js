@@ -1,8 +1,9 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الكاملة والنهائية (V9)
-   - الكورسات تفتح بكود الكورسات الخاص (CRS-XXXX-XXXX) فقط (منفصل عن كود PRO)
-   - رسالة مخصصة لمستخدمي البرو أعلى الفيديو للتواصل مع الأدمن + خانة تفعيل الكود فوراً
-   - 8 بطاقات رئيسية + بانر التخصصات الستة + المحاضرون + القفل التتابعي + التعليقات
+   GEO Academy UI - النسخة الرسمية المتكاملة (V11)
+   - استبدال جميع الإيموجي العادية بأيقونات Lucide SVG الهندسية الرسمية
+   - حركات انتقال (Motions) أكاديمية هادئة واحترافية
+   - الكورسات تفتح بكود الكورسات الخاص (CRS-XXXX-XXXX) فقط
+   - صلاحيات منسق الكورسات + تعديل المحاضرات + التقييم (أعجبني / لم يعجبني)
    ============================================================================ */
 (function () {
   "use strict";
@@ -84,7 +85,7 @@
       id: "inst_ahmed_samir",
       name: "المهندس أحمد سمير",
       role: "مهندس مساحة وخرائط ونظم معلومات جغرافية (GIS) ومطور حلول GeoAI",
-      age: "21 سنة",
+      age: "22 سنة",
       phone: "01015912371",
       teachingSince: "2024",
       specialties: "AutoCAD + AI، نظم المعلومات الجغرافية GIS، المساحة والرفع المساحي، أتمتة الليسبات والبرمجة الهندسية.",
@@ -94,19 +95,19 @@
       id: "inst_amr_ashraf",
       name: "المهندس عمرو أشرف",
       role: "مهندس مساحة وبنية تحتية ومكتب فني",
-      age: "21 سنة",
-      phone: "+20 12 76342395",
-      teachingSince: "2024",
-            specialties: "AutoCAD + AI، نظم المعلومات الجغرافية GIS،المساحة والرفع المساحي    المساحة الهندسية، تصميم الطرق وحساب كميات الحفر .",
-     
+      age: "24 سنة",
+      phone: "",
+      teachingSince: "2023",
+      specialties: "Civil 3D، المساحة الهندسية، تصميم الطرق وحساب كميات الحفر والردم.",
       bio: "محاضر متخصص في أعمال المكتب الفني المساحي وتصميم الطرق والأسطح الطبوغرافية باستخدام Civil 3D."
     }
   ];
 
   let currentUser = null;
   let isAdminUser = false;
-  let isProSubscriber = false;     // مشترك في باقة PRO العادية
-  let hasCoursesAccess = false;    // مفعّل له كود الكورسات الخاص (CRS-...)
+  let isCourseManagerUser = false;
+  let isProSubscriber = false;
+  let hasCoursesAccess = false;
   let notes = [];
   let memories = [];
   let completedLectures = [];
@@ -117,6 +118,7 @@
   let selectedTrackFilter = "all";
   let selectedInstructorFilter = "all";
   let selectedCourseDetailId = null;
+  let isEditingCourseMode = false;
   let videoFinishedWatching = false;
   let ytWatchTimer = null;
   let courseComments = [];
@@ -125,12 +127,20 @@
 
   const $ = id => document.getElementById(id);
 
+  function canManageCourses() {
+    return Boolean(isAdminUser || isCourseManagerUser);
+  }
+
   function refreshAcademyIcons(root = document) {
     try {
       if (window.lucide && typeof window.lucide.createIcons === "function") {
-        window.lucide.createIcons({ root, attrs: { "stroke-width": 1.8 } });
+        window.lucide.createIcons({ root, attrs: { "stroke-width": 1.85 } });
       }
     } catch (_) {}
+  }
+
+  function ico(name, size = 16) {
+    return `<i data-lucide="${name}" style="width:${size}px;height:${size}px;flex-shrink:0;vertical-align:middle;"></i>`;
   }
 
   function escapeHTML(value) {
@@ -172,42 +182,57 @@
     const style = document.createElement("style");
     style.id = "academyStyles";
     style.textContent = `
+      @keyframes gdFormalFadeSlide {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       #s-academy {
         padding: 16px;
         direction: rtl;
         color: var(--tx, #e8edf7);
       }
+
+      /* إخفاء أي حقن خارجي قديم داخل تبويب الكورسات والدورات الخاصة بالمنصة */
+      #s-academy[data-current-tab="courses"] #gdAcademyAiBridgeBox,
+      #s-academy[data-current-tab="courses"] #gdDawodCoursesBox,
+      #s-academy[data-current-tab="courses"] .dawod-courses-section,
+      #s-academy[data-current-tab="courses"] [id*="dawod"],
+      #s-academy[data-current-tab="courses"] [id*="ProPlus"] {
+        display: none !important;
+      }
+
       #s-academy .academy-header,
       #s-academy .teacher-header {
         position: relative;
         overflow: hidden;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155));
-        border-radius: 20px;
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 32%, var(--ln, #334155));
+        border-radius: 18px;
         background:
-          radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bl, #38bdf8) 20%, transparent), transparent 45%),
-          linear-gradient(145deg, var(--cd, #182334), color-mix(in srgb, var(--cd, #182334) 82%, var(--bl, #38bdf8)));
-        box-shadow: 0 12px 35px rgba(0,0,0,.12);
+          radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bl, #38bdf8) 16%, transparent), transparent 45%),
+          linear-gradient(145deg, var(--cd, #182334), color-mix(in srgb, var(--cd, #182334) 86%, var(--bl, #38bdf8)));
+        box-shadow: 0 10px 28px rgba(0,0,0,.12);
       }
       #s-academy .academy-header h2 {
         margin: 0 0 8px;
-        font-size: 22px;
+        font-size: 21px;
         font-weight: 900;
         display: flex;
         align-items: center;
         gap: 10px;
         color: var(--tx, #f8fafc);
       }
-      #s-academy .academy-header h2 svg { width: 27px; height: 27px; color: var(--bl, #38bdf8); flex-shrink: 0; }
+      #s-academy .academy-header h2 svg { width: 25px; height: 25px; color: var(--bl, #38bdf8); flex-shrink: 0; }
       #s-academy .academy-header p { margin: 0; color: var(--mt, #94a3b8); line-height: 1.85; }
 
       #gdSmartVideoAlert {
         background: linear-gradient(90deg, #0f172a, #1e293b);
         color: #f8fafc;
-        border: 2px solid #e09f24;
+        border: 1.5px solid #e09f24;
         border-radius: 14px;
-        padding: 11px 14px;
+        padding: 12px 15px;
         margin-bottom: 14px;
         display: flex;
         align-items: center;
@@ -215,7 +240,8 @@
         flex-wrap: wrap;
         gap: 10px;
         cursor: pointer;
-        box-shadow: 0 8px 22px rgba(224, 159, 36, 0.25);
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+        animation: gdFormalFadeSlide 0.35s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       #s-academy .academy-hub-grid {
@@ -228,32 +254,37 @@
         position: relative;
         text-align: right;
         cursor: pointer;
-        background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 95%, var(--bl, #38bdf8)), var(--cd, #182334));
+        background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 96%, var(--bl, #38bdf8)), var(--cd, #182334));
         border: 1.5px solid var(--ln, #334155);
-        border-radius: 18px;
+        border-radius: 16px;
         padding: 14px;
         color: inherit;
         font-family: inherit;
         display: flex;
         flex-direction: column;
         gap: 7px;
-        transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+        transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.25s ease;
       }
-      #s-academy .academy-hub-card:hover { transform: translateY(-2px); border-color: var(--bl, #38bdf8); }
+      #s-academy .academy-hub-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--bl, #38bdf8);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+      }
       #s-academy .academy-hub-card.active {
         border: 2px solid #e09f24;
-        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
-        box-shadow: 0 10px 26px rgba(224, 159, 36, 0.18);
+        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 12%, var(--cd, #182334)), var(--cd, #182334));
+        box-shadow: 0 8px 22px rgba(224, 159, 36, 0.16);
       }
       #s-academy .hub-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
       #s-academy .hub-card-badge {
-        font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 99px;
-        background: color-mix(in srgb, var(--bl, #38bdf8) 15%, var(--cd, #182334));
+        font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px;
+        background: color-mix(in srgb, var(--bl, #38bdf8) 14%, var(--cd, #182334));
         color: var(--bl, #38bdf8);
-        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 30%, var(--ln, #334155));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 28%, var(--ln, #334155));
+        display: inline-flex; align-items: center; gap: 5px;
       }
       #s-academy .academy-hub-card.active .hub-card-badge { background: #e09f24; color: #0f172a; border-color: #e09f24; }
-      #s-academy .hub-card-title { margin: 0; font-size: 15.5px; font-weight: 900; color: var(--tx, #f8fafc); }
+      #s-academy .hub-card-title { margin: 0; font-size: 15px; font-weight: 900; color: var(--tx, #f8fafc); }
       #s-academy .hub-card-desc { margin: 0; font-size: 12px; line-height: 1.65; color: var(--mt, #94a3b8); }
 
       #s-academy .courses-sub-switcher {
@@ -266,11 +297,11 @@
         flex: 1;
         min-width: 170px;
         padding: 12px 15px;
-        border-radius: 14px;
+        border-radius: 13px;
         border: 1.5px solid var(--ln, #334155);
         background: var(--cd, #182334);
         color: var(--tx, #e8edf7);
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 900;
         cursor: pointer;
         font-family: inherit;
@@ -278,6 +309,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
+        transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
       }
       #s-academy .sub-switch-btn.active {
         background: #0f172a;
@@ -286,8 +318,8 @@
       }
 
       #s-academy .instructor-card {
-        border: 1.5px solid color-mix(in srgb, #e09f24 45%, var(--ln, #334155));
-        background: linear-gradient(150deg, color-mix(in srgb, #e09f24 8%, var(--cd, #182334)), var(--cd, #182334));
+        border: 1.5px solid color-mix(in srgb, #e09f24 40%, var(--ln, #334155));
+        background: linear-gradient(150deg, color-mix(in srgb, #e09f24 7%, var(--cd, #182334)), var(--cd, #182334));
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -295,38 +327,44 @@
       }
       #s-academy .inst-header { display: flex; align-items: center; gap: 12px; }
       #s-academy .inst-avatar {
-        width: 54px; height: 54px; border-radius: 16px;
-        background: linear-gradient(135deg, #e09f24, #b45309);
-        color: #0f172a; display: grid; place-items: center; font-size: 24px; font-weight: 900; flex-shrink: 0;
+        width: 50px; height: 50px; border-radius: 14px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1.5px solid #e09f24;
+        color: #fbbf24; display: grid; place-items: center; flex-shrink: 0;
       }
       #s-academy .inst-meta-grid {
         display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px;
         background: var(--bg, #101827); padding: 10px; border-radius: 12px;
         border: 1px solid var(--ln, #334155); font-size: 12px;
       }
-      #s-academy .inst-meta-item b { color: #fbbf24; display: block; font-size: 11px; }
+      #s-academy .inst-meta-item b {
+        color: #fbbf24; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; margin-bottom: 2px;
+      }
       #s-academy .lecturer-tag {
-        display: inline-flex; align-items: center; gap: 5px;
-        background: rgba(224, 159, 36, 0.14); border: 1px solid rgba(224, 159, 36, 0.4);
-        color: #fbbf24; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; margin: 4px 0;
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(224, 159, 36, 0.12); border: 1px solid rgba(224, 159, 36, 0.35);
+        color: #fbbf24; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; margin: 4px 0;
       }
 
       #s-academy .tracks-banner {
-        background: linear-gradient(135deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
-        border: 1.5px solid #e09f24; border-radius: 18px; padding: 15px; margin-bottom: 16px;
+        background: linear-gradient(135deg, color-mix(in srgb, #e09f24 10%, var(--cd, #182334)), var(--cd, #182334));
+        border: 1.5px solid color-mix(in srgb, #e09f24 65%, var(--ln, #334155));
+        border-radius: 16px; padding: 15px; margin-bottom: 16px;
       }
       #s-academy .tracks-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       #s-academy .track-pill-btn {
         border: 1.5px solid var(--ln, #334155); background: var(--bg, #101827); color: var(--tx, #e8edf7);
-        border-radius: 12px; padding: 8px 13px; font-size: 12.5px; font-weight: 800;
+        border-radius: 10px; padding: 8px 13px; font-size: 12.5px; font-weight: 800;
         cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+        transition: all 0.2s ease;
       }
       #s-academy .track-pill-btn.active,
       #s-academy .track-pill-btn:hover { background: #e09f24; color: #0f172a; border-color: #e09f24; }
 
       #s-academy .academy-active-stage {
-        border-top: 2px dashed color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
+        border-top: 1.5px solid color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
         padding-top: 16px; margin-top: 6px;
+        animation: gdFormalFadeSlide 0.32s cubic-bezier(0.22, 1, 0.36, 1);
       }
       #s-academy .academy-grid {
         display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 265px), 1fr)); gap: 13px;
@@ -336,65 +374,111 @@
         position: relative; overflow: hidden;
         background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 96%, var(--bl, #38bdf8)), var(--cd, #182334));
         border: 1px solid color-mix(in srgb, var(--ln, #334155) 85%, var(--bl, #38bdf8));
-        border-radius: 18px; padding: 16px; min-width: 0; overflow-wrap: anywhere;
-        box-shadow: 0 8px 24px rgba(0,0,0,.09);
+        border-radius: 16px; padding: 16px; min-width: 0; overflow-wrap: anywhere;
+        box-shadow: 0 6px 20px rgba(0,0,0,.08);
+        transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
       }
       #s-academy .academy-card.lecture-locked { opacity: 0.78; border-style: dashed; }
       #s-academy .academy-card h3,
       #s-academy .academy-course-result h4 {
-        font-size: 16.5px; margin: 6px 0 8px; color: var(--tx, #f8fafc); font-weight: 900;
+        font-size: 16px; margin: 6px 0 8px; color: var(--tx, #f8fafc); font-weight: 900;
         display: flex; align-items: center; gap: 8px;
       }
       #s-academy .academy-card p,
       #s-academy .academy-course-result p { line-height: 1.85; color: var(--mt, #cbd5e1); }
       #s-academy .academy-icon {
-        width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-        border-radius: 13px; color: var(--bl, #38bdf8);
-        background: color-mix(in srgb, var(--bl, #38bdf8) 14%, var(--cd, #182334));
-        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 28%, var(--ln, #334155));
+        width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+        border-radius: 12px; color: var(--bl, #38bdf8);
+        background: color-mix(in srgb, var(--bl, #38bdf8) 12%, var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 26%, var(--ln, #334155));
       }
-      #s-academy .academy-icon svg { width: 22px; height: 22px; }
+      #s-academy .academy-icon svg { width: 21px; height: 21px; }
       #s-academy .admin-upload-card {
-        border: 2px solid #e09f24;
-        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 10%, var(--cd, #182334)), var(--cd, #182334));
+        border: 1.5px solid #e09f24;
+        background: linear-gradient(145deg, color-mix(in srgb, #e09f24 8%, var(--cd, #182334)), var(--cd, #182334));
         margin-bottom: 18px;
       }
       #s-academy .admin-upload-grid {
         display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px;
       }
-      #s-academy .course-detail-box { border: 2px solid var(--bl, #38bdf8); margin-bottom: 18px; }
+      #s-academy .course-detail-box {
+        border: 1.5px solid var(--bl, #38bdf8);
+        margin-bottom: 18px;
+        animation: gdFormalFadeSlide 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      }
       #s-academy .course-video-frame {
-        width: 100%; border-radius: 14px; overflow: hidden; background: #050811; margin: 12px 0;
+        width: 100%; border-radius: 12px; overflow: hidden; background: #050811; margin: 12px 0;
         border: 1px solid var(--ln, #334155);
       }
       #s-academy .course-video-frame video,
       #s-academy .course-video-frame iframe { width: 100%; max-height: 420px; display: block; border: 0; }
 
+      /* شريط أزرار أعجبني / لم يعجبني */
+      #s-academy .lecture-reaction-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 10px 0 14px;
+      }
+      #s-academy .reaction-btn {
+        flex: 1;
+        min-width: 135px;
+        padding: 10px 14px;
+        border-radius: 11px;
+        border: 1.5px solid var(--ln, #334155);
+        background: var(--bg, #101827);
+        color: var(--tx, #e8edf7);
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: all 0.22s ease;
+      }
+      #s-academy .reaction-btn.liked {
+        background: rgba(22, 163, 74, 0.2);
+        border-color: #22c55e;
+        color: #4ade80;
+      }
+      #s-academy .reaction-btn.disliked {
+        background: rgba(220, 38, 38, 0.2);
+        border-color: #ef4444;
+        color: #f87171;
+      }
+
       /* جدار قفل الفيديو وخانة تفعيل كود الكورسات */
       #s-academy .locked-video-wall {
         background: linear-gradient(135deg, #0f172a, #1e293b);
-        border: 2px solid #e09f24;
-        border-radius: 16px;
+        border: 1.5px solid #e09f24;
+        border-radius: 14px;
         padding: 20px 16px;
         text-align: center;
         margin: 12px 0;
         color: #f8fafc;
       }
       #s-academy .pro-course-notice-banner {
-        background: rgba(245, 158, 11, 0.16);
-        border: 1.5px solid #fbbf24;
+        background: rgba(245, 158, 11, 0.14);
+        border: 1px solid #fbbf24;
         color: #fde68a;
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 11px 13px;
         margin-bottom: 14px;
-        font-size: 13.5px;
-        font-weight: 900;
+        font-size: 13px;
+        font-weight: 800;
         line-height: 1.65;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
       #s-academy .course-redeem-box {
         background: rgba(15, 23, 42, 0.85);
         border: 1px solid #475569;
-        border-radius: 13px;
+        border-radius: 12px;
         padding: 13px;
         margin-top: 14px;
         text-align: right;
@@ -419,16 +503,18 @@
       #s-academy .course-attachments-bar { display: flex; flex-wrap: wrap; gap: 9px; margin: 12px 0; }
       #s-academy .comments-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ln, #334155); }
       #s-academy .comment-item {
-        padding: 11px 13px; border-radius: 13px; background: var(--bg, #101827);
+        padding: 11px 13px; border-radius: 12px; background: var(--bg, #101827);
         border: 1px solid var(--ln, #334155); margin-bottom: 9px;
       }
       #s-academy .comment-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-size: 12.5px; }
       #s-academy .academy-btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 7px;
         border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 25%, var(--ln, #334155));
-        border-radius: 12px; padding: 10px 15px; background: var(--bl, #167b9c);
+        border-radius: 11px; padding: 10px 15px; background: var(--bl, #167b9c);
         color: #fff; font-weight: 800; font-family: inherit; cursor: pointer; text-decoration: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
       }
+      #s-academy .academy-btn:hover { opacity: 0.94; }
       #s-academy .academy-btn.gold { background: #e09f24; color: #0f172a; border-color: #e09f24; }
       #s-academy .academy-btn.purple { background: #7c3aed; color: #fff; border-color: #7c3aed; }
       #s-academy .academy-btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
@@ -442,68 +528,61 @@
       #s-academy .academy-input,
       #s-academy .academy-textarea,
       #s-academy select {
-        width: 100%; box-sizing: border-box; padding: 11px 12px; border-radius: 12px;
+        width: 100%; box-sizing: border-box; padding: 11px 12px; border-radius: 11px;
         border: 1px solid var(--ln, #334155); background: var(--bg, #101827);
         color: var(--tx, #e8edf7); margin: 6px 0 11px; font: inherit;
       }
       #s-academy .academy-textarea { min-height: 90px; resize: vertical; }
-      #s-academy .academy-muted { opacity: .78; font-size: 12.5px; }
+      #s-academy .academy-muted { opacity: .8; font-size: 12.5px; }
       #s-academy .academy-progress {
-        height: 10px; background: var(--ln, #344256); border-radius: 20px; overflow: hidden; margin: 12px 0;
+        height: 9px; background: var(--ln, #344256); border-radius: 99px; overflow: hidden; margin: 12px 0;
       }
       #s-academy .academy-progress > span {
-        display: block; height: 100%; background: linear-gradient(90deg, #e09f24, #22c55e); transition: width .35s ease;
+        display: block; height: 100%; background: linear-gradient(90deg, #e09f24, #22c55e); transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       }
       #s-academy .academy-empty { text-align: center; padding: 22px 12px; opacity: .75; }
       #s-academy .academy-status {
         padding: 10px 14px; border-radius: 12px;
         background: color-mix(in srgb, var(--cd, #182334) 92%, var(--bl, #38bdf8));
         border: 1px solid var(--ln, #334155); margin-bottom: 14px; font-size: 13px;
+        display: flex; align-items: center; gap: 8px;
       }
       #s-academy .academy-teacher { display: flex; flex-direction: column; gap: 14px; }
       #s-academy .teacher-header { display: flex; align-items: center; gap: 13px; padding: 16px; }
       #s-academy .teacher-avatar {
-        width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center;
-        border-radius: 50%; background: color-mix(in srgb, var(--bl, #38bdf8) 20%, var(--cd, #182334));
-        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155)); font-size: 24px;
+        width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center;
+        border-radius: 12px; background: color-mix(in srgb, var(--bl, #38bdf8) 16%, var(--cd, #182334));
+        border: 1px solid color-mix(in srgb, var(--bl, #38bdf8) 35%, var(--ln, #334155)); color: var(--bl, #38bdf8);
       }
-      #s-academy .teacher-online { color: #4ade80; font-size: 12px; }
-      #s-academy .teacher-subject { padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 14px; background: var(--cd, #182334); }
+      #s-academy .teacher-online { color: #4ade80; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+      #s-academy .teacher-subject { padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 13px; background: var(--cd, #182334); }
       #s-academy .academy-teacher-messages {
         display: flex; flex-direction: column; gap: 14px; min-height: 240px; max-height: 62vh;
         overflow-y: auto; padding: 14px; border: 1px solid var(--ln, #334155);
-        border-radius: 16px; background: var(--bg, #101827);
+        border-radius: 14px; background: var(--bg, #101827);
       }
       #s-academy .teacher-welcome,
       #s-academy .teacher-message { display: flex; align-items: flex-start; gap: 9px; }
       #s-academy .teacher-bubble {
         width: 100%; padding: 14px; border: 1px solid var(--ln, #1e293b);
-        border-radius: 16px; background: var(--cd, #0f172a); line-height: 1.9; overflow-wrap: anywhere;
+        border-radius: 14px; background: var(--cd, #0f172a); line-height: 1.9; overflow-wrap: anywhere;
       }
-      #s-academy .teacher-composer { padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 16px; background: var(--cd, #182334); }
+      #s-academy .teacher-composer { padding: 12px; border: 1px solid var(--ln, #334155); border-radius: 14px; background: var(--cd, #182334); }
       #s-academy .academy-search-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 12px 0; }
       #s-academy .academy-course-platform { display: flex; align-items: center; gap: 10px; }
       #s-academy .academy-platform-icon,
       #s-academy .academy-platform-fallback { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px; }
       #s-academy .academy-platform-icon { object-fit: contain; background: #fff; padding: 4px; }
-      #s-academy .academy-platform-fallback { display: grid; place-items: center; background: #26384d; font-size: 20px; }
+      #s-academy .academy-platform-fallback { display: grid; place-items: center; background: #26384d; color: #38bdf8; }
       #academyToast {
-        position: fixed; z-index: 99999; bottom: 20px; right: 50%; transform: translate(50%, 20px);
-        background: #26384d; color: white; padding: 12px 18px; border-radius: 12px;
-        opacity: 0; pointer-events: none; transition: .2s; max-width: 88%; text-align: center;
+        position: fixed; z-index: 99999; bottom: 20px; right: 50%; transform: translate(50%, 16px);
+        background: #1e293b; color: #f8fafc; padding: 12px 18px; border-radius: 11px;
+        border: 1px solid #475569; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        max-width: 88%; text-align: center; font-weight: 700;
       }
-            /* إخفاء أي حقن خارجي قديم داخل تبويب الكورسات والدورات الخاصة بالمنصة */
-      #s-academy[data-current-tab="courses"] #gdAcademyAiBridgeBox,
-      #s-academy[data-current-tab="courses"] #gdDawodCoursesBox,
-      #s-academy[data-current-tab="courses"] .dawod-courses-section,
-      #s-academy[data-current-tab="courses"] [id*="dawod"],
-      #s-academy[data-current-tab="courses"] [id*="ProPlus"] {
-        display: none !important;
-      }
-
       #academyToast.show { opacity: 1; transform: translate(50%, 0); }
-      #academyToast[data-type="error"] { background: #9b3434; }
-      #academyToast[data-type="success"] { background: #176b50; }
+      #academyToast[data-type="error"] { background: #7f1d1d; border-color: #ef4444; }
+      #academyToast[data-type="success"] { background: #14532d; border-color: #22c55e; }
       @media (max-width: 640px) {
         #s-academy { padding: 10px 7px; }
         #s-academy .academy-hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
@@ -541,6 +620,7 @@
       const section = document.createElement("section");
       section.id = "s-academy";
       section.className = "sec";
+      section.dataset.currentTab = activeTab;
 
       section.innerHTML = `
         <div id="gdSmartVideoAlertWrap"></div>
@@ -551,7 +631,7 @@
         </div>
 
         <div id="academyStatus" class="academy-status">
-          جاري التحقق من تسجيل الدخول...
+          ${ico("shield-check", 16)} <span>جاري التحقق من تسجيل الدخول...</span>
         </div>
 
         <div id="academyHubGrid" class="academy-hub-grid">
@@ -582,7 +662,10 @@
 
   function setStatus(message) {
     const element = $("academyStatus");
-    if (element) element.textContent = message;
+    if (element) {
+      element.innerHTML = `${ico("badge-check", 16)} <span>${escapeHTML(message)}</span>`;
+      refreshAcademyIcons(element);
+    }
   }
 
   function getDb() {
@@ -594,12 +677,10 @@
     return null;
   }
 
-  /* ============================================================================
-     فحص حالة اشتراك PRO العادي + حالة كود الكورسات الخاص (منفصلين تماماً)
-     ============================================================================ */
   async function checkUserSubscriptionsStatus(user) {
     if (!user) {
       isAdminUser = false;
+      isCourseManagerUser = false;
       isProSubscriber = false;
       hasCoursesAccess = false;
       return;
@@ -607,12 +688,12 @@
 
     isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
     if (isAdminUser) {
+      isCourseManagerUser = true;
       isProSubscriber = true;
       hasCoursesAccess = true;
       return;
     }
 
-    // 1. التحقق هل المستخدم لديه اشتراك PRO (لإظهار رسالة PRO المخصصة له)
     try {
       const pageText = document.body.innerText || "";
       const proBadgeMatch = pageText.match(/(\d+)\s*d\s+\d+\s*h\s*(?:\d+\s*m\s*)?PRO/i);
@@ -623,9 +704,20 @@
       }
     } catch (_) {}
 
-    // 2. التحقق من Firestore لحقول اشتراك PRO وحقول اشتراك الكورسات (courses_active / courses_until)
     const db = getDb();
     if (!db) return;
+
+    isCourseManagerUser = false;
+    if (user.email) {
+      try {
+        const mgrSnap = await db.collection("geodev_course_managers").doc(user.email.toLowerCase()).get();
+        if (mgrSnap.exists && mgrSnap.data().enabled === true) {
+          isCourseManagerUser = true;
+          hasCoursesAccess = true;
+          return;
+        }
+      } catch (_) {}
+    }
 
     try {
       const snap = await db.collection("users").doc(user.uid).get();
@@ -638,7 +730,6 @@
         isProSubscriber = true;
       }
 
-      // فحص اشتراك الكورسات المستقل فقط!
       const coursesActiveFlag = data.courses_active === true;
       const coursesUntil = Number(data.courses_until || 0);
       hasCoursesAccess = Boolean(coursesActiveFlag && (!coursesUntil || coursesUntil > now));
@@ -647,9 +738,6 @@
     }
   }
 
-  /* ============================================================================
-     تفعيل كود الكورسات (CRS-XXXX-XXXX) عند إدخاله من قبل المستخدم
-     ============================================================================ */
   async function redeemCourseCode(rawCode) {
     if (!currentUser) {
       return notify("يجب تسجيل الدخول أولاً لتفعيل كود الكورسات.", "error");
@@ -668,7 +756,7 @@
     const btn = $("academyRedeemCourseCodeBtn");
     if (btn) {
       btn.disabled = true;
-      btn.textContent = "⏳ جاري التحقق من الكود...";
+      btn.textContent = "جاري التحقق من الكود...";
     }
 
     try {
@@ -687,7 +775,6 @@
       const days = Number(codeData.days || 30);
       const expiryMs = Date.now() + days * DAY_MS;
 
-      // 1. تحديث حساب المستخدم لتفعيل الكورسات
       await db.collection("users").doc(currentUser.uid).set(
         {
           courses_active: true,
@@ -698,7 +785,6 @@
         { merge: true }
       );
 
-      // 2. تعليم الكود كمستخدم
       await codeRef.update({
         used: true,
         usedBy: currentUser.uid,
@@ -707,7 +793,7 @@
       });
 
       hasCoursesAccess = true;
-      notify(`🎉 تم تفعيل الكورسات بنجاح لمدة ${days} يوماً! يمكنك مشاهدة الفيديوهات الآن.`, "success");
+      notify(`تم تفعيل الكورسات بنجاح لمدة ${days} يوماً.`, "success");
       setStatus(`مرحباً بك — اشتراك الكورسات مفعّل بنجاح (${days} يوماً).`);
       renderCourses();
     } catch (err) {
@@ -715,7 +801,49 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "🔓 تفعيل الكورسات الآن";
+        btn.innerHTML = `${ico("unlock", 16)} تفعيل الكورسات الآن`;
+        refreshAcademyIcons(btn);
+      }
+    }
+  }
+
+  async function toggleLectureReaction(courseId, reactionType) {
+    if (!currentUser) {
+      return notify("يجب تسجيل الدخول أولاً لتقييم المحاضرة.", "error");
+    }
+
+    const item = uploadedCourses.find(c => c.id === courseId);
+    if (!item) return;
+
+    const uid = currentUser.uid;
+    const likes = Array.isArray(item.likes) ? item.likes.slice() : [];
+    const dislikes = Array.isArray(item.dislikes) ? item.dislikes.slice() : [];
+
+    const hasLiked = likes.includes(uid);
+    const hasDisliked = dislikes.includes(uid);
+
+    const nextLikes = likes.filter(id => id !== uid);
+    const nextDislikes = dislikes.filter(id => id !== uid);
+
+    if (reactionType === "like" && !hasLiked) {
+      nextLikes.push(uid);
+    } else if (reactionType === "dislike" && !hasDisliked) {
+      nextDislikes.push(uid);
+    }
+
+    item.likes = nextLikes;
+    item.dislikes = nextDislikes;
+    renderCourses();
+
+    const db = getDb();
+    if (db) {
+      try {
+        await db.collection("geodev_academy_courses").doc(courseId).update({
+          likes: nextLikes,
+          dislikes: nextDislikes
+        });
+      } catch (err) {
+        notify("تعذر حفظ التقييم: " + (err.message || ""), "error");
       }
     }
   }
@@ -767,15 +895,18 @@
     wrap.innerHTML = `
       <div id="gdSmartVideoAlert" data-jump-to-video="${escapeHTML(latest.id)}">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:22px;">🔔</span>
+          <span style="color:#fbbf24;">${ico("bell-ring", 20)}</span>
           <div>
             <div style="font-size:11.5px;color:#fbbf24;font-weight:900;">محاضرة جديدة أُضيفت الآن في (${escapeHTML(latest.category || "الأكاديمية")})</div>
-            <div style="font-size:13.5px;font-weight:800;">${escapeHTML(latest.title)} ${latest.instructorName ? `— تقديم: ${escapeHTML(latest.instructorName)}` : ""} ↗</div>
+            <div style="font-size:13.5px;font-weight:800;">${escapeHTML(latest.title)} ${latest.instructorName ? `— تقديم: ${escapeHTML(latest.instructorName)}` : ""}</div>
           </div>
         </div>
-        <button type="button" id="gdDismissVideoAlert" style="background:rgba(255,255,255,0.15);color:#fff;border:0;border-radius:8px;padding:4px 9px;cursor:pointer;">✕</button>
+        <button type="button" id="gdDismissVideoAlert" style="background:rgba(255,255,255,0.12);color:#fff;border:0;border-radius:8px;padding:5px 9px;cursor:pointer;">
+          ${ico("x", 15)}
+        </button>
       </div>
     `;
+    refreshAcademyIcons(wrap);
   }
 
   async function loadUserCompletedLectures() {
@@ -819,12 +950,12 @@
       const trackLectures = uploadedCourses.filter(c => c.category === lecture.category);
       const doneInTrack = trackLectures.filter(c => completedLectures.includes(c.id)).length;
       const pct = trackLectures.length ? Math.round((doneInTrack / trackLectures.length) * 100) : 100;
-      notify(`🎉 أحسنت! أكملت المحاضرة، وتقدمك في (${lecture.category}) أصبح ${pct}% (${doneInTrack}/${trackLectures.length})`, "success");
+      notify(`تم إكمال المحاضرة بنجاح. نسبة تقدمك في (${lecture.category}) أصبحت ${pct}% (${doneInTrack}/${trackLectures.length}).`, "success");
     }
   }
 
   function isLectureUnlocked(lectureItem) {
-    if (isAdminUser) return true;
+    if (canManageCourses()) return true;
     const sameTrack = uploadedCourses.filter(c => c.category === lectureItem.category);
     const idx = sameTrack.findIndex(c => c.id === lectureItem.id);
     if (idx <= 0) return true;
@@ -842,11 +973,8 @@
     } catch (_) {}
   }
 
-  /* ============================================================================
-     بناء مشغل الفيديو أو جدار القفل بكود الكورسات + رسالة PRO المخصصة
-     ============================================================================ */
   function buildVideoPlayerHTML(item) {
-    if (!hasCoursesAccess && !isAdminUser) {
+    if (!hasCoursesAccess && !canManageCourses()) {
       const userEmail = currentUser && currentUser.email ? currentUser.email : "";
       const waText = encodeURIComponent(
         isProSubscriber
@@ -856,34 +984,33 @@
 
       return `
         <div class="locked-video-wall">
-          ${isProSubscriber ? `
-            <div class="pro-course-notice-banner">
-              👑 إذا كنت مستخدم البرو (PRO)، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات.
-            </div>
-          ` : `
-            <div class="pro-course-notice-banner">
-              🔒 تشغيل الفيديوهات متاح بكود الكورسات الخاص فقط — إذا كنت مستخدم البرو، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات.
-            </div>
-          `}
+          <div class="pro-course-notice-banner">
+            ${ico("shield-alert", 18)}
+            <span>
+              ${isProSubscriber
+                ? "إذا كنت مستخدم البرو (PRO)، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات."
+                : "تشغيل الفيديوهات متاح بكود الكورسات الخاص فقط — إذا كنت مستخدم البرو، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات."}
+            </span>
+          </div>
 
-          <div style="font-size:32px;margin-bottom:6px;">🎓🔒</div>
-          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:16.5px;">هذا الفيديو محمي بكود الكورسات</h4>
+          <div style="color:#fbbf24;margin-bottom:8px;">${ico("lock", 32)}</div>
+          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:16px;">هذا المحتوى محمي بكود الكورسات</h4>
           <p style="margin:0 0 14px;font-size:12.5px;color:#cbd5e1;line-height:1.7;">
             تواصل مع إدارة المنصة للحصول على كود الكورسات الخاص بك (<code>CRS-XXXX-XXXX</code>)، أو أدخل الكود في الخانة بالأسفل لفتح جميع المحاضرات فوراً:
           </p>
 
           <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${waText}" target="_blank" rel="noopener noreferrer" class="academy-btn gold" style="width:100%;max-width:360px;">
-            💬 كلم الأدمن للحصول على كود الكورسات (واتساب)
+            ${ico("message-square", 16)} كلم الأدمن للحصول على كود الكورسات
           </a>
 
           <div class="course-redeem-box">
-            <label for="academyCourseCodeInput" style="font-size:12px;font-weight:800;color:#fbbf24;">
-              🎟️ لديك كود الكورسات؟ أدخله هنا للتفعيل الفوري:
+            <label for="academyCourseCodeInput" style="font-size:12px;font-weight:800;color:#fbbf24;display:inline-flex;align-items:center;gap:6px;">
+              ${ico("key-round", 15)} لديك كود الكورسات؟ أدخله هنا للتفعيل الفوري:
             </label>
             <div class="course-redeem-row">
               <input type="text" id="academyCourseCodeInput" class="academy-input" placeholder="CRS-XXXX-XXXX">
               <button type="button" id="academyRedeemCourseCodeBtn" class="academy-btn purple">
-                🔓 تفعيل الكورسات الآن
+                ${ico("unlock", 16)} تفعيل الكورسات الآن
               </button>
             </div>
           </div>
@@ -901,10 +1028,10 @@
   }
 
   function renderAdminUploadCardHTML() {
-    if (!isAdminUser) return "";
+    if (!canManageCourses()) return "";
     return `
       <div class="academy-card admin-upload-card">
-        <h3><i data-lucide="upload-cloud"></i> رفع محاضرة أو فيديو جديد في دوراتنا (لوحة الأدمن)</h3>
+        <h3>${ico("upload-cloud", 20)} رفع محاضرة أو فيديو جديد في دوراتنا</h3>
         <p class="academy-muted">اكتب اسم المحاضر (مثل: المهندس أحمد سمير أو المهندس عمرو أشرف) وسيظهر على بطاقة المحاضرة ويرتبط بملف المحاضر تلقائياً.</p>
 
         <form id="academyAdminCourseForm">
@@ -954,7 +1081,69 @@
           </div>
 
           <button type="submit" id="acUpSubmitBtn" class="academy-btn gold" style="width:100%;margin-top:6px;">
-            <i data-lucide="plus-circle"></i> نشر المحاضرة وإرسال إشعار للمستخدمين
+            ${ico("plus-circle", 17)} نشر المحاضرة وإرسال إشعار للمستخدمين
+          </button>
+        </form>
+      </div>
+    `;
+  }
+
+  function renderEditCourseFormHTML(item) {
+    if (!canManageCourses() || !isEditingCourseMode) return "";
+    return `
+      <div class="academy-card admin-upload-card" style="margin:14px 0;border-color:#38bdf8;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">${ico("edit-3", 18)} تعديل بيانات المحاضرة والملفات المرفقة</h4>
+          <button type="button" class="academy-btn secondary" id="cancelEditCourseBtn" style="padding:5px 11px;font-size:12px;">
+            ${ico("x", 14)} إلغاء التعديل
+          </button>
+        </div>
+
+        <form id="academyEditCourseForm" data-edit-course-id="${escapeHTML(item.id)}" style="margin-top:10px;">
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">عنوان المحاضرة *</label>
+              <input type="text" id="edCourseTitle" class="academy-input" value="${escapeHTML(item.title || "")}" required>
+            </div>
+            <div>
+              <label class="academy-muted">اسم المحاضر *</label>
+              <input type="text" id="edCourseInstructor" list="gdInstructorsDatalist" class="academy-input" value="${escapeHTML(item.instructorName || "")}" required>
+            </div>
+            <div>
+              <label class="academy-muted">التخصص *</label>
+              <select id="edCourseCategory" class="academy-input">
+                ${ourTracks.map(t => `<option value="${t.id}" ${item.category === t.id ? "selected" : ""}>${t.title}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <label class="academy-muted">وصف وتفاصيل المحاضرة *</label>
+          <textarea id="edCourseDesc" class="academy-textarea" required>${escapeHTML(item.desc || "")}</textarea>
+
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">رابط الفيديو (YouTube / MP4)</label>
+              <input type="url" id="edCourseVideoUrl" class="academy-input" value="${escapeHTML(item.videoUrl || "")}" placeholder="https://youtube.com/...">
+            </div>
+            <div>
+              <label class="academy-muted">رابط ملفات (Google Drive / MediaFire)</label>
+              <input type="url" id="edCourseDriveUrl" class="academy-input" value="${escapeHTML(item.driveUrl || "")}" placeholder="https://drive.google.com/...">
+            </div>
+          </div>
+
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">تحديث ملف الفيديو (اختياري)</label>
+              <input type="file" id="edCourseVideoFile" class="academy-input" accept="video/*">
+            </div>
+            <div>
+              <label class="academy-muted">تحديث أو إضافة ملف PDF (اختياري)</label>
+              <input type="file" id="edCoursePdfFile" class="academy-input" accept=".pdf,application/pdf">
+            </div>
+          </div>
+
+          <button type="submit" id="edCourseSaveBtn" class="academy-btn success" style="width:100%;margin-top:6px;">
+            ${ico("save", 17)} حفظ التعديلات على المحاضرة
           </button>
         </form>
       </div>
@@ -967,71 +1156,99 @@
     if (!item) return "";
 
     const isCompleted = completedLectures.includes(item.id);
-    const canShowCompleteBtn = isCompleted || videoFinishedWatching || isAdminUser;
+    const canShowCompleteBtn = isCompleted || videoFinishedWatching || canManageCourses();
+
+    const likesArr = Array.isArray(item.likes) ? item.likes : [];
+    const dislikesArr = Array.isArray(item.dislikes) ? item.dislikes : [];
+    const userLiked = currentUser ? likesArr.includes(currentUser.uid) : false;
+    const userDisliked = currentUser ? dislikesArr.includes(currentUser.uid) : false;
 
     return `
       <div class="academy-card course-detail-box" id="academyCourseDetailBox">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
-          <button type="button" class="academy-btn secondary" id="academyCloseCourseDetail">✕ إغلاق المحاضرة</button>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            ${canManageCourses() ? `
+              <button type="button" class="academy-btn gold" id="academyToggleEditCourseBtn" style="padding:7px 13px;font-size:12.5px;">
+                ${ico("edit-3", 15)} تعديل المحاضرة
+              </button>
+            ` : ""}
+            <button type="button" class="academy-btn secondary" id="academyCloseCourseDetail">
+              ${ico("x", 15)} إغلاق المحاضرة
+            </button>
+          </div>
         </div>
 
-        <h3 style="font-size:19px;margin-top:10px;">🎬 ${escapeHTML(item.title)}</h3>
-        ${item.instructorName ? `<div class="lecturer-tag">👨‍🏫 المحاضر: ${escapeHTML(item.instructorName)}</div>` : ""}
+        ${renderEditCourseFormHTML(item)}
+
+        <h3 style="font-size:18.5px;margin-top:10px;">${ico("video", 20)} ${escapeHTML(item.title)}</h3>
+        ${item.instructorName ? `<div class="lecturer-tag">${ico("user-check", 15)} المحاضر: ${escapeHTML(item.instructorName)}</div>` : ""}
         <p style="white-space:pre-line;margin-top:8px;">${escapeHTML(item.desc || "")}</p>
 
         ${buildVideoPlayerHTML(item)}
 
-        ${hasCoursesAccess || isAdminUser ? `
-          <div style="margin:12px 0;padding:12px;border-radius:14px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
+        ${hasCoursesAccess || canManageCourses() ? `
+          <div style="margin:12px 0 8px;padding:12px;border-radius:12px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
             ${isCompleted ? `
-              <div style="color:#4ade80;font-weight:900;font-size:14px;">✅ تم إكمال هذه المحاضرة بنجاح وفتح المحاضرة التالية!</div>
+              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;">
+                ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح وفتح المحاضرة التالية
+              </div>
             ` : canShowCompleteBtn ? `
               <button type="button" class="academy-btn success" style="width:100%;" data-complete-lecture="${escapeHTML(item.id)}">
-                ✓ إكمال المحاضرة وفتح المحاضرة التالية
+                ${ico("check-circle-2", 17)} إكمال المحاضرة وفتح المحاضرة التالية
               </button>
             ` : `
-              <div class="academy-muted" style="text-align:center;">
-                ⏳ شاهد المحاضرة كاملة حتى النهاية ليظهر لك زر <b>«إكمال المحاضرة»</b> وتُفتح المحاضرة التالية.
+              <div class="academy-muted" style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                ${ico("clock", 15)} شاهد المحاضرة كاملة حتى النهاية ليظهر لك زر «إكمال المحاضرة» وتُفتح المحاضرة التالية.
               </div>
             `}
           </div>
         ` : ""}
 
+        <!-- أزرار أعجبني / لم يعجبني تحت زر تم الإكمال مباشرة -->
+        <div class="lecture-reaction-bar">
+          <button type="button" class="reaction-btn ${userLiked ? "liked" : ""}" data-react-lecture="like" data-course-id="${escapeHTML(item.id)}">
+            ${ico("thumbs-up", 16)} أعجبني (${likesArr.length})
+          </button>
+          <button type="button" class="reaction-btn ${userDisliked ? "disliked" : ""}" data-react-lecture="dislike" data-course-id="${escapeHTML(item.id)}">
+            ${ico("thumbs-down", 16)} لم يعجبني (${dislikesArr.length})
+          </button>
+        </div>
+
         <div class="course-attachments-bar">
-          ${safeURL(item.pdfUrl) && (hasCoursesAccess || isAdminUser) ? `
+          ${safeURL(item.pdfUrl) && (hasCoursesAccess || canManageCourses()) ? `
             <a href="${safeURL(item.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(item.pdfName || item.title + ".pdf")}" class="academy-btn pdf-btn">
-              <i data-lucide="file-text"></i> تحميل ملف PDF المرفق
+              ${ico("file-text", 16)} تحميل ملف PDF المرفق
             </a>
           ` : ""}
-          ${safeURL(item.driveUrl) && (hasCoursesAccess || isAdminUser) ? `
+          ${safeURL(item.driveUrl) && (hasCoursesAccess || canManageCourses()) ? `
             <a href="${safeURL(item.driveUrl)}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn">
-              <i data-lucide="folder-down"></i> تحميل الملفات (Google Drive / MediaFire)
+              ${ico("folder-down", 16)} تحميل الملفات (Google Drive / MediaFire)
             </a>
           ` : ""}
-          ${isAdminUser ? `
+          ${canManageCourses() ? `
             <button type="button" class="academy-btn danger" data-delete-uploaded-course="${escapeHTML(item.id)}">
-              <i data-lucide="trash-2"></i> حذف المحاضرة (أدمن)
+              ${ico("trash-2", 16)} حذف المحاضرة
             </button>
           ` : ""}
         </div>
 
         <div class="comments-section">
-          <h4>💬 التعليقات والمناقشات (${courseComments.length})</h4>
+          <h4 style="display:flex;align-items:center;gap:7px;">${ico("message-square", 17)} التعليقات والمناقشات (${courseComments.length})</h4>
           <div style="margin:10px 0 14px;">
             <textarea id="academyNewCommentText" class="academy-textarea" style="min-height:72px;" placeholder="اكتب تعليقك أو سؤالك حول هذه المحاضرة..."></textarea>
             <button type="button" class="academy-btn" id="academyPostCommentBtn" data-course-id="${escapeHTML(item.id)}">
-              <i data-lucide="send"></i> نشر التعليق
+              ${ico("send", 15)} نشر التعليق
             </button>
           </div>
           <div id="academyCommentsList">
             ${courseComments.length ? courseComments.map(cm => `
               <div class="comment-item">
                 <div class="comment-head">
-                  <strong>👤 ${escapeHTML(cm.userName || "مستخدم")}</strong>
+                  <strong style="display:inline-flex;align-items:center;gap:5px;">${ico("user", 14)} ${escapeHTML(cm.userName || "مستخدم")}</strong>
                   <div style="display:flex;align-items:center;gap:8px;">
                     <span class="academy-muted">${escapeHTML(cm.dateText || "")}</span>
-                    ${(isAdminUser || (currentUser && cm.uid === currentUser.uid)) ? `
+                    ${(canManageCourses() || (currentUser && cm.uid === currentUser.uid)) ? `
                       <button type="button" class="academy-btn danger" style="padding:3px 8px;font-size:11px;"
                         data-delete-comment="${escapeHTML(cm.id)}" data-course-id="${escapeHTML(item.id)}">حذف</button>
                     ` : ""}
@@ -1039,7 +1256,7 @@
                 </div>
                 <div style="line-height:1.75;white-space:pre-line;">${escapeHTML(cm.text || "")}</div>
               </div>
-            `).join("") : `<div class="academy-muted">لا توجد تعليقات حتى الآن. كن أول من يكتب تعليقاً!</div>`}
+            `).join("") : `<div class="academy-muted">لا توجد تعليقات حتى الآن. كن أول من يكتب تعليقاً.</div>`}
           </div>
         </div>
       </div>
@@ -1047,9 +1264,9 @@
   }
 
   function renderInstructorsSubView() {
-    const adminAddInstructorHTML = isAdminUser ? `
+    const adminAddInstructorHTML = canManageCourses() ? `
       <div class="academy-card admin-upload-card">
-        <h3><i data-lucide="user-plus"></i> إضافة بطاقة محاضر جديد (لوحة الأدمن)</h3>
+        <h3>${ico("user-plus", 20)} إضافة بطاقة محاضر جديد</h3>
         <form id="academyAddInstructorForm">
           <div class="admin-upload-grid">
             <div>
@@ -1084,7 +1301,7 @@
           <textarea id="instBio" class="academy-textarea" placeholder="اكتب تفاصيل خبرات المحاضر ومسيرته العلمية والعملية..."></textarea>
 
           <button type="submit" id="instSaveBtn" class="academy-btn gold" style="width:100%;">
-            <i data-lucide="save"></i> حفظ ونشر بطاقة المحاضر
+            ${ico("save", 17)} حفظ ونشر بطاقة المحاضر
           </button>
         </form>
       </div>
@@ -1094,7 +1311,7 @@
       ${adminAddInstructorHTML}
 
       <div class="academy-card" style="margin-bottom:15px;">
-        <h3>👨‍🏫 نخبة المحاضرين والمدربين في المنصة (${instructorsList.length})</h3>
+        <h3>${ico("users", 20)} نخبة المحاضرين والمدربين في المنصة (${instructorsList.length})</h3>
         <p class="academy-muted">تعرف على بيانات وخبرات وتخصصات المحاضرين القائمين على إعداد الدورات والشروحات التطبيقية.</p>
 
         <div class="academy-grid" style="margin-top:12px;">
@@ -1109,40 +1326,40 @@
               <div class="academy-card instructor-card">
                 <div>
                   <div class="inst-header">
-                    <div class="inst-avatar">👨‍🏫</div>
+                    <div class="inst-avatar">${ico("user-check", 24)}</div>
                     <div>
-                      <h3 style="margin:0 0 3px;font-size:17px;">${escapeHTML(inst.name)}</h3>
+                      <h3 style="margin:0 0 3px;font-size:16.5px;">${escapeHTML(inst.name)}</h3>
                       <div style="font-size:12px;color:#fbbf24;font-weight:800;">${escapeHTML(inst.role || "محاضر معتمد")}</div>
                     </div>
                   </div>
 
                   <div class="inst-meta-grid" style="margin-top:11px;">
                     <div class="inst-meta-item">
-                      <b>🎂 السن:</b>
+                      <b>${ico("user", 13)} السن:</b>
                       <span>${escapeHTML(inst.age || "غير محدد")}</span>
                     </div>
                     <div class="inst-meta-item">
-                      <b>📅 يحاضر منذ:</b>
+                      <b>${ico("calendar", 13)} يحاضر منذ:</b>
                       <span>${escapeHTML(inst.teachingSince || "2024")}</span>
                     </div>
                     <div class="inst-meta-item">
-                      <b>📞 رقم التواصل:</b>
+                      <b>${ico("phone", 13)} رقم التواصل:</b>
                       <span style="direction:ltr;display:inline-block;">${escapeHTML(inst.phone || "عبر المنصة")}</span>
                     </div>
                     <div class="inst-meta-item">
-                      <b>🎬 المحاضرات:</b>
+                      <b>${ico("video", 13)} المحاضرات:</b>
                       <span>${lecturesCount} محاضرة مرفوعة</span>
                     </div>
                   </div>
 
                   <div style="margin-top:10px;font-size:12.5px;">
-                    <strong style="color:#38bdf8;">🎯 التخصصات:</strong>
+                    <strong style="color:#38bdf8;display:inline-flex;align-items:center;gap:5px;">${ico("layers", 14)} التخصصات:</strong>
                     <div style="margin-top:3px;line-height:1.6;">${escapeHTML(inst.specialties || "")}</div>
                   </div>
 
                   ${inst.bio ? `
                     <div style="margin-top:8px;font-size:12.5px;">
-                      <strong style="color:#38bdf8;">💼 الخبرات:</strong>
+                      <strong style="color:#38bdf8;display:inline-flex;align-items:center;gap:5px;">${ico("briefcase", 14)} الخبرات:</strong>
                       <p style="margin:3px 0 0;line-height:1.7;">${escapeHTML(inst.bio)}</p>
                     </div>
                   ` : ""}
@@ -1150,16 +1367,16 @@
 
                 <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;">
                   <button type="button" class="academy-btn gold" style="width:100%;" data-view-instructor-courses="${escapeHTML(inst.name)}">
-                    🎬 عرض محاضرات ${escapeHTML(inst.name)} (${lecturesCount})
+                    ${ico("play-circle", 16)} عرض محاضرات ${escapeHTML(inst.name)} (${lecturesCount})
                   </button>
                   ${waPhone ? `
                     <a href="https://wa.me/${waPhone}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn" style="width:100%;">
-                      💬 تواصل واتساب مع المحاضر
+                      ${ico("message-square", 16)} تواصل واتساب مع المحاضر
                     </a>
                   ` : ""}
-                  ${isAdminUser && !String(inst.id).startsWith("inst_") ? `
+                  ${canManageCourses() && !String(inst.id).startsWith("inst_") ? `
                     <button type="button" class="academy-btn danger" style="width:100%;" data-delete-instructor="${escapeHTML(inst.id)}">
-                      🗑 حذف بطاقة المحاضر
+                      ${ico("trash-2", 16)} حذف بطاقة المحاضر
                     </button>
                   ` : ""}
                 </div>
@@ -1178,10 +1395,10 @@
     const subSwitcherHTML = `
       <div class="courses-sub-switcher">
         <button type="button" class="sub-switch-btn ${coursesSubView === "lectures" ? "active" : ""}" data-courses-subview="lectures">
-          🎬 الكورسات والمحاضرات (${uploadedCourses.length})
+          ${ico("video", 17)} الكورسات والمحاضرات (${uploadedCourses.length})
         </button>
         <button type="button" class="sub-switch-btn ${coursesSubView === "instructors" ? "active" : ""}" data-courses-subview="instructors">
-          👨‍🏫 المحاضرون والمدربون (${instructorsList.length})
+          ${ico("users", 17)} المحاضرون والمدربون (${instructorsList.length})
         </button>
       </div>
     `;
@@ -1205,20 +1422,22 @@
 
       <div class="tracks-banner">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;font-size:16px;font-weight:900;">🎯 مسارات وتخصصات المنصة (6 تخصصات تطبيقية)</h3>
+          <h3 style="margin:0;font-size:15.5px;font-weight:900;display:flex;align-items:center;gap:7px;">
+            ${ico("compass", 18)} مسارات وتخصصات المنصة (6 تخصصات تطبيقية)
+          </h3>
           <span class="hub-card-badge">${uploadedCourses.length} محاضرة مرفوعة</span>
         </div>
         <p class="academy-muted" style="margin:6px 0 0;">اختر التخصص لعرض محاضراته مرتبة بالتسلسل (يجب إكمال كل محاضرة لفتح المحاضرة التي تليها):</p>
 
         <div class="tracks-pills">
           <button type="button" class="track-pill-btn ${selectedTrackFilter === "all" && selectedInstructorFilter === "all" ? "active" : ""}" data-filter-track="all">
-            📚 جميع التخصصات (${uploadedCourses.length})
+            ${ico("layers", 15)} جميع التخصصات (${uploadedCourses.length})
           </button>
           ${ourTracks.map(tr => {
             const count = uploadedCourses.filter(c => c.category === tr.id).length;
             return `
               <button type="button" class="track-pill-btn ${selectedTrackFilter === tr.id ? "active" : ""}" data-filter-track="${tr.id}">
-                <i data-lucide="${tr.icon}" style="width:15px;height:15px;"></i>
+                ${ico(tr.icon, 15)}
                 ${tr.id} (${count})
               </button>
             `;
@@ -1227,8 +1446,12 @@
 
         ${selectedInstructorFilter !== "all" ? `
           <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--bg,#101827);padding:8px 12px;border-radius:10px;">
-            <span style="font-size:12.5px;font-weight:800;color:#fbbf24;">👨‍🏫 تصفية حسب المحاضر: ${escapeHTML(selectedInstructorFilter)}</span>
-            <button type="button" class="academy-btn secondary" style="padding:4px 10px;font-size:11.5px;" data-clear-instructor-filter>عرض كل المحاضرين ✕</button>
+            <span style="font-size:12.5px;font-weight:800;color:#fbbf24;display:inline-flex;align-items:center;gap:6px;">
+              ${ico("user-check", 15)} تصفية حسب المحاضر: ${escapeHTML(selectedInstructorFilter)}
+            </span>
+            <button type="button" class="academy-btn secondary" style="padding:4px 10px;font-size:11.5px;" data-clear-instructor-filter>
+              ${ico("x", 13)} عرض كل المحاضرين
+            </button>
           </div>
         ` : ""}
       </div>
@@ -1236,7 +1459,7 @@
       ${renderSelectedCourseDetailHTML()}
 
       <div class="academy-card">
-        <h3>🎬 محاضرات ودروس المنصة (${filteredLectures.length})</h3>
+        <h3>${ico("play-square", 19)} محاضرات ودروس المنصة (${filteredLectures.length})</h3>
         <p class="academy-muted">التصفح متاح للجميع، وتشغيل الفيديوهات متاح بكود الكورسات الخاص فقط.</p>
 
         <div class="academy-grid">
@@ -1245,24 +1468,30 @@
             const done = completedLectures.includes(item.id);
             const trackList = uploadedCourses.filter(c => c.category === item.category);
             const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
+            const likesCount = Array.isArray(item.likes) ? item.likes.length : 0;
 
             return `
               <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
                   <span class="hub-card-badge">${escapeHTML(item.category)} • محاضرة ${lectureNum}</span>
-                  ${done ? `<span style="color:#4ade80;font-size:12px;font-weight:900;">✅ مكتملة</span>` : unlocked ? `<span style="color:#38bdf8;font-size:12px;font-weight:800;">🔓 مفتوحة</span>` : `<span style="color:#f87171;font-size:12px;font-weight:800;">🔒 مقفولة</span>`}
+                  ${done
+                    ? `<span style="color:#4ade80;font-size:12px;font-weight:900;display:inline-flex;align-items:center;gap:4px;">${ico("check-circle-2", 14)} مكتملة</span>`
+                    : unlocked
+                    ? `<span style="color:#38bdf8;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">${ico("unlock", 14)} مفتوحة</span>`
+                    : `<span style="color:#f87171;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">${ico("lock", 14)} مقفولة</span>`}
                 </div>
                 <h3>${escapeHTML(item.title)}</h3>
-                ${item.instructorName ? `<div class="lecturer-tag">👨‍🏫 ${escapeHTML(item.instructorName)}</div>` : ""}
+                ${item.instructorName ? `<div class="lecturer-tag">${ico("user-check", 14)} ${escapeHTML(item.instructorName)}</div>` : ""}
                 <p>${escapeHTML(String(item.desc || "").slice(0, 110))}${String(item.desc || "").length > 110 ? "..." : ""}</p>
+                ${likesCount > 0 ? `<div class="academy-muted" style="margin-bottom:8px;display:inline-flex;align-items:center;gap:5px;">${ico("thumbs-up", 13)} ${likesCount} إعجاب</div>` : ""}
 
                 ${unlocked ? `
                   <button type="button" class="academy-btn gold" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
-                    <i data-lucide="play-circle"></i> فتح المحاضرة والتفاصيل
+                    ${ico("play-circle", 16)} فتح المحاضرة والتفاصيل
                   </button>
                 ` : `
                   <button type="button" class="academy-btn secondary" style="width:100%;" disabled>
-                    🔒 أكمل المحاضرة رقم ${lectureNum - 1} أولاً لفتحها
+                    ${ico("lock", 15)} أكمل المحاضرة رقم ${lectureNum - 1} أولاً لفتحها
                   </button>
                 `}
               </div>
@@ -1275,6 +1504,7 @@
     `;
 
     bindCourseUploadForm();
+    bindEditCourseForm();
     setupVideoWatchCompletionWatcher();
     refreshAcademyIcons(content);
   }
@@ -1288,7 +1518,7 @@
       html5Vid.addEventListener("ended", () => {
         videoFinishedWatching = true;
         renderCourses();
-        notify("✔ أتممت مشاهدة المحاضرة! يمكنك الآن الضغط على زر «إكمال المحاضرة».", "success");
+        notify("أتممت مشاهدة المحاضرة. يمكنك الآن الضغط على زر إكمال المحاضرة.", "success");
       });
       return;
     }
@@ -1327,7 +1557,7 @@
 
     content.innerHTML = `
       <div class="academy-card">
-        <h3>🌐 مكتبة الكورسات الرسمية العالمية</h3>
+        <h3>${ico("globe", 20)} مكتبة الكورسات الرسمية العالمية</h3>
         <p>روابط مباشرة للدورات التدريبية المعتمدة من الجهات الرسمية (Esri, Autodesk, NARSS, Spatial Thoughts).</p>
         <input id="academyCatalogSearch" class="academy-input" placeholder="ابحث عن ArcGIS أو AutoCAD أو Civil 3D..."
           value="${escapeHTML(query)}" oninput="window.GEOAcademyUI.search(this.value)">
@@ -1338,9 +1568,11 @@
         ${realCourses.length ? realCourses.map(course => `
           <div class="academy-card">
             <h3>${escapeHTML(course.title)}</h3>
-            <p>🏫 ${escapeHTML(course.provider)}</p>
+            <p style="display:flex;align-items:center;gap:6px;">${ico("building-2", 15)} ${escapeHTML(course.provider)}</p>
             <p class="academy-muted">المستوى: ${escapeHTML(course.level)}<br>اللغة: ${escapeHTML(course.language)}<br>السعر: ${escapeHTML(course.price)}</p>
-            <a class="academy-btn" href="${safeURL(course.url)}" target="_blank" rel="noopener noreferrer" style="width:100%;">فتح الكورس الأصلي ↗</a>
+            <a class="academy-btn" href="${safeURL(course.url)}" target="_blank" rel="noopener noreferrer" style="width:100%;">
+              ${ico("external-link", 15)} فتح الكورس الأصلي
+            </a>
           </div>
         `).join("") : `<div class="academy-empty">لا توجد كورسات رسمية مطابقة للبحث.</div>`}
       </div>
@@ -1356,7 +1588,7 @@
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                 ${category.topics.map(topic => `
                   <a class="academy-btn secondary" style="font-size:11px" target="_blank" rel="noopener noreferrer"
-                    href="${safeURL(catalog.searchUrl("youtube", topic))}">${escapeHTML(topic)} 🔎</a>
+                    href="${safeURL(catalog.searchUrl("youtube", topic))}">${ico("search", 12)} ${escapeHTML(topic)}</a>
                 `).join("")}
               </div>
               <h4>المصادر الرسمية</h4>
@@ -1364,7 +1596,9 @@
                 <div style="margin:8px 0;padding:9px;background:var(--bg,#101827);border-radius:9px">
                   <b>${escapeHTML(source.name)}</b>
                   <div class="academy-muted">${escapeHTML(source.platform)} • ${escapeHTML(source.language || "لغات متعددة")}</div>
-                  <a href="${safeURL(source.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="margin-top:6px">زيارة المصدر ↗</a>
+                  <a href="${safeURL(source.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="margin-top:6px">
+                    ${ico("external-link", 14)} زيارة المصدر
+                  </a>
                 </div>
               `).join("")}
             </div>
@@ -1388,16 +1622,18 @@
     ];
     content.innerHTML = `
       <div class="academy-card" style="margin-bottom:15px;">
-        <h3>📚 مكتبة الكتب والمراجع الهندسية</h3>
+        <h3>${ico("library", 20)} مكتبة الكتب والمراجع الهندسية</h3>
         <p>مجموعة مختارة من الأدلة الرسمية والمراجع العلمية في المساحة ونظم المعلومات الجغرافية والاستشعار عن بعد.</p>
       </div>
       <div class="academy-grid">
         ${referenceLibrary.map(book => `
           <div class="academy-card">
             <span class="hub-card-badge">${escapeHTML(book.category)}</span>
-            <h3>📖 ${escapeHTML(book.title)}</h3>
+            <h3>${ico("book-open", 18)} ${escapeHTML(book.title)}</h3>
             <p>${escapeHTML(book.desc)}</p>
-            <a href="${safeURL(book.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;">فتح المرجع الرسمي ↗</a>
+            <a href="${safeURL(book.url)}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;">
+              ${ico("external-link", 15)} فتح المرجع الرسمي
+            </a>
           </div>
         `).join("")}
       </div>
@@ -1423,7 +1659,7 @@
 
     content.innerHTML = `
       <div class="academy-card" style="margin-bottom:15px;border-color:#e09f24;">
-        <h3>📊 تقدمك التعليمي العام في المنصة (${overallPct}%)</h3>
+        <h3>${ico("bar-chart-3", 20)} تقدمك التعليمي العام في المنصة (${overallPct}%)</h3>
         <p>يتم تحديث بطاقات التقدم تلقائياً مع كل محاضرة جديدة تُرفع في الأكاديمية أو تُكمل مشاهدتها.</p>
         <div class="academy-progress"><span style="width:${overallPct}%"></span></div>
         <div class="academy-muted">أتممت <b>${totalAllCompleted}</b> من أصل <b>${totalAllLectures}</b> محاضرة مرفوعة على المنصة.</div>
@@ -1436,12 +1672,12 @@
               <span class="hub-card-badge">${tr.done} / ${tr.total} محاضرة</span>
               <strong style="color:#e09f24;font-size:15px;">${tr.percent}%</strong>
             </div>
-            <h3><i data-lucide="${tr.icon}"></i> ${escapeHTML(tr.title)}</h3>
+            <h3>${ico(tr.icon, 18)} ${escapeHTML(tr.title)}</h3>
             <div class="academy-progress"><span style="width:${tr.percent}%"></span></div>
             <p class="academy-muted">
-              ${tr.total === 0 ? "لم تُرفع محاضرات في هذا الكورس بعد." : tr.percent === 100 ? "🎉 أتممت جميع محاضرات هذا الكورس بنجاح!" : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس بالكامل.`}
+              ${tr.total === 0 ? "لم تُرفع محاضرات في هذا الكورس بعد." : tr.percent === 100 ? "أتممت جميع محاضرات هذا الكورس بنجاح." : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس بالكامل.`}
             </p>
-            ${tr.total > 0 ? `<button type="button" class="academy-btn secondary" style="width:100%;" data-jump-track="${escapeHTML(tr.id)}">الذهاب لمحاضرات الكورس ↗</button>` : ""}
+            ${tr.total > 0 ? `<button type="button" class="academy-btn secondary" style="width:100%;" data-jump-track="${escapeHTML(tr.id)}">${ico("arrow-up-left", 15)} الذهاب لمحاضرات الكورس</button>` : ""}
           </div>
         `).join("")}
       </div>
@@ -1453,10 +1689,10 @@
     const content = $("academyContent");
     content.innerHTML = `
       <div class="academy-card">
-        <h3>📝 إضافة ملاحظة دراسية</h3>
+        <h3>${ico("file-pen-line", 19)} إضافة ملاحظة دراسية</h3>
         <input id="academyNoteTitle" class="academy-input" maxlength="120" placeholder="عنوان الملاحظة">
         <textarea id="academyNoteContent" class="academy-textarea" maxlength="10000" placeholder="اكتب ملاحظتك هنا..."></textarea>
-        <button class="academy-btn" id="academySaveNote">حفظ الملاحظة</button>
+        <button class="academy-btn" id="academySaveNote">${ico("save", 15)} حفظ الملاحظة</button>
       </div>
       <h3 style="margin-top:16px;">ملاحظاتي المحفوظة</h3>
       <div class="academy-grid">
@@ -1464,19 +1700,20 @@
           <div class="academy-card">
             <h3>${escapeHTML(note.title || "ملاحظة بدون عنوان")}</h3>
             <p style="white-space:pre-wrap">${escapeHTML(note.content || "")}</p>
-            <button class="academy-btn danger" data-delete-note="${escapeHTML(note.id)}">حذف</button>
+            <button class="academy-btn danger" data-delete-note="${escapeHTML(note.id)}">${ico("trash-2", 14)} حذف</button>
           </div>
         `).join("") : '<div class="academy-empty">لا توجد ملاحظات محفوظة حتى الآن.</div>'}
       </div>
     `;
     $("academySaveNote").addEventListener("click", saveNote);
+    refreshAcademyIcons(content);
   }
 
   function renderMemory() {
     const content = $("academyContent");
     content.innerHTML = `
       <div class="academy-card">
-        <h3>🧠 الذاكرة التعليمية الشخصية</h3>
+        <h3>${ico("brain", 19)} الذاكرة التعليمية الشخصية</h3>
         <p class="academy-muted">احفظ معلومات أو نقاطًا تريد الرجوع إليها لاحقًا. هذه الذاكرة خاصة بحسابك.</p>
         <textarea id="academyMemoryContent" class="academy-textarea" maxlength="10000" placeholder="اكتب المعلومة التي تريد حفظها..."></textarea>
         <select id="academyMemoryCategory" class="academy-input">
@@ -1487,7 +1724,7 @@
           <option value="programming">البرمجة</option>
           <option value="study">ملاحظات دراسية</option>
         </select>
-        <button class="academy-btn" id="academySaveMemory">حفظ في الذاكرة</button>
+        <button class="academy-btn" id="academySaveMemory">${ico("save", 15)} حفظ في الذاكرة</button>
       </div>
       <h3 style="margin-top:16px;">المعلومات المحفوظة</h3>
       <div class="academy-grid">
@@ -1495,12 +1732,13 @@
           <div class="academy-card">
             <div class="academy-muted">${escapeHTML(item.category || "general")}</div>
             <p style="white-space:pre-wrap">${escapeHTML(item.content || "")}</p>
-            <button class="academy-btn danger" data-delete-memory="${escapeHTML(item.id)}">حذف</button>
+            <button class="academy-btn danger" data-delete-memory="${escapeHTML(item.id)}">${ico("trash-2", 14)} حذف</button>
           </div>
         `).join("") : '<div class="academy-empty">ذاكرتك التعليمية فارغة حاليًا.</div>'}
       </div>
     `;
     $("academySaveMemory").addEventListener("click", saveMemory);
+    refreshAcademyIcons(content);
   }
 
   function renderTeacher() {
@@ -1509,11 +1747,11 @@
     content.innerHTML = `
       <section class="academy-teacher">
         <header class="teacher-header">
-          <div class="teacher-avatar">👨‍🏫</div>
+          <div class="teacher-avatar">${ico("bot", 24)}</div>
           <div>
             <h3>GEO Teacher</h3>
             <p>مدرسك الذكي في الجغرافيا والجيوماتكس</p>
-            <span class="teacher-online">● متصل بالمحرك الذكي</span>
+            <span class="teacher-online">${ico("radio", 13)} متصل بالمحرك الذكي</span>
           </div>
         </header>
         <div class="teacher-subject">
@@ -1531,19 +1769,22 @@
         </div>
         <div id="academyTeacherMessages" class="academy-teacher-messages" aria-live="polite">
           <div class="teacher-welcome">
-            <div class="teacher-avatar">👨‍🏫</div>
+            <div class="teacher-avatar">${ico("bot", 22)}</div>
             <div class="teacher-bubble">
-              <strong>أهلاً بك في GEO Teacher!</strong>
+              <strong>أهلاً بك في GEO Teacher</strong>
               <p>أنا مدرسك الذكي. اسألني عن أي درس وسأشرحه لك خطوة بخطوة مع الأمثلة والتطبيقات.</p>
             </div>
           </div>
         </div>
         <div class="teacher-composer">
           <textarea id="academyTeacherQuestion" class="academy-textarea" rows="3" placeholder="اكتب سؤالك أو اسم الدرس هنا..."></textarea>
-          <button type="button" class="academy-btn" id="academyTeacherSend" style="width:100%;">إرسال السؤال ➤</button>
+          <button type="button" class="academy-btn" id="academyTeacherSend" style="width:100%;">
+            ${ico("send", 15)} إرسال السؤال
+          </button>
         </div>
       </section>
     `;
+    refreshAcademyIcons(content);
   }
 
   function renderSmartSearch() {
@@ -1551,22 +1792,25 @@
     if (!content) return;
     content.innerHTML = `
       <div class="academy-card academy-search-box">
-        <h3>🔎 الباحث الذكي عن الكورسات</h3>
+        <h3>${ico("search", 19)} الباحث الذكي عن الكورسات</h3>
         <p class="academy-muted">ابحث عن كورسات حقيقية من YouTube والمنصات التعليمية والمواقع الرسمية.</p>
         <textarea id="academySmartQuery" class="academy-textarea" rows="4"
           placeholder="مثال: ابحث عن أفضل كورسات AutoCAD من الصفر باللغة العربية، المجانية والمدفوعة..."></textarea>
-        <button type="button" class="academy-btn" id="academySmartSearchBtn" style="margin-top:12px;width:100%">🔍 ابدأ البحث الذكي</button>
+        <button type="button" class="academy-btn" id="academySmartSearchBtn" style="margin-top:12px;width:100%">
+          ${ico("search", 16)} ابدأ البحث الذكي
+        </button>
       </div>
       <div id="academySmartResults" class="academy-results-box" style="margin-top:16px;width:100%"></div>
     `;
+    refreshAcademyIcons(content);
   }
 
   function renderTab() {
-         const sec = $("s-academy");
-    if (sec) sec.dataset.currentTab = activeTab;
-
     const content = $("academyContent");
     if (!content) return;
+
+    const sec = $("s-academy");
+    if (sec) sec.dataset.currentTab = activeTab;
 
     document.querySelectorAll("[data-academy-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.academyTab === activeTab);
@@ -1612,6 +1856,8 @@
     setStatus(
       isAdminUser
         ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات مفعّلة."
+        : isCourseManagerUser
+        ? "مرحباً بك (محاضر / منسق كورسات) — يمكنك رفع وتعديل الدورات والمحاضرين."
         : hasCoursesAccess
         ? "مرحباً بك — اشتراك الكورسات مفعّل بالكود الخاص بك."
         : isProSubscriber
@@ -1628,7 +1874,7 @@
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
-      if (!isAdminUser) return;
+      if (!canManageCourses()) return;
 
       const btn = $("instSaveBtn");
       const name = $("instName")?.value.trim();
@@ -1644,7 +1890,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = "⏳ جاري حفظ بطاقة المحاضر...";
+      btn.textContent = "جاري حفظ بطاقة المحاضر...";
 
       try {
         const instObj = {
@@ -1667,13 +1913,14 @@
         }
 
         localStorage.setItem("gd_academy_instructors", JSON.stringify(instructorsList));
-        notify("✔ تم إضافة بطاقة المحاضر بنجاح!", "success");
+        notify("تم إضافة بطاقة المحاضر بنجاح.", "success");
         renderCourses();
       } catch (err) {
         notify("خطأ أثناء حفظ المحاضر: " + (err.message || ""), "error");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="save"></i> حفظ ونشر بطاقة المحاضر`;
+        btn.innerHTML = `${ico("save", 17)} حفظ ونشر بطاقة المحاضر`;
+        refreshAcademyIcons(btn);
       }
     });
   }
@@ -1685,7 +1932,7 @@
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
-      if (!isAdminUser) return;
+      if (!canManageCourses()) return;
 
       const btn = $("acUpSubmitBtn");
       const title = $("acUpTitle")?.value.trim();
@@ -1703,7 +1950,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = "⏳ جاري النشر وإرسال الإشعار للمستخدمين...";
+      btn.textContent = "جاري النشر وإرسال الإشعار للمستخدمين...";
 
       try {
         const hasBucket = !!(window.firebase && firebase.app && firebase.app().options && firebase.app().options.storageBucket);
@@ -1735,6 +1982,8 @@
           pdfUrl,
           pdfName,
           driveUrl: driveUrl || "",
+          likes: [],
+          dislikes: [],
           authorEmail: currentUser.email || ADMIN_EMAIL,
           createdAt: Date.now()
         };
@@ -1749,14 +1998,97 @@
 
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
         renderSmartNotificationBanner();
-        notify("✔ تم نشر المحاضرة باسم المحاضر وإرسال إشعار ذكي للجميع!", "success");
+        notify("تم نشر المحاضرة باسم المحاضر وإرسال إشعار للجميع.", "success");
         renderCourses();
       } catch (err) {
         notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="plus-circle"></i> نشر المحاضرة وإرسال إشعار للمستخدمين`;
+        btn.innerHTML = `${ico("plus-circle", 17)} نشر المحاضرة وإرسال إشعار للمستخدمين`;
         refreshAcademyIcons(form);
+      }
+    });
+  }
+
+  function bindEditCourseForm() {
+    const form = $("academyEditCourseForm");
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!canManageCourses()) return;
+
+      const courseId = form.dataset.editCourseId;
+      const existing = uploadedCourses.find(c => c.id === courseId);
+      if (!existing) return;
+
+      const btn = $("edCourseSaveBtn");
+      const title = $("edCourseTitle")?.value.trim();
+      const instructorName = $("edCourseInstructor")?.value.trim();
+      const category = $("edCourseCategory")?.value || existing.category;
+      const desc = $("edCourseDesc")?.value.trim();
+      let videoUrl = $("edCourseVideoUrl")?.value.trim() || "";
+      const driveUrl = $("edCourseDriveUrl")?.value.trim() || "";
+      const videoFile = $("edCourseVideoFile")?.files?.[0];
+      const pdfFile = $("edCoursePdfFile")?.files?.[0];
+
+      if (!title || !desc || !instructorName) {
+        return notify("اكتب عنوان المحاضرة واسم المحاضر والوصف.", "error");
+      }
+
+      btn.disabled = true;
+      btn.textContent = "جاري حفظ التعديلات...";
+
+      try {
+        const hasBucket = !!(window.firebase && firebase.app && firebase.app().options && firebase.app().options.storageBucket);
+
+        if (videoFile) {
+          if (videoFile.size > 500 * 1024 * 1024) throw new Error("حجم الفيديو يتجاوز 500 ميجابايت.");
+          if (!hasBucket) throw new Error("رفع الملفات المباشر غير مفعّل؛ ضع رابط الفيديو في خانة الرابط.");
+          const ref = firebase.storage().ref(`academy_courses_videos/${Date.now()}_${videoFile.name}`);
+          await ref.put(videoFile);
+          videoUrl = await ref.getDownloadURL();
+        }
+
+        let pdfUrl = existing.pdfUrl || "";
+        let pdfName = existing.pdfName || "";
+        if (pdfFile) {
+          if (!hasBucket) throw new Error("رفع PDF المباشر غير مفعّل؛ ضع رابط Drive في خانة الروابط.");
+          pdfName = pdfFile.name;
+          const pdfRef = firebase.storage().ref(`academy_courses_pdfs/${Date.now()}_${pdfFile.name}`);
+          await pdfRef.put(pdfFile);
+          pdfUrl = await pdfRef.getDownloadURL();
+        }
+
+        const updatedFields = {
+          title,
+          instructorName,
+          category,
+          desc,
+          videoUrl,
+          driveUrl,
+          pdfUrl,
+          pdfName,
+          updatedAt: Date.now()
+        };
+
+        const db = getDb();
+        if (db) {
+          await db.collection("geodev_academy_courses").doc(courseId).update(updatedFields);
+        }
+
+        Object.assign(existing, updatedFields);
+        localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+        isEditingCourseMode = false;
+        notify("تم حفظ تعديلات المحاضرة بنجاح.", "success");
+        renderCourses();
+      } catch (err) {
+        notify("حدث خطأ أثناء التعديل: " + (err.message || ""), "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ico("save", 17)} حفظ التعديلات على المحاضرة`;
+        refreshAcademyIcons(btn);
       }
     });
   }
@@ -1816,20 +2148,20 @@
       if (!["https:", "http:"].includes(parsed.protocol)) throw new Error("Invalid URL");
       host = parsed.hostname.toLowerCase().replace(/^www\./, "");
     } catch (_) {
-      return { name: "مصدر تعليمي", emoji: "🌐", icon: "" };
+      return { name: "مصدر تعليمي", iconName: "globe", icon: "" };
     }
     const platforms = [
-      { match: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/, name: "YouTube", emoji: "▶️" },
-      { match: /(^|\.)coursera\.org$/, name: "Coursera", emoji: "🎓" },
-      { match: /(^|\.)udemy\.com$/, name: "Udemy", emoji: "🟣" },
-      { match: /(^|\.)autodesk\.com$/, name: "Autodesk", emoji: "🅰️" },
-      { match: /(^|\.)edx\.org$/, name: "edX", emoji: "🎓" },
-      { match: /(^|\.)esri\.com$/, name: "Esri", emoji: "🌍" }
+      { match: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/, name: "YouTube", iconName: "play-circle" },
+      { match: /(^|\.)coursera\.org$/, name: "Coursera", iconName: "graduation-cap" },
+      { match: /(^|\.)udemy\.com$/, name: "Udemy", iconName: "book-open" },
+      { match: /(^|\.)autodesk\.com$/, name: "Autodesk", iconName: "drafting-compass" },
+      { match: /(^|\.)edx\.org$/, name: "edX", iconName: "graduation-cap" },
+      { match: /(^|\.)esri\.com$/, name: "Esri", iconName: "globe" }
     ];
     const found = platforms.find(p => p.match.test(host));
     return {
       name: found ? found.name : host,
-      emoji: found ? found.emoji : "🌐",
+      iconName: found ? found.iconName : "globe",
       icon: "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(host) + "&sz=64"
     };
   }
@@ -1846,10 +2178,10 @@
   function renderSearchResults(data) {
     const results = Array.isArray(data.results) ? data.results : [];
     const analysis = data.analysis
-      ? `<div class="academy-card" style="margin-bottom:14px"><h3>🤖 تحليل GEO AI</h3><div class="academy-analysis">${renderAnalysisMarkdown(data.analysis)}</div></div>`
+      ? `<div class="academy-card" style="margin-bottom:14px"><h3>${ico("cpu", 18)} تحليل GEO AI</h3><div class="academy-analysis">${renderAnalysisMarkdown(data.analysis)}</div></div>`
       : "";
     const summary = data.answer
-      ? `<div class="academy-card" style="margin-bottom:14px"><h3>📝 ملخص البحث</h3><p>${escapeHTML(data.answer)}</p></div>`
+      ? `<div class="academy-card" style="margin-bottom:14px"><h3>${ico("file-text", 18)} ملخص البحث</h3><p>${escapeHTML(data.answer)}</p></div>`
       : "";
 
     const cards = results.map((item, index) => {
@@ -1860,7 +2192,7 @@
       const icon = platform.icon
         ? `<img class="academy-platform-icon" src="${platform.icon}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
         : "";
-      const fallback = `<span class="academy-platform-fallback" style="${platform.icon ? "display:none" : ""}">${escapeHTML(platform.emoji)}</span>`;
+      const fallback = `<span class="academy-platform-fallback" style="${platform.icon ? "display:none" : ""}">${ico(platform.iconName, 18)}</span>`;
 
       return `
         <article class="academy-course-result">
@@ -1874,12 +2206,12 @@
           </div>
           <h4>${index + 1}. ${title}</h4>
           <p>${description}</p>
-          ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;margin-top:auto">فتح المصدر على ${escapeHTML(platform.name)} ↗</a>` : `<span class="academy-muted">الرابط غير متاح</span>`}
+          ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="academy-btn" style="width:100%;margin-top:auto">${ico("external-link", 15)} فتح المصدر على ${escapeHTML(platform.name)}</a>` : `<span class="academy-muted">الرابط غير متاح</span>`}
         </article>
       `;
     }).join("");
 
-    return `<h3>🎓 نتائج البحث (${results.length})</h3><div class="academy-search-grid">${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}</div>${summary}${analysis}`;
+    return `<h3 style="display:flex;align-items:center;gap:7px;">${ico("graduation-cap", 19)} نتائج البحث (${results.length})</h3><div class="academy-search-grid">${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}</div>${summary}${analysis}`;
   }
 
   function bindEvents() {
@@ -1887,10 +2219,28 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
-      // 1. زر تفعيل كود الكورسات داخل المحاضرة
       if (event.target.closest("#academyRedeemCourseCodeBtn")) {
         const val = $("academyCourseCodeInput")?.value || "";
         await redeemCourseCode(val);
+        return;
+      }
+
+      const reactBtn = event.target.closest("[data-react-lecture]");
+      if (reactBtn) {
+        const type = reactBtn.dataset.reactLecture;
+        const cId = reactBtn.dataset.courseId;
+        await toggleLectureReaction(cId, type);
+        return;
+      }
+
+      if (event.target.closest("#academyToggleEditCourseBtn")) {
+        isEditingCourseMode = !isEditingCourseMode;
+        renderCourses();
+        return;
+      }
+      if (event.target.closest("#cancelEditCourseBtn")) {
+        isEditingCourseMode = false;
+        renderCourses();
         return;
       }
 
@@ -1913,13 +2263,14 @@
           coursesSubView = "lectures";
           selectedTrackFilter = targetLecture.category || "all";
           selectedInstructorFilter = "all";
+          isEditingCourseMode = false;
           if (isLectureUnlocked(targetLecture)) {
             await checkUserSubscriptionsStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
             videoFinishedWatching = false;
             await loadCommentsForCourse(selectedCourseDetailId);
           } else {
-            notify("🔒 هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
+            notify("هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
           }
           renderTab();
         }
@@ -1958,7 +2309,7 @@
       }
 
       const delInstBtn = event.target.closest("[data-delete-instructor]");
-      if (delInstBtn && isAdminUser) {
+      if (delInstBtn && canManageCourses()) {
         if (!confirm("هل تريد حذف بطاقة المحاضر؟")) return;
         const instId = delInstBtn.dataset.deleteInstructor;
         const db = getDb();
@@ -1976,6 +2327,7 @@
       if (trackBtn) {
         selectedTrackFilter = trackBtn.dataset.filterTrack;
         selectedCourseDetailId = null;
+        isEditingCourseMode = false;
         renderCourses();
         return;
       }
@@ -1986,6 +2338,7 @@
         coursesSubView = "lectures";
         selectedTrackFilter = jumpTrackBtn.dataset.jumpTrack;
         selectedCourseDetailId = null;
+        isEditingCourseMode = false;
         renderTab();
         return;
       }
@@ -1995,11 +2348,12 @@
         const lectureId = openCourseBtn.dataset.openUploadedCourse;
         const lectureObj = uploadedCourses.find(c => c.id === lectureId);
         if (!lectureObj || !isLectureUnlocked(lectureObj)) {
-          notify("🔒 يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
+          notify("يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
           return;
         }
         await checkUserSubscriptionsStatus(currentUser);
         selectedCourseDetailId = lectureId;
+        isEditingCourseMode = false;
         videoFinishedWatching = false;
         await loadCommentsForCourse(selectedCourseDetailId);
         renderCourses();
@@ -2018,6 +2372,7 @@
 
       if (event.target.closest("#academyCloseCourseDetail")) {
         selectedCourseDetailId = null;
+        isEditingCourseMode = false;
         clearTimeout(ytWatchTimer);
         renderCourses();
         return;
@@ -2044,7 +2399,7 @@
             await db.collection("geodev_academy_courses").doc(courseId).collection("comments").add(commentObj);
           }
           await loadCommentsForCourse(courseId);
-          notify("تم نشر تعليقك بنجاح!", "success");
+          notify("تم نشر تعليقك بنجاح.", "success");
           renderCourses();
         } catch (err) {
           notify("تعذر نشر التعليق: " + (err.message || ""), "error");
@@ -2070,7 +2425,7 @@
       }
 
       const delCourseBtn = event.target.closest("[data-delete-uploaded-course]");
-      if (delCourseBtn && isAdminUser) {
+      if (delCourseBtn && canManageCourses()) {
         if (!confirm("هل تريد حذف هذه المحاضرة نهائياً؟")) return;
         const courseId = delCourseBtn.dataset.deleteUploadedCourse;
         const db = getDb();
@@ -2079,7 +2434,10 @@
         }
         uploadedCourses = uploadedCourses.filter(c => c.id !== courseId);
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
-        if (selectedCourseDetailId === courseId) selectedCourseDetailId = null;
+        if (selectedCourseDetailId === courseId) {
+          selectedCourseDetailId = null;
+          isEditingCourseMode = false;
+        }
         notify("تم حذف المحاضرة بنجاح.", "success");
         renderCourses();
         return;
@@ -2094,17 +2452,19 @@
           return;
         }
         smartBtn.disabled = true;
-        smartBtn.textContent = "⏳ جاري البحث والتحليل...";
+        smartBtn.textContent = "جاري البحث والتحليل...";
         output.textContent = "يبحث GEO 5.2 ULTRA على الويب، ثم يحلل GEO 3.8 FLASH النتائج...";
         try {
           const data = await window.GEOAcademyEngines.search(query);
           if (!data || data.success === false) throw new Error(data?.message || "لم يتم إرجاع نتائج البحث.");
           output.innerHTML = renderSearchResults(data);
+          refreshAcademyIcons(output);
         } catch (error) {
           output.textContent = "حدث خطأ: " + (error.message || "تعذر البحث.");
         } finally {
           smartBtn.disabled = false;
-          smartBtn.textContent = "🔍 ابدأ البحث الذكي";
+          smartBtn.innerHTML = `${ico("search", 16)} ابدأ البحث الذكي`;
+          refreshAcademyIcons(smartBtn);
         }
         return;
       }
@@ -2122,7 +2482,7 @@
         if (!messagesBox || !window.GEOAcademyEngines?.teacherChat) return notify("محرك المدرس الذكي غير متصل.", "error");
 
         teacherBtn.disabled = true;
-        teacherBtn.textContent = "⏳ جاري إعداد الإجابة...";
+        teacherBtn.textContent = "جاري إعداد الإجابة...";
 
         const userRow = document.createElement("div");
         userRow.className = "teacher-message teacher-user";
@@ -2138,7 +2498,7 @@
         loading.className = "teacher-message teacher-assistant";
         const loadingBubble = document.createElement("div");
         loadingBubble.className = "teacher-bubble";
-        loadingBubble.textContent = "⏳ المدرس يجهز الشرح...";
+        loadingBubble.textContent = "المدرس يجهز الشرح...";
         loading.appendChild(loadingBubble);
         messagesBox.appendChild(loading);
         messagesBox.scrollTop = messagesBox.scrollHeight;
@@ -2152,7 +2512,7 @@
           assistantRow.className = "teacher-message teacher-assistant";
           const avatar = document.createElement("div");
           avatar.className = "teacher-avatar";
-          avatar.textContent = "👨‍🏫";
+          avatar.innerHTML = ico("bot", 22);
           const assistantBubble = document.createElement("div");
           assistantBubble.className = "teacher-bubble";
           const teacherName = document.createElement("strong");
@@ -2166,6 +2526,7 @@
           assistantRow.appendChild(avatar);
           assistantRow.appendChild(assistantBubble);
           messagesBox.appendChild(assistantRow);
+          refreshAcademyIcons(assistantRow);
 
           questionInput.value = "";
           messagesBox.scrollTop = messagesBox.scrollHeight;
@@ -2175,7 +2536,8 @@
           notify(error.message || "حدث خطأ أثناء سؤال المدرس.", "error");
         } finally {
           teacherBtn.disabled = false;
-          teacherBtn.textContent = "إرسال السؤال ➤";
+          teacherBtn.innerHTML = `${ico("send", 15)} إرسال السؤال`;
+          refreshAcademyIcons(teacherBtn);
         }
         return;
       }
