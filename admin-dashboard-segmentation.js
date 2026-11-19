@@ -1,18 +1,21 @@
 /* ============================================================================
-   مخزن الحسابات الشامل (دمج Firestore + Worker) + الرسم البياني للدخول والخروج + أكواد الكورسات
+   لوحة الإدارة ومخزن الحسابات + صلاحية عرض الإحصائيات فقط لمنسق الكورسات (Course Manager)
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOAdminDashboardSegV4Init) return;
-  window.GEOAdminDashboardSegV4Init = true;
+  if (window.GEOAdminDashboardSegV5Init) return;
+  window.GEOAdminDashboardSegV5Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const DAY_MS = 24 * 60 * 60 * 1000;
 
+  let isSuperAdmin = false;
+  let isCourseManager = false;
   let firestoreUsersMap = new Map();
   let workerUsersMap = new Map();
   let mergedUsersList = [];
   let courseCodesList = [];
+  let courseManagersList = [];
   let dailyActivityStats = [];
   let currentCategoryFilter = "all_warehouse";
   let searchQuery = "";
@@ -116,16 +119,8 @@
         min-height: 4px;
         transition: height .3s ease;
       }
-      .gd-chart-num {
-        font-size: 10px;
-        font-weight: 900;
-        color: #334155;
-      }
-      .gd-chart-day {
-        font-size: 10px;
-        font-weight: 800;
-        color: #64748b;
-      }
+      .gd-chart-num { font-size: 10px; font-weight: 900; color: #334155; }
+      .gd-chart-day { font-size: 10px; font-weight: 800; color: #64748b; }
       .gd-chart-legend {
         display: flex;
         gap: 14px;
@@ -231,7 +226,6 @@
       .gd-admin-btn.courses-btn { background: #7c3aed; color: #fff; }
       .gd-admin-btn.demote { background: #dc2626; color: #fff; }
 
-      /* أكواد الكورسات */
       .gd-cc-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -289,6 +283,11 @@
         font-size: 12px;
       }
 
+      /* إخفاء بطاقة إنشاء أكواد GEO الأصلية عن منسق الكورسات */
+      body.gd-course-mgr-restricted #adminPanel .gd-hide-for-course-mgr {
+        display: none !important;
+      }
+
       body.dark-mode #gdLoginLogoutChartCard,
       body.dark-mode #gdAdminDashboardSection,
       body.dark-mode #gdCourseCodeGenCard,
@@ -344,7 +343,38 @@
     return 0;
   }
 
-  // دمج مستخدمي Firestore مع مستخدمي Cloudflare Worker لإظهار الـ 331+ حساب بالكامل
+  // إظهار تبويب "الإدارة" وإحصائيات المنصة لمنسق الكورسات مع إخفاء بطاقة إنشاء أكواد GEO عنه
+  function applyCourseManagerAdminViewRestrictions() {
+    if (!isCourseManager || isSuperAdmin) return;
+
+    document.body.classList.add("gd-course-mgr-restricted");
+
+    // إظهار زر الإدارة في شريط التنقل
+    const adminNavBtn = document.querySelector('[data-t="admin"]');
+    if (adminNavBtn) {
+      adminNavBtn.style.display = "";
+      adminNavBtn.hidden = false;
+    }
+
+    // إخفاء بطاقة إنشاء أكواد GEO وإعدادات القفل عن منسق الكورسات
+    const adminPanel = document.getElementById("adminPanel") || document.getElementById("admin");
+    if (adminPanel) {
+      adminPanel.style.display = "";
+      adminPanel.classList.remove("hidden");
+      const cards = Array.from(adminPanel.querySelectorAll(".card, div"));
+      cards.forEach(card => {
+        const txt = card.textContent || "";
+        if (
+          (txt.includes("إنشاء كود") && !txt.includes("الكورسات")) ||
+          txt.includes("لوحة الإعدادات") ||
+          txt.includes("استيراد وتنسيق كورسات")
+        ) {
+          card.classList.add("gd-hide-for-course-mgr");
+        }
+      });
+    }
+  }
+
   function rebuildMergedUsers() {
     const byKey = new Map();
 
@@ -396,6 +426,8 @@
   }
 
   function renderCourseCodeGeneratorHTML() {
+    if (!isSuperAdmin) return "";
+
     const recentCodesHtml = courseCodesList.slice(0, 15).map(item => {
       const statusBadge = item.used
         ? `<span style="background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:6px;font-weight:800;">مُستخدم (${escapeHTML(item.usedByEmail || "مستخدم")})</span>`
@@ -419,7 +451,7 @@
     }).join("");
 
     return `
-      <h3 class="gd-admin-title">🎓 إنشاء كود للكورسات (خاص بالأكاديمية)</h3>
+      <h3 class="gd-admin-title">إنشاء كود للكورسات (خاص بالأكاديمية)</h3>
       <p style="margin:4px 0 8px;font-size:12.5px;opacity:.85;">
         هذا الكود مخصص لفتح فيديوهات وملفات الكورسات في الأكاديمية فقط (منفصل عن اشتراك PRO).
       </p>
@@ -446,7 +478,7 @@
 
       <button type="button" id="gdCreateCourseCodeBtn" onclick="window.GEOAdminSegActions.createCourseCode()"
         style="width:100%;background:#7c3aed;color:#ffffff;border:none;border-radius:11px;padding:11px;font-size:13.5px;font-weight:900;cursor:pointer;font-family:inherit;">
-        🎟️ إنشاء كود للكورسات الآن
+        إنشاء كود للكورسات الآن
       </button>
 
       ${lastGeneratedCourseCode ? `
@@ -456,30 +488,59 @@
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
             <button type="button" onclick="window.GEOAdminSegActions.copyCode('${escapeHTML(lastGeneratedCourseCode)}')"
               style="background:#e09f24;color:#0f172a;border:0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:900;cursor:pointer;">
-              📋 نسخ الكود
+              نسخ الكود
             </button>
             <a href="https://wa.me/?text=${encodeURIComponent("كود تفعيل الكورسات الخاص بك في منصة GeoDev Studio Pro:\n" + lastGeneratedCourseCode + "\nادخل على قسم الأكاديمية > الكورسات والدورات وأدخل الكود لفتح الفيديوهات.")}"
               target="_blank" rel="noopener"
               style="background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:900;">
-              💬 إرسال عبر واتساب
+              إرسال عبر واتساب
             </a>
           </div>
         </div>
       ` : ""}
 
       ${courseCodesList.length ? `
-        <div style="margin-top:12px;font-size:12.5px;font-weight:900;">📋 سجل أكواد الكورسات (${courseCodesList.length}):</div>
+        <div style="margin-top:12px;font-size:12.5px;font-weight:900;">سجل أكواد الكورسات (${courseCodesList.length}):</div>
         <div class="gd-cc-list">${recentCodesHtml}</div>
+      ` : ""}
+
+      <hr style="border-color:#cbd5e1;margin:16px 0;">
+      <h3 class="gd-admin-title">منح صلاحية منسق كورسات (يرفع كورسات ويرى الإحصائيات فقط)</h3>
+      <p style="margin:4px 0 8px;font-size:12px;opacity:.85;">
+        الحسابات المضافة هنا ترى إحصائيات الزوار وحركة الدخول وترفع المحاضرات فقط، ولا يمكنها إنشاء أي أكواد اشتراكات أو تعديل حسابات المستخدمين.
+      </p>
+      <div class="gd-cc-grid">
+        <input type="email" id="gdCourseManagerEmail" class="gd-cc-input" placeholder="البريد الإلكتروني للمحاضر (Gmail)" style="direction:ltr;">
+        <input type="text" id="gdCourseManagerName" class="gd-cc-input" placeholder="اسم المحاضر (مثال: م. عمرو أشرف)">
+      </div>
+      <button type="button" onclick="window.GEOAdminSegActions.addCourseManager()"
+        style="width:100%;background:#0284c7;color:#fff;border:none;border-radius:11px;padding:10px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">
+        منح صلاحية منسق كورسات لهذا الحساب
+      </button>
+
+      ${courseManagersList.length ? `
+        <div class="gd-cc-list" style="margin-top:10px;">
+          ${courseManagersList.map(m => `
+            <div class="gd-cc-item">
+              <div>
+                <strong>${escapeHTML(m.name || "")}</strong>
+                <div style="font-size:11px;color:#64748b;direction:ltr;">${escapeHTML(m.email)}</div>
+              </div>
+              <button type="button" onclick="window.GEOAdminSegActions.removeCourseManager('${escapeHTML(m.email)}')"
+                style="background:#dc2626;color:#fff;border:0;border-radius:7px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer;">
+                سحب الصلاحية
+              </button>
+            </div>
+          `).join("")}
+        </div>
       ` : ""}
     `;
   }
 
-  // حقن الرسم البياني للدخول والخروج + مخزن الحسابات بعد بطاقة "إحصائيات المنصة" مباشرة حتى لا تختفي الرسوم البيانية
   function getAdminAnchorElement() {
     const adminRoot = document.getElementById("adminPanel") || document.getElementById("admin") || document.getElementById("adminView");
     if (!adminRoot) return null;
 
-    // البحث عن بطاقة "إحصائيات المنصة" الأصلية لوضع الإضافات بعدها مباشرة
     const cards = Array.from(adminRoot.querySelectorAll(".card, div"));
     const statsCard = cards.find(el => {
       const h = el.querySelector("h3, h4");
@@ -505,7 +566,6 @@
       }
     }
 
-    // بناء بيانات آخر 7 أيام للدخول والخروج
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(Date.now() - i * DAY_MS);
@@ -519,7 +579,7 @@
 
     chartCard.innerHTML = `
       <div class="gd-admin-top-row" style="margin-bottom:4px;">
-        <h3 class="gd-admin-title">📈 الرسم البياني لحركة الدخول والخروج اليومية (آخر 7 أيام)</h3>
+        <h3 class="gd-admin-title">الرسم البياني لحركة الدخول والخروج اليومية (آخر 7 أيام)</h3>
       </div>
       <div class="gd-chart-legend">
         <span style="color:#16a34a;">■ تسجيل الدخول اليومي</span>
@@ -546,6 +606,12 @@
   }
 
   function mountCourseCodeGeneratorCard() {
+    if (!isSuperAdmin) {
+      const existing = document.getElementById("gdCourseCodeGenCard");
+      if (existing) existing.remove();
+      return;
+    }
+
     const anchor = getAdminAnchorElement();
     if (!anchor) return;
 
@@ -572,6 +638,7 @@
   }
 
   function renderAdminDashboard() {
+    applyCourseManagerAdminViewRestrictions();
     renderLoginLogoutDailyChart();
     mountCourseCodeGeneratorCard();
 
@@ -593,13 +660,13 @@
     }
 
     const segments = {
-      all_warehouse: { count: mergedUsersList.length, label: "مخزن الحسابات الكلي", sub: "جميع الحسابات المسجلة" },
-      all_active: { count: 0, label: "الحسابات الشغالة دلوقتي", sub: "مشتركون + تجريبي نشط" },
+      all_warehouse: { count: mergedUsersList.length, label: "إجمالي الحسابات المسجلة", sub: "العدد الكلي بالمنصة" },
+      all_active: { count: 0, label: "الحسابات النشطة حالياً", sub: "مشتركون + تجريبي نشط" },
       pro: { count: 0, label: "حسابات الـ PRO", sub: "الاشتراك المدفوع" },
       pro_plus: { count: 0, label: "حسابات البرو بلس", sub: "باقة PRO Plus" },
       courses_active: { count: 0, label: "مشتركو الكورسات", sub: "مفعّل بكود الكورسات" },
-      trial_active: { count: 0, label: "الحسابات العادية (تجريبي)", sub: "فترة التجربة النشطة" },
-      trial_expired: { count: 0, label: "حسابات من غير اشتراك", sub: "منتهية / ملغاة" }
+      trial_active: { count: 0, label: "الحسابات التجريبية", sub: "فترة التجربة النشطة" },
+      trial_expired: { count: 0, label: "بدون اشتراك نشط", sub: "منتهية / ملغاة" }
     };
 
     const now = Date.now();
@@ -619,14 +686,41 @@
       }
     });
 
+    // إذا كان منسق كورسات: يرى ملخص الأعداد والإحصائيات فقط (بدون بيانات المستخدمين الخاصة أو أزرار التعديل)
+    if (!isSuperAdmin && isCourseManager) {
+      section.innerHTML = `
+        <div class="gd-admin-top-row">
+          <h3 class="gd-admin-title">مؤشرات وأحوال المنصة اليومية</h3>
+          <span style="font-size:11.5px;font-weight:800;background:#e0f2fe;color:#075985;padding:4px 10px;border-radius:8px;">
+            صلاحية منسق كورسات (عرض الإحصائيات وإضافة الدورات فقط)
+          </span>
+        </div>
+
+        <div class="gd-segment-grid">
+          ${Object.entries(segments)
+            .map(
+              ([, data]) => `
+            <div class="gd-segment-card" style="cursor:default;">
+              <div class="gd-segment-count">${data.count}</div>
+              <div class="gd-segment-label">${data.label}</div>
+              <div class="gd-segment-sub">${data.sub}</div>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      `;
+      return;
+    }
+
     const categoryNames = {
       all_warehouse: "مخزن الحسابات الكلي",
-      all_active: "الحسابات الشغالة دلوقتي",
+      all_active: "الحسابات النشطة حالياً",
       pro: "حسابات الـ PRO",
       pro_plus: "حسابات البرو بلس (PRO Plus)",
       courses_active: "الحسابات المفعّل لها الكورسات",
-      trial_active: "الحسابات العادية (التجريبية النشطة)",
-      trial_expired: "حسابات من غير اشتراك (منتهية / ملغاة)"
+      trial_active: "الحسابات التجريبية النشطة",
+      trial_expired: "حسابات بدون اشتراك نشط"
     };
 
     const q = searchQuery.trim().toLowerCase();
@@ -655,9 +749,9 @@
 
     section.innerHTML = `
       <div class="gd-admin-top-row">
-        <h3 class="gd-admin-title">🗄️ مخزن وتصنيف حسابات المنصة (${mergedUsersList.length} حساب)</h3>
+        <h3 class="gd-admin-title">مخزن وتصنيف حسابات المنصة (${mergedUsersList.length} حساب)</h3>
         <button type="button" class="gd-bulk-fix-btn" onclick="window.GEOAdminSegActions.enforce3DaysOnOldUsers()">
-          ⚡ تصفية القدامى وضبط الجميع على 3 أيام
+          تصفية القدامى وضبط الجميع على 3 أيام
         </button>
       </div>
       
@@ -675,11 +769,11 @@
           .join("")}
       </div>
 
-      <input type="text" class="gd-warehouse-search" placeholder="🔎 ابحث في مخزن الحسابات بالاسم أو البريد الإلكتروني..."
+      <input type="text" class="gd-warehouse-search" placeholder="ابحث في مخزن الحسابات بالاسم أو البريد الإلكتروني..."
         value="${escapeHTML(searchQuery)}" oninput="window.GEOAdminSegActions.searchWarehouse(this.value)">
 
       <div class="gd-users-section-header">
-        <span class="gd-users-section-title">👥 ${categoryNames[currentCategoryFilter]} (${filteredUsers.length} حساب)</span>
+        <span class="gd-users-section-title">${categoryNames[currentCategoryFilter]} (${filteredUsers.length} حساب)</span>
       </div>
 
       <div class="gd-user-cards-list">
@@ -690,12 +784,12 @@
             const hasCourses = Boolean(u.courses_active && (!coursesUntil || coursesUntil > now));
 
             let badgeHtml = "";
-            if (cat === "pro") badgeHtml = `<span class="gd-badge active-pro">💎 PRO فعال</span>`;
-            else if (cat === "pro_plus") badgeHtml = `<span class="gd-badge active-plus">👑 PRO Plus</span>`;
-            else if (cat === "trial_active") badgeHtml = `<span class="gd-badge trial-active">⏳ تجريبي نشط</span>`;
-            else badgeHtml = `<span class="gd-badge trial-expired">🚫 من غير اشتراك</span>`;
+            if (cat === "pro") badgeHtml = `<span class="gd-badge active-pro">PRO فعال</span>`;
+            else if (cat === "pro_plus") badgeHtml = `<span class="gd-badge active-plus">PRO Plus</span>`;
+            else if (cat === "trial_active") badgeHtml = `<span class="gd-badge trial-active">تجريبي نشط</span>`;
+            else badgeHtml = `<span class="gd-badge trial-expired">منتهي</span>`;
 
-            const coursesBadge = hasCourses ? `<span class="gd-badge courses-ok">🎓 كورسات مفعّلة</span>` : "";
+            const coursesBadge = hasCourses ? `<span class="gd-badge courses-ok">كورسات مفعّلة</span>` : "";
 
             const tEnd = parseTimestampMs(u.trial_end || u.trialEnd);
             const pEnd = parseTimestampMs(u.pro_until || u.proUntil || u.expiresAt);
@@ -708,21 +802,21 @@
             <div class="gd-admin-user-card">
               <div>
                 <div class="gd-auc-header">
-                  <span class="gd-auc-name">👤 ${escapeHTML(u.name || u.displayName || "مستخدم")}</span>
+                  <span class="gd-auc-name">${escapeHTML(u.name || u.displayName || "مستخدم")}</span>
                   <div style="display:flex;gap:4px;flex-wrap:wrap;">${badgeHtml}${coursesBadge}</div>
                 </div>
                 <div class="gd-auc-email">${escapeHTML(u.email || docId)}</div>
                 <div class="gd-auc-dates" style="margin-top: 6px;">
-                  ⏳ نهاية التجريبي: <b>${trialEndStr}</b><br>
-                  💳 نهاية البرو المدفوع: <b>${proEndStr}</b><br>
-                  🎓 اشتراك الكورسات: <b>${coursesEndStr}</b>
+                  نهاية التجريبي: <b>${trialEndStr}</b><br>
+                  نهاية البرو المدفوع: <b>${proEndStr}</b><br>
+                  اشتراك الكورسات: <b>${coursesEndStr}</b>
                 </div>
               </div>
 
               <div class="gd-auc-actions">
                 <button type="button" class="gd-admin-btn upgrade-pro" onclick="window.GEOAdminSegActions.changePlan('${docId}', 'pro', '${escapeHTML(u.email || "")}')">تفعيل PRO</button>
                 <button type="button" class="gd-admin-btn courses-btn" onclick="window.GEOAdminSegActions.toggleCoursesAccess('${docId}', ${!hasCourses}, '${escapeHTML(u.email || "")}')">
-                  ${hasCourses ? "إلغاء الكورسات" : "🎓 تفعيل الكورسات"}
+                  ${hasCourses ? "إلغاء الكورسات" : "تفعيل الكورسات"}
                 </button>
                 <button type="button" class="gd-admin-btn demote" onclick="window.GEOAdminSegActions.changePlan('${docId}', 'free', '${escapeHTML(u.email || "")}')">إلغاء الكل</button>
               </div>
@@ -735,7 +829,7 @@
       ${filteredUsers.length > visibleLimit ? `
         <button type="button" onclick="window.GEOAdminSegActions.loadMore()"
           style="width:100%;margin-top:12px;padding:10px;border-radius:11px;border:1.5px solid #e09f24;background:#fffbeb;color:#0f172a;font-weight:900;cursor:pointer;font-family:inherit;">
-          عرض المزيد من الحسابات (${filteredUsers.length - visibleLimit} متبقي) ▾
+          عرض المزيد من الحسابات (${filteredUsers.length - visibleLimit} متبقي)
         </button>
       ` : ""}
     `;
@@ -782,7 +876,6 @@
     const db = getFirestoreDb();
     if (!db) return;
 
-    // 1. جلب جميع حسابات Firestore
     db.collection("users").onSnapshot(
       snap => {
         firestoreUsersMap.clear();
@@ -793,10 +886,9 @@
         });
         rebuildMergedUsers();
       },
-      err => console.warn("Firestore users fetch error:", err)
+      () => {}
     );
 
-    // 2. جلب سجل الدخول والخروج اليومي للرسم البياني
     db.collection("gd_user_activity")
       .limit(500)
       .onSnapshot(
@@ -822,21 +914,33 @@
         () => {}
       );
 
-    // 3. جلب أكواد الكورسات
-    db.collection("geodev_course_codes")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(
-        snap => {
-          courseCodesList = [];
-          snap.forEach(doc => {
-            courseCodesList.push({ id: doc.id, ...doc.data() });
-          });
-          mountCourseCodeGeneratorCard();
-        },
-        () => {}
-      );
+    if (isSuperAdmin) {
+      db.collection("geodev_course_codes")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(
+          snap => {
+            courseCodesList = [];
+            snap.forEach(doc => {
+              courseCodesList.push({ id: doc.id, ...doc.data() });
+            });
+            mountCourseCodeGeneratorCard();
+          },
+          () => {}
+        );
 
-    // 4. جلب الحسابات الكاملة من Cloudflare Worker لدمجها مع Firestore
+      db.collection("geodev_course_managers")
+        .onSnapshot(
+          snap => {
+            courseManagersList = [];
+            snap.forEach(doc => {
+              courseManagersList.push({ id: doc.id, ...doc.data() });
+            });
+            mountCourseCodeGeneratorCard();
+          },
+          () => {}
+        );
+    }
+
     fetchWorkerUsersIfAvailable(user);
   }
 
@@ -859,6 +963,7 @@
     },
 
     async createCourseCode() {
+      if (!isSuperAdmin) return;
       const db = getFirestoreDb();
       if (!db) return alert("قاعدة البيانات غير متصلة.");
 
@@ -880,7 +985,7 @@
 
       if (btn) {
         btn.disabled = true;
-        btn.textContent = "⏳ جاري إنشاء الكود...";
+        btn.textContent = "جاري إنشاء الكود...";
       }
 
       try {
@@ -899,14 +1004,14 @@
         if (noteInput) noteInput.value = "";
         mountCourseCodeGeneratorCard();
         if (typeof window.toast === "function") {
-          window.toast("✔ تم إنشاء كود الكورسات بنجاح!", "success");
+          window.toast("تم إنشاء كود الكورسات بنجاح.", "success");
         }
       } catch (err) {
         alert("حدث خطأ أثناء إنشاء كود الكورسات: " + err.message);
       } finally {
         if (btn) {
           btn.disabled = false;
-          btn.textContent = "🎟️ إنشاء كود للكورسات الآن";
+          btn.textContent = "إنشاء كود للكورسات الآن";
         }
       }
     },
@@ -916,13 +1021,14 @@
         navigator.clipboard.writeText(code).catch(() => {});
       }
       if (typeof window.toast === "function") {
-        window.toast("📋 تم نسخ الكود: " + code, "success");
+        window.toast("تم نسخ الكود: " + code, "success");
       } else {
         alert("تم نسخ الكود: " + code);
       }
     },
 
     async deleteCourseCode(code) {
+      if (!isSuperAdmin) return;
       const db = getFirestoreDb();
       if (!db || !confirm("حذف كود الكورسات " + code + " نهائياً؟")) return;
       try {
@@ -932,7 +1038,53 @@
       }
     },
 
+    async addCourseManager() {
+      if (!isSuperAdmin) return;
+      const db = getFirestoreDb();
+      if (!db) return;
+      const emailInput = document.getElementById("gdCourseManagerEmail");
+      const nameInput = document.getElementById("gdCourseManagerName");
+      const email = String(emailInput?.value || "").trim().toLowerCase();
+      const name = String(nameInput?.value || "").trim();
+
+      if (!email || !email.includes("@")) {
+        return alert("من فضلك أدخل بريد إلكتروني صحيح.");
+      }
+
+      try {
+        await db.collection("geodev_course_managers").doc(email).set({
+          email: email,
+          name: name || email.split("@")[0],
+          enabled: true,
+          addedBy: ADMIN_EMAIL,
+          createdAt: Date.now()
+        });
+        if (emailInput) emailInput.value = "";
+        if (nameInput) nameInput.value = "";
+        if (typeof window.toast === "function") {
+          window.toast("تم منح صلاحية منسق الكورسات للحساب بنجاح.", "success");
+        }
+      } catch (err) {
+        alert("خطأ: " + err.message);
+      }
+    },
+
+    async removeCourseManager(email) {
+      if (!isSuperAdmin) return;
+      const db = getFirestoreDb();
+      if (!db || !confirm("هل تريد سحب صلاحية منسق الكورسات من " + email + "؟")) return;
+      try {
+        await db.collection("geodev_course_managers").doc(email).delete();
+        if (typeof window.toast === "function") {
+          window.toast("تم سحب الصلاحية بنجاح.", "success");
+        }
+      } catch (err) {
+        alert("خطأ: " + err.message);
+      }
+    },
+
     async toggleCoursesAccess(userId, enable, email) {
+      if (!isSuperAdmin) return;
       const db = getFirestoreDb();
       if (!db) return;
       try {
@@ -946,7 +1098,7 @@
           { merge: true }
         );
         if (typeof window.toast === "function") {
-          window.toast(enable ? "✔ تم تفعيل الكورسات لهذا الحساب (30 يوم)!" : "تم إلغاء اشتراك الكورسات للحساب.", "success");
+          window.toast(enable ? "تم تفعيل الكورسات لهذا الحساب (30 يوم)." : "تم إلغاء اشتراك الكورسات للحساب.", "success");
         }
       } catch (err) {
         alert("فشل التحديث: " + err.message);
@@ -954,6 +1106,7 @@
     },
 
     async changePlan(userId, planType, email) {
+      if (!isSuperAdmin) return;
       const db = getFirestoreDb();
       if (!db) return;
 
@@ -990,7 +1143,7 @@
       try {
         await userRef.set(updateData, { merge: true });
         if (typeof window.toast === "function") {
-          window.toast("تم تحديث حالة الحساب بنجاح!", "success");
+          window.toast("تم تحديث حالة الحساب بنجاح.", "success");
         }
       } catch (err) {
         alert("فشل تحديث الحساب: " + err.message);
@@ -998,6 +1151,7 @@
     },
 
     async enforce3DaysOnOldUsers() {
+      if (!isSuperAdmin) return;
       const db = getFirestoreDb();
       if (!db) return;
       if (!confirm("هل تريد تصفية جميع الحسابات القديمة ذات الـ 30 يوماً وتقليص أقصى فترة تجريبية غير مدفوعة إلى 3 أيام فقط؟")) return;
@@ -1033,15 +1187,29 @@
         }
       }
 
-      alert(`✔ تم تحديث وتصفية ${updatedCount} حساب بنجاح!`);
+      alert(`تم تحديث وتصفية ${updatedCount} حساب بنجاح.`);
     }
   };
 
-  function checkAdmin() {
+  function checkAdminOrCourseManager() {
     if (window.firebase && firebase.apps && firebase.apps.length) {
-      firebase.auth().onAuthStateChanged(user => {
-        const isAdminUser = user && user.email && user.email.toLowerCase() === ADMIN_EMAIL;
-        if (isAdminUser) {
+      firebase.auth().onAuthStateChanged(async user => {
+        isSuperAdmin = Boolean(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+        isCourseManager = false;
+
+        if (!isSuperAdmin && user && user.email) {
+          const db = getFirestoreDb();
+          if (db) {
+            try {
+              const snap = await db.collection("geodev_course_managers").doc(user.email.toLowerCase()).get();
+              if (snap.exists && snap.data().enabled === true) {
+                isCourseManager = true;
+              }
+            } catch (_) {}
+          }
+        }
+
+        if (isSuperAdmin || isCourseManager) {
           injectStyles();
           fetchAllUsersAndActivityLive(user);
           setTimeout(() => {
@@ -1049,6 +1217,7 @@
             renderAdminDashboard();
           }, 700);
         } else {
+          document.body.classList.remove("gd-course-mgr-restricted");
           ["gdLoginLogoutChartCard", "gdAdminDashboardSection", "gdCourseCodeGenCard"].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
@@ -1061,9 +1230,9 @@
   }
 
   function init() {
-    if (!checkAdmin()) {
+    if (!checkAdminOrCourseManager()) {
       const iv = setInterval(() => {
-        if (checkAdmin()) clearInterval(iv);
+        if (checkAdminOrCourseManager()) clearInterval(iv);
       }, 400);
       setTimeout(() => clearInterval(iv), 10000);
     }
