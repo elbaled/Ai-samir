@@ -1,9 +1,10 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الاحترافية المتكاملة (V6)
+   GEO Academy UI - النسخة الاحترافية المتكاملة (V7)
    - البطاقات الثماني الرئيسية للأكاديمية
    - قسم "الكورسات والدورات": بانر التخصصات الستة + اسم المحاضر + بطاقات المحاضرين التفصيلية
    - قفل تتابعي للمحاضرات + زر إكمال يظهر بعد مشاهدة الفيديو بالكامل
-   - ربط تلقائي مع "تقدمي التعليمي" + إشعارات ذكية + قفل الفيديوهات على المشتركين بالكود
+   - ربط تلقائي مع "تقدمي التعليمي" + إشعارات ذكية
+   - فتح الفيديوهات للمشتركين بالكود من جميع حقول Firebase وشارة PRO
    ============================================================================ */
 (function () {
   "use strict";
@@ -80,7 +81,6 @@
     }
   ];
 
-  // بيانات المحاضرين الافتراضية (ويمكن للأدمن إضافة أو تعديل أي محاضر من الواجهة)
   const defaultInstructors = [
     {
       id: "inst_ahmed_samir",
@@ -113,7 +113,7 @@
   let teacherMessages = [];
   let uploadedCourses = [];
   let instructorsList = [];
-  let coursesSubView = "lectures"; // 'lectures' | 'instructors'
+  let coursesSubView = "lectures";
   let selectedTrackFilter = "all";
   let selectedInstructorFilter = "all";
   let selectedCourseDetailId = null;
@@ -256,7 +256,6 @@
       #s-academy .hub-card-title { margin: 0; font-size: 15.5px; font-weight: 900; color: var(--tx, #f8fafc); }
       #s-academy .hub-card-desc { margin: 0; font-size: 12px; line-height: 1.65; color: var(--mt, #94a3b8); }
 
-      /* شريط التبديل الفرعي داخل قسم الكورسات (المحاضرات / المحاضرون) */
       #s-academy .courses-sub-switcher {
         display: flex;
         gap: 10px;
@@ -286,7 +285,6 @@
         border-color: #e09f24;
       }
 
-      /* بطاقة المحاضر التفصيلية */
       #s-academy .instructor-card {
         border: 1.5px solid color-mix(in srgb, #e09f24 45%, var(--ln, #334155));
         background: linear-gradient(150deg, color-mix(in srgb, #e09f24 8%, var(--cd, #182334)), var(--cd, #182334));
@@ -295,98 +293,50 @@
         justify-content: space-between;
         gap: 10px;
       }
-      #s-academy .inst-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
+      #s-academy .inst-header { display: flex; align-items: center; gap: 12px; }
       #s-academy .inst-avatar {
-        width: 54px;
-        height: 54px;
-        border-radius: 16px;
+        width: 54px; height: 54px; border-radius: 16px;
         background: linear-gradient(135deg, #e09f24, #b45309);
-        color: #0f172a;
-        display: grid;
-        place-items: center;
-        font-size: 24px;
-        font-weight: 900;
-        flex-shrink: 0;
+        color: #0f172a; display: grid; place-items: center; font-size: 24px; font-weight: 900; flex-shrink: 0;
       }
       #s-academy .inst-meta-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 7px;
-        background: var(--bg, #101827);
-        padding: 10px;
-        border-radius: 12px;
-        border: 1px solid var(--ln, #334155);
-        font-size: 12px;
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px;
+        background: var(--bg, #101827); padding: 10px; border-radius: 12px;
+        border: 1px solid var(--ln, #334155); font-size: 12px;
       }
-      #s-academy .inst-meta-item b {
-        color: #fbbf24;
-        display: block;
-        font-size: 11px;
-      }
+      #s-academy .inst-meta-item b { color: #fbbf24; display: block; font-size: 11px; }
       #s-academy .lecturer-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background: rgba(224, 159, 36, 0.14);
-        border: 1px solid rgba(224, 159, 36, 0.4);
-        color: #fbbf24;
-        padding: 3px 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 800;
-        margin: 4px 0;
+        display: inline-flex; align-items: center; gap: 5px;
+        background: rgba(224, 159, 36, 0.14); border: 1px solid rgba(224, 159, 36, 0.4);
+        color: #fbbf24; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; margin: 4px 0;
       }
 
-      /* بانر التخصصات الستة */
       #s-academy .tracks-banner {
         background: linear-gradient(135deg, color-mix(in srgb, #e09f24 14%, var(--cd, #182334)), var(--cd, #182334));
-        border: 1.5px solid #e09f24;
-        border-radius: 18px;
-        padding: 15px;
-        margin-bottom: 16px;
+        border: 1.5px solid #e09f24; border-radius: 18px; padding: 15px; margin-bottom: 16px;
       }
       #s-academy .tracks-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       #s-academy .track-pill-btn {
-        border: 1.5px solid var(--ln, #334155);
-        background: var(--bg, #101827);
-        color: var(--tx, #e8edf7);
-        border-radius: 12px;
-        padding: 8px 13px;
-        font-size: 12.5px;
-        font-weight: 800;
-        cursor: pointer;
-        font-family: inherit;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+        border: 1.5px solid var(--ln, #334155); background: var(--bg, #101827); color: var(--tx, #e8edf7);
+        border-radius: 12px; padding: 8px 13px; font-size: 12.5px; font-weight: 800;
+        cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
       }
       #s-academy .track-pill-btn.active,
       #s-academy .track-pill-btn:hover { background: #e09f24; color: #0f172a; border-color: #e09f24; }
 
       #s-academy .academy-active-stage {
         border-top: 2px dashed color-mix(in srgb, var(--ln, #334155) 85%, #e09f24);
-        padding-top: 16px;
-        margin-top: 6px;
+        padding-top: 16px; margin-top: 6px;
       }
       #s-academy .academy-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 265px), 1fr));
-        gap: 13px;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 265px), 1fr)); gap: 13px;
       }
       #s-academy .academy-card,
       #s-academy .academy-course-result {
-        position: relative;
-        overflow: hidden;
+        position: relative; overflow: hidden;
         background: linear-gradient(145deg, color-mix(in srgb, var(--cd, #182334) 96%, var(--bl, #38bdf8)), var(--cd, #182334));
         border: 1px solid color-mix(in srgb, var(--ln, #334155) 85%, var(--bl, #38bdf8));
-        border-radius: 18px;
-        padding: 16px;
-        min-width: 0;
-        overflow-wrap: anywhere;
+        border-radius: 18px; padding: 16px; min-width: 0; overflow-wrap: anywhere;
         box-shadow: 0 8px 24px rgba(0,0,0,.09);
       }
       #s-academy .academy-card.lecture-locked { opacity: 0.78; border-style: dashed; }
@@ -410,9 +360,7 @@
         margin-bottom: 18px;
       }
       #s-academy .admin-upload-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-        gap: 10px;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px;
       }
       #s-academy .course-detail-box { border: 2px solid var(--bl, #38bdf8); margin-bottom: 18px; }
       #s-academy .course-video-frame {
@@ -423,12 +371,8 @@
       #s-academy .course-video-frame iframe { width: 100%; max-height: 420px; display: block; border: 0; }
       #s-academy .locked-video-wall {
         background: linear-gradient(135deg, #0f172a, #1e293b);
-        border: 2px solid #e09f24;
-        border-radius: 16px;
-        padding: 22px 16px;
-        text-align: center;
-        margin: 12px 0;
-        color: #f8fafc;
+        border: 2px solid #e09f24; border-radius: 16px; padding: 22px 16px;
+        text-align: center; margin: 12px 0; color: #f8fafc;
       }
       #s-academy .course-attachments-bar { display: flex; flex-wrap: wrap; gap: 9px; margin: 12px 0; }
       #s-academy .comments-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ln, #334155); }
@@ -611,27 +555,60 @@
       return;
     }
 
+    try {
+      if (typeof window.isPro === "function" && window.isPro()) {
+        const headerBadgeText = document.body.innerText || "";
+        const daysMatch = headerBadgeText.match(/(\d+)d\s+\d+h\s+\d+m\s+PRO/i);
+        if (!daysMatch || Number(daysMatch[1]) >= 4) {
+          isCodeSubscriber = true;
+        }
+      }
+    } catch (_) {}
+
     const db = getDb();
-    if (!db) {
-      isCodeSubscriber = false;
-      return;
-    }
+    if (!db) return;
 
     try {
       const snap = await db.collection("users").doc(user.uid).get();
       const data = snap.exists ? snap.data() : {};
       const now = Date.now();
-      const plan = String(data.plan || "").toLowerCase();
-      const proUntil = Number(data.pro_until || 0);
-      const trialEnd = Number(data.trial_end || data.trialEnd || 0);
 
-      const hasPaidPlan = (plan === "pro" || plan === "pro_plus" || plan.includes("plus")) && (!proUntil || proUntil > now);
-      const hasMoreThan4Days = (proUntil - now) > FOUR_DAYS_MS || (trialEnd - now) > FOUR_DAYS_MS;
+      const plan = String(data.plan || data.tier || data.subscription || data.role || "").toLowerCase();
+      const isProFlag = data.isPro === true || data.pro === true;
 
-      isCodeSubscriber = Boolean(hasPaidPlan || hasMoreThan4Days);
-    } catch (_) {
-      isCodeSubscriber = false;
-    }
+      const rawExpiry =
+        data.pro_until ||
+        data.proUntil ||
+        data.pro_end ||
+        data.proEnd ||
+        data.expiresAt ||
+        data.expiry ||
+        data.trial_end ||
+        data.trialEnd ||
+        0;
+
+      let expiryMs = 0;
+      if (rawExpiry && typeof rawExpiry.toMillis === "function") {
+        expiryMs = rawExpiry.toMillis();
+      } else if (typeof rawExpiry === "number") {
+        expiryMs = rawExpiry < 1e12 ? rawExpiry * 1000 : rawExpiry;
+      } else if (typeof rawExpiry === "string" && rawExpiry) {
+        expiryMs = new Date(rawExpiry).getTime() || 0;
+      }
+
+      const hasPaidPlan =
+        isProFlag ||
+        plan.includes("pro") ||
+        plan.includes("plus") ||
+        plan.includes("vip") ||
+        plan.includes("paid");
+
+      const hasMoreThan4Days = expiryMs - now > FOUR_DAYS_MS;
+
+      if (hasPaidPlan || hasMoreThan4Days) {
+        isCodeSubscriber = true;
+      }
+    } catch (_) {}
   }
 
   async function loadInstructors() {
@@ -928,9 +905,6 @@
     `;
   }
 
-  /* =========================================================
-     قسم "المحاضرون والمدربون" داخل الكورسات والدورات
-     ========================================================= */
   function renderInstructorsSubView() {
     const adminAddInstructorHTML = isAdminUser ? `
       <div class="academy-card admin-upload-card">
@@ -1056,9 +1030,6 @@
     `;
   }
 
-  /* =========================================================
-     1. قسم "الكورسات والدورات" (المحاضرات + المحاضرون)
-     ========================================================= */
   function renderCourses() {
     const content = $("academyContent");
     if (!content) return;
