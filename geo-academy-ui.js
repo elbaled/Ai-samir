@@ -542,74 +542,91 @@
     return null;
   }
 
-  async function checkCodeSubscriptionStatus(user) {
+    async function checkCodeSubscriptionStatus(user) {
     if (!user) {
       isAdminUser = false;
       isCodeSubscriber = false;
-      return;
+      return false;
     }
 
     isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
     if (isAdminUser) {
       isCodeSubscriber = true;
-      return;
+      return true;
     }
 
+    // 1. فحص شارة الـ PRO الظاهرة في الهيدر مباشرة (مثلاً 357d 8h PRO)
+    const pageText = document.body.innerText || "";
+    const proBadgeMatch = pageText.match(/(\d+)\s*d\s+\d+\s*h\s*(?:\d+\s*m\s*)?PRO/i);
+    if (proBadgeMatch && Number(proBadgeMatch[1]) >= 4) {
+      isCodeSubscriber = true;
+      return true;
+    }
+
+    // 2. فحص دوال ومتغيرات المنصة العامة و localStorage
     try {
-      if (typeof window.isPro === "function" && window.isPro()) {
-        const headerBadgeText = document.body.innerText || "";
-        const daysMatch = headerBadgeText.match(/(\d+)d\s+\d+h\s+\d+m\s+PRO/i);
-        if (!daysMatch || Number(daysMatch[1]) >= 4) {
-          isCodeSubscriber = true;
-        }
-      }
-    } catch (_) {}
+      const globalUser = window.U || window.userData || window.currentUserData || {};
+      const localPlan = String(
+        localStorage.getItem("gd_user_plan") ||
+        localStorage.getItem("plan") ||
+        globalUser.plan ||
+        ""
+      ).toLowerCase();
 
-    const db = getDb();
-    if (!db) return;
-
-    try {
-      const snap = await db.collection("users").doc(user.uid).get();
-      const data = snap.exists ? snap.data() : {};
-      const now = Date.now();
-
-      const plan = String(data.plan || data.tier || data.subscription || data.role || "").toLowerCase();
-      const isProFlag = data.isPro === true || data.pro === true;
-
-      const rawExpiry =
-        data.pro_until ||
-        data.proUntil ||
-        data.pro_end ||
-        data.proEnd ||
-        data.expiresAt ||
-        data.expiry ||
-        data.trial_end ||
-        data.trialEnd ||
-        0;
-
-      let expiryMs = 0;
-      if (rawExpiry && typeof rawExpiry.toMillis === "function") {
-        expiryMs = rawExpiry.toMillis();
-      } else if (typeof rawExpiry === "number") {
-        expiryMs = rawExpiry < 1e12 ? rawExpiry * 1000 : rawExpiry;
-      } else if (typeof rawExpiry === "string" && rawExpiry) {
-        expiryMs = new Date(rawExpiry).getTime() || 0;
-      }
-
-      const hasPaidPlan =
-        isProFlag ||
-        plan.includes("pro") ||
-        plan.includes("plus") ||
-        plan.includes("vip") ||
-        plan.includes("paid");
-
-      const hasMoreThan4Days = expiryMs - now > FOUR_DAYS_MS;
-
-      if (hasPaidPlan || hasMoreThan4Days) {
+      if (
+        localPlan.includes("pro") ||
+        localPlan.includes("plus") ||
+        globalUser.isPro === true ||
+        globalUser.pro === true ||
+        globalUser.activated === true ||
+        Boolean(globalUser.code)
+      ) {
         isCodeSubscriber = true;
+        return true;
       }
     } catch (_) {}
+
+    // 3. فحص مستند المستخدم في Firestore
+    const db = getDb();
+    if (db) {
+      try {
+        const snap = await db.collection("users").doc(user.uid).get();
+        const data = snap.exists ? snap.data() : {};
+        const now = Date.now();
+
+        const plan = String(data.plan || data.tier || data.subscription || data.status || "").toLowerCase();
+        const isProFlag = data.isPro === true || data.pro === true || data.activated === true || Boolean(data.activationCode || data.code);
+
+        const rawExpiry =
+          data.pro_until || data.proUntil || data.pro_end || data.proEnd ||
+          data.expiresAt || data.expiry || data.trial_end || data.trialEnd || 0;
+
+        let expiryMs = 0;
+        if (rawExpiry && typeof rawExpiry.toMillis === "function") {
+          expiryMs = rawExpiry.toMillis();
+        } else if (typeof rawExpiry === "number") {
+          expiryMs = rawExpiry < 1e12 ? rawExpiry * 1000 : rawExpiry;
+        } else if (typeof rawExpiry === "string" && rawExpiry) {
+          expiryMs = new Date(rawExpiry).getTime() || 0;
+        }
+
+        if (
+          isProFlag ||
+          plan.includes("pro") ||
+          plan.includes("plus") ||
+          plan.includes("active") ||
+          (expiryMs - now) > FOUR_DAYS_MS
+        ) {
+          isCodeSubscriber = true;
+          return true;
+        }
+      } catch (_) {}
+    }
+
+    isCodeSubscriber = false;
+    return false;
   }
+
 
   async function loadInstructors() {
     const db = getDb();
@@ -1837,6 +1854,16 @@
         if (!lectureObj || !isLectureUnlocked(lectureObj)) {
           notify("🔒 يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
           return;
+        }
+        selectedCourseDetailId = lectureId;
+        videoFinishedWatching = false;
+        await loadCommentsForCourse(selectedCourseDetailId);
+        renderCourses();
+        const detailBox = $("academyCourseDetailBox");
+        if (detailBox) detailBox.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+    
+
         }
         selectedCourseDetailId = lectureId;
         videoFinishedWatching = false;
