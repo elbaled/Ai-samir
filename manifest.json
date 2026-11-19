@@ -1,32 +1,33 @@
 {
-  "name": "GeoDev Studio Pro",
-  "short_name": "GeoDev Pro",
+  "name": "GeoDev",
+  "short_name": "GeoDev",
   "description": "منصة عربية للمساحة والجيوماتكس وGIS والذكاء الاصطناعي الهندسي",
-  "start_url": "/Ai-samir/",
-  "scope": "/Ai-samir/",
+  "start_url": "/GEO_DEV_AI/index.html",
+  "scope": "/GEO_DEV_AI/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#090d16",
   "theme_color": "#0f172a",
+  "lang": "ar",
+  "dir": "rtl",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/GEO_DEV_AI/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/GEO_DEV_AI/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/GEO_DEV_AI/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ]
-
 }
