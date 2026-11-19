@@ -1,17 +1,15 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الكاملة والنهائية (V8)
-   - 8 بطاقات رئيسية: (الكورسات والدورات، كورسات رسمية، البحث الذكي، الكتب، المدرس، ملاحظاتي، ذاكرتي، تقدمي)
-   - قسم الكورسات والدورات: بانر التخصصات الستة + اسم المحاضر + بطاقات المحاضرين التفصيلية
-   - قفل تتابعي للمحاضرات + زر إكمال يظهر فقط بعد مشاهدة الفيديو بالكامل
-   - ربط تلقائي مع "تقدمي التعليمي" + إشعار ذكي علوي عند رفع محاضرة جديدة
-   - قفل الفيديوهات والمرفقات على المشتركين بالكود فقط (استبعاد التجريبي 3 أيام)
+   GEO Academy UI - النسخة الكاملة والنهائية (V9)
+   - الكورسات تفتح بكود الكورسات الخاص (CRS-XXXX-XXXX) فقط (منفصل عن كود PRO)
+   - رسالة مخصصة لمستخدمي البرو أعلى الفيديو للتواصل مع الأدمن + خانة تفعيل الكود فوراً
+   - 8 بطاقات رئيسية + بانر التخصصات الستة + المحاضرون + القفل التتابعي + التعليقات
    ============================================================================ */
 (function () {
   "use strict";
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const ADMIN_WHATSAPP = "201015912371";
-  const FOUR_DAYS_MS = 4 * 24 * 60 * 60 * 1000;
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   const ourTracks = [
     { id: "AutoCAD + AI", title: "AutoCAD + AI", icon: "bot", desc: "ربط الأوتوكاد بالذكاء الاصطناعي وأتمتة الليسبات." },
@@ -27,7 +25,7 @@
       id: "courses",
       title: "الكورسات والدورات",
       icon: "graduation-cap",
-      badge: "حصري PRO",
+      badge: "كود الكورسات",
       desc: "كورسات المنصة التطبيقية، المحاضرون، ونظام فتح المحاضرات التتابعي."
     },
     {
@@ -106,7 +104,8 @@
 
   let currentUser = null;
   let isAdminUser = false;
-  let isCodeSubscriber = false;
+  let isProSubscriber = false;     // مشترك في باقة PRO العادية
+  let hasCoursesAccess = false;    // مفعّل له كود الكورسات الخاص (CRS-...)
   let notes = [];
   let memories = [];
   let completedLectures = [];
@@ -164,7 +163,7 @@
     box.dataset.type = type;
     box.classList.add("show");
     clearTimeout(box._timer);
-    box._timer = setTimeout(() => box.classList.remove("show"), 4000);
+    box._timer = setTimeout(() => box.classList.remove("show"), 4200);
   }
 
   function injectStyles() {
@@ -369,11 +368,53 @@
       }
       #s-academy .course-video-frame video,
       #s-academy .course-video-frame iframe { width: 100%; max-height: 420px; display: block; border: 0; }
+
+      /* جدار قفل الفيديو وخانة تفعيل كود الكورسات */
       #s-academy .locked-video-wall {
         background: linear-gradient(135deg, #0f172a, #1e293b);
-        border: 2px solid #e09f24; border-radius: 16px; padding: 22px 16px;
-        text-align: center; margin: 12px 0; color: #f8fafc;
+        border: 2px solid #e09f24;
+        border-radius: 16px;
+        padding: 20px 16px;
+        text-align: center;
+        margin: 12px 0;
+        color: #f8fafc;
       }
+      #s-academy .pro-course-notice-banner {
+        background: rgba(245, 158, 11, 0.16);
+        border: 1.5px solid #fbbf24;
+        color: #fde68a;
+        border-radius: 12px;
+        padding: 11px 13px;
+        margin-bottom: 14px;
+        font-size: 13.5px;
+        font-weight: 900;
+        line-height: 1.65;
+      }
+      #s-academy .course-redeem-box {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #475569;
+        border-radius: 13px;
+        padding: 13px;
+        margin-top: 14px;
+        text-align: right;
+      }
+      #s-academy .course-redeem-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 7px;
+      }
+      #s-academy .course-redeem-row input {
+        flex: 1;
+        min-width: 180px;
+        margin: 0 !important;
+        text-align: center;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        direction: ltr;
+      }
+
       #s-academy .course-attachments-bar { display: flex; flex-wrap: wrap; gap: 9px; margin: 12px 0; }
       #s-academy .comments-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ln, #334155); }
       #s-academy .comment-item {
@@ -388,6 +429,7 @@
         color: #fff; font-weight: 800; font-family: inherit; cursor: pointer; text-decoration: none;
       }
       #s-academy .academy-btn.gold { background: #e09f24; color: #0f172a; border-color: #e09f24; }
+      #s-academy .academy-btn.purple { background: #7c3aed; color: #fff; border-color: #7c3aed; }
       #s-academy .academy-btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
       #s-academy .academy-btn.pdf-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
       #s-academy .academy-btn.drive-btn { background: #15803d; color: #fff; border-color: #15803d; }
@@ -542,100 +584,130 @@
     return null;
   }
 
-  async function checkCodeSubscriptionStatus(user) {
+  /* ============================================================================
+     فحص حالة اشتراك PRO العادي + حالة كود الكورسات الخاص (منفصلين تماماً)
+     ============================================================================ */
+  async function checkUserSubscriptionsStatus(user) {
     if (!user) {
       isAdminUser = false;
-      isCodeSubscriber = false;
-      return false;
+      isProSubscriber = false;
+      hasCoursesAccess = false;
+      return;
     }
 
     isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
     if (isAdminUser) {
-      isCodeSubscriber = true;
-      return true;
+      isProSubscriber = true;
+      hasCoursesAccess = true;
+      return;
     }
 
-    // 1. فحص شارة الـ PRO الظاهرة في الهيدر مباشرة (مثلاً 357d 8h PRO)
-    const pageText = document.body.innerText || "";
-    const proBadgeMatch = pageText.match(/(\d+)\s*d\s+\d+\s*h\s*(?:\d+\s*m\s*)?PRO/i);
-    if (proBadgeMatch && Number(proBadgeMatch[1]) >= 4) {
-      isCodeSubscriber = true;
-      return true;
-    }
-
-    // 2. فحص دوال ومتغيرات المنصة العامة و localStorage
+    // 1. التحقق هل المستخدم لديه اشتراك PRO (لإظهار رسالة PRO المخصصة له)
     try {
-      const globalUser = window.U || window.userData || window.currentUserData || {};
-      const localPlan = String(
-        localStorage.getItem("gd_user_plan") ||
-        localStorage.getItem("plan") ||
-        globalUser.plan ||
-        ""
-      ).toLowerCase();
-
-      if (
-        localPlan.includes("pro") ||
-        localPlan.includes("plus") ||
-        globalUser.isPro === true ||
-        globalUser.pro === true ||
-        globalUser.activated === true ||
-        Boolean(globalUser.code)
-      ) {
-        isCodeSubscriber = true;
-        return true;
+      const pageText = document.body.innerText || "";
+      const proBadgeMatch = pageText.match(/(\d+)\s*d\s+\d+\s*h\s*(?:\d+\s*m\s*)?PRO/i);
+      if (proBadgeMatch && Number(proBadgeMatch[1]) >= 4) {
+        isProSubscriber = true;
+      } else if (typeof window.isPro === "function" && window.isPro()) {
+        isProSubscriber = true;
       }
     } catch (_) {}
 
-    // 3. فحص مستند المستخدم في Firestore
+    // 2. التحقق من Firestore لحقول اشتراك PRO وحقول اشتراك الكورسات (courses_active / courses_until)
     const db = getDb();
-    if (db) {
-      try {
-        const snap = await db.collection("users").doc(user.uid).get();
-        const data = snap.exists ? snap.data() : {};
-        const now = Date.now();
+    if (!db) return;
 
-        const plan = String(data.plan || data.tier || data.subscription || data.status || "").toLowerCase();
-        const isProFlag =
-          data.isPro === true ||
-          data.pro === true ||
-          data.activated === true ||
-          Boolean(data.activationCode || data.code);
+    try {
+      const snap = await db.collection("users").doc(user.uid).get();
+      const data = snap.exists ? snap.data() : {};
+      const now = Date.now();
 
-        const rawExpiry =
-          data.pro_until ||
-          data.proUntil ||
-          data.pro_end ||
-          data.proEnd ||
-          data.expiresAt ||
-          data.expiry ||
-          data.trial_end ||
-          data.trialEnd ||
-          0;
+      const plan = String(data.plan || data.tier || data.subscription || "").toLowerCase();
+      const proUntil = Number(data.pro_until || data.proUntil || 0);
+      if ((plan.includes("pro") || plan.includes("plus") || data.isPro === true) && (!proUntil || proUntil > now)) {
+        isProSubscriber = true;
+      }
 
-        let expiryMs = 0;
-        if (rawExpiry && typeof rawExpiry.toMillis === "function") {
-          expiryMs = rawExpiry.toMillis();
-        } else if (typeof rawExpiry === "number") {
-          expiryMs = rawExpiry < 1e12 ? rawExpiry * 1000 : rawExpiry;
-        } else if (typeof rawExpiry === "string" && rawExpiry) {
-          expiryMs = new Date(rawExpiry).getTime() || 0;
-        }
+      // فحص اشتراك الكورسات المستقل فقط!
+      const coursesActiveFlag = data.courses_active === true;
+      const coursesUntil = Number(data.courses_until || 0);
+      hasCoursesAccess = Boolean(coursesActiveFlag && (!coursesUntil || coursesUntil > now));
+    } catch (_) {
+      hasCoursesAccess = false;
+    }
+  }
 
-        if (
-          isProFlag ||
-          plan.includes("pro") ||
-          plan.includes("plus") ||
-          plan.includes("active") ||
-          (expiryMs - now) > FOUR_DAYS_MS
-        ) {
-          isCodeSubscriber = true;
-          return true;
-        }
-      } catch (_) {}
+  /* ============================================================================
+     تفعيل كود الكورسات (CRS-XXXX-XXXX) عند إدخاله من قبل المستخدم
+     ============================================================================ */
+  async function redeemCourseCode(rawCode) {
+    if (!currentUser) {
+      return notify("يجب تسجيل الدخول أولاً لتفعيل كود الكورسات.", "error");
     }
 
-    isCodeSubscriber = false;
-    return false;
+    const code = String(rawCode || "").trim().toUpperCase();
+    if (!code) {
+      return notify("من فضلك أدخل كود الكورسات أولاً.", "error");
+    }
+
+    const db = getDb();
+    if (!db) {
+      return notify("قاعدة البيانات غير متصلة حالياً.", "error");
+    }
+
+    const btn = $("academyRedeemCourseCodeBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "⏳ جاري التحقق من الكود...";
+    }
+
+    try {
+      const codeRef = db.collection("geodev_course_codes").doc(code);
+      const codeSnap = await codeRef.get();
+
+      if (!codeSnap.exists) {
+        throw new Error("كود الكورسات غير صحيح أو غير موجود.");
+      }
+
+      const codeData = codeSnap.data();
+      if (codeData.used === true) {
+        throw new Error("هذا الكود تم استخدامه مسبقاً.");
+      }
+
+      const days = Number(codeData.days || 30);
+      const expiryMs = Date.now() + days * DAY_MS;
+
+      // 1. تحديث حساب المستخدم لتفعيل الكورسات
+      await db.collection("users").doc(currentUser.uid).set(
+        {
+          courses_active: true,
+          courses_until: expiryMs,
+          courses_code: code,
+          updatedAt: Date.now()
+        },
+        { merge: true }
+      );
+
+      // 2. تعليم الكود كمستخدم
+      await codeRef.update({
+        used: true,
+        usedBy: currentUser.uid,
+        usedByEmail: currentUser.email || "",
+        usedAt: Date.now()
+      });
+
+      hasCoursesAccess = true;
+      notify(`🎉 تم تفعيل الكورسات بنجاح لمدة ${days} يوماً! يمكنك مشاهدة الفيديوهات الآن.`, "success");
+      setStatus(`مرحباً بك — اشتراك الكورسات مفعّل بنجاح (${days} يوماً).`);
+      renderCourses();
+    } catch (err) {
+      notify(err.message || "فشل تفعيل كود الكورسات.", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "🔓 تفعيل الكورسات الآن";
+      }
+    }
   }
 
   async function loadInstructors() {
@@ -760,19 +832,51 @@
     } catch (_) {}
   }
 
+  /* ============================================================================
+     بناء مشغل الفيديو أو جدار القفل بكود الكورسات + رسالة PRO المخصصة
+     ============================================================================ */
   function buildVideoPlayerHTML(item) {
-    if (!isCodeSubscriber && !isAdminUser) {
-      const msg = encodeURIComponent(`مرحبا، أريد الاشتراك بالكود في منصة GeoDev Studio Pro لفتح فيديوهات الأكاديمية (${item.title}).`);
+    if (!hasCoursesAccess && !isAdminUser) {
+      const userEmail = currentUser && currentUser.email ? currentUser.email : "";
+      const waText = encodeURIComponent(
+        isProSubscriber
+          ? `مرحبا، أنا مستخدم PRO في منصة GeoDev Studio Pro وأريد الحصول على الكود الخاص بي لفتح الكورسات.\nحسابي: ${userEmail}`
+          : `مرحبا، أريد الحصول على كود تفعيل الكورسات في منصة GeoDev Studio Pro لفتح محاضرة: ${item.title}\nحسابي: ${userEmail}`
+      );
+
       return `
         <div class="locked-video-wall">
-          <div style="font-size:34px;margin-bottom:8px;">🔒</div>
-          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:17px;">تشغيل الفيديوهات متاح للمشتركين بالكود فقط</h4>
-          <p style="margin:0 0 14px;font-size:13px;color:#cbd5e1;line-height:1.7;">
-            يمكنك تصفح تفاصيل الدورة والتعليقات بحرية، ولكن تشغيل المحاضرات ومشاهدة الشروحات التطبيقية حصري للمشتركين المفعّلين بكود المنصة (غير متاح للحسابات التجريبية).
+          ${isProSubscriber ? `
+            <div class="pro-course-notice-banner">
+              👑 إذا كنت مستخدم البرو (PRO)، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات.
+            </div>
+          ` : `
+            <div class="pro-course-notice-banner">
+              🔒 تشغيل الفيديوهات متاح بكود الكورسات الخاص فقط — إذا كنت مستخدم البرو، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات.
+            </div>
+          `}
+
+          <div style="font-size:32px;margin-bottom:6px;">🎓🔒</div>
+          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:16.5px;">هذا الفيديو محمي بكود الكورسات</h4>
+          <p style="margin:0 0 14px;font-size:12.5px;color:#cbd5e1;line-height:1.7;">
+            تواصل مع إدارة المنصة للحصول على كود الكورسات الخاص بك (<code>CRS-XXXX-XXXX</code>)، أو أدخل الكود في الخانة بالأسفل لفتح جميع المحاضرات فوراً:
           </p>
-          <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${msg}" target="_blank" rel="noopener noreferrer" class="academy-btn gold">
-            💬 تواصل مع إدارة المنصة للحصول على كود التفعيل
+
+          <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${waText}" target="_blank" rel="noopener noreferrer" class="academy-btn gold" style="width:100%;max-width:360px;">
+            💬 كلم الأدمن للحصول على كود الكورسات (واتساب)
           </a>
+
+          <div class="course-redeem-box">
+            <label for="academyCourseCodeInput" style="font-size:12px;font-weight:800;color:#fbbf24;">
+              🎟️ لديك كود الكورسات؟ أدخله هنا للتفعيل الفوري:
+            </label>
+            <div class="course-redeem-row">
+              <input type="text" id="academyCourseCodeInput" class="academy-input" placeholder="CRS-XXXX-XXXX">
+              <button type="button" id="academyRedeemCourseCodeBtn" class="academy-btn purple">
+                🔓 تفعيل الكورسات الآن
+              </button>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -868,7 +972,7 @@
 
         ${buildVideoPlayerHTML(item)}
 
-        ${isCodeSubscriber || isAdminUser ? `
+        ${hasCoursesAccess || isAdminUser ? `
           <div style="margin:12px 0;padding:12px;border-radius:14px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
             ${isCompleted ? `
               <div style="color:#4ade80;font-weight:900;font-size:14px;">✅ تم إكمال هذه المحاضرة بنجاح وفتح المحاضرة التالية!</div>
@@ -885,12 +989,12 @@
         ` : ""}
 
         <div class="course-attachments-bar">
-          ${safeURL(item.pdfUrl) && (isCodeSubscriber || isAdminUser) ? `
+          ${safeURL(item.pdfUrl) && (hasCoursesAccess || isAdminUser) ? `
             <a href="${safeURL(item.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(item.pdfName || item.title + ".pdf")}" class="academy-btn pdf-btn">
               <i data-lucide="file-text"></i> تحميل ملف PDF المرفق
             </a>
           ` : ""}
-          ${safeURL(item.driveUrl) && (isCodeSubscriber || isAdminUser) ? `
+          ${safeURL(item.driveUrl) && (hasCoursesAccess || isAdminUser) ? `
             <a href="${safeURL(item.driveUrl)}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn">
               <i data-lucide="folder-down"></i> تحميل الملفات (Google Drive / MediaFire)
             </a>
@@ -1123,7 +1227,7 @@
 
       <div class="academy-card">
         <h3>🎬 محاضرات ودروس المنصة (${filteredLectures.length})</h3>
-        <p class="academy-muted">التصفح متاح للجميع، وتشغيل الفيديوهات متاح للمشتركين بالكود فقط.</p>
+        <p class="academy-muted">التصفح متاح للجميع، وتشغيل الفيديوهات متاح بكود الكورسات الخاص فقط.</p>
 
         <div class="academy-grid">
           ${filteredLectures.length ? filteredLectures.map(item => {
@@ -1492,7 +1596,15 @@
       } catch (_) {}
     }
 
-    setStatus("تم الاتصال بقاعدة بيانات الأكاديمية.");
+    setStatus(
+      isAdminUser
+        ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات مفعّلة."
+        : hasCoursesAccess
+        ? "مرحباً بك — اشتراك الكورسات مفعّل بالكود الخاص بك."
+        : isProSubscriber
+        ? "مرحباً بك (مستخدم PRO) — كلم الأدمن للحصول على كود تفعيل الكورسات الخاص بك."
+        : "مرحباً بك — تصفح تفاصيل الدورات متاح لك، وتشغيل الفيديوهات متاح بكود الكورسات الخاص فقط."
+    );
     renderTab();
   }
 
@@ -1762,6 +1874,13 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
+      // 1. زر تفعيل كود الكورسات داخل المحاضرة
+      if (event.target.closest("#academyRedeemCourseCodeBtn")) {
+        const val = $("academyCourseCodeInput")?.value || "";
+        await redeemCourseCode(val);
+        return;
+      }
+
       if (event.target.closest("#gdDismissVideoAlert")) {
         event.stopPropagation();
         if (uploadedCourses.length) {
@@ -1782,7 +1901,7 @@
           selectedTrackFilter = targetLecture.category || "all";
           selectedInstructorFilter = "all";
           if (isLectureUnlocked(targetLecture)) {
-            await checkCodeSubscriptionStatus(currentUser);
+            await checkUserSubscriptionsStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
             videoFinishedWatching = false;
             await loadCommentsForCourse(selectedCourseDetailId);
@@ -1866,7 +1985,7 @@
           notify("🔒 يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
           return;
         }
-        await checkCodeSubscriptionStatus(currentUser);
+        await checkUserSubscriptionsStatus(currentUser);
         selectedCourseDetailId = lectureId;
         videoFinishedWatching = false;
         await loadCommentsForCourse(selectedCourseDetailId);
@@ -2064,7 +2183,7 @@
 
         firebase.auth().onAuthStateChanged(async user => {
           currentUser = user || null;
-          await checkCodeSubscriptionStatus(currentUser);
+          await checkUserSubscriptionsStatus(currentUser);
 
           if (!user) {
             notes = [];
@@ -2075,13 +2194,6 @@
             return;
           }
 
-          setStatus(
-            isAdminUser
-              ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات مفعّلة."
-              : isCodeSubscriber
-              ? "مرحباً بك (اشتراك PRO مفعّل بالكود) — جميع المحاضرات متاحة لك."
-              : "مرحباً بك — تصفح تفاصيل الدورات متاح لك، وتشغيل الفيديوهات متاح للمشتركين بالكود فقط."
-          );
           await refreshData();
         });
         return true;
