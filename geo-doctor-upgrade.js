@@ -293,23 +293,7 @@
         "عدّل مسار قاعدة البيانات (workspace) ومسار طبقة الحدود (clip_boundary) في أول سطرين من الكود.",
         "الصق الكود في نافذة Python واضغط Enter مرتين ليبدأ القص التلقائي لجميع الطبقات."
       ],
-      code: `import arcpy
-import os
-
-# 1. حدد مسار قاعدة البيانات التي تحتوي على الطبقات
-arcpy.env.workspace = r"C:\\GIS_Project\\Input_Data.gdb"
-arcpy.env.overwriteOutput = True
-
-# 2. حدد طبقة حدود منطقة الدراسة ومكان الحفظ
-clip_boundary = r"C:\\GIS_Project\\Study_Area_Boundary.shp"
-output_gdb = r"C:\\GIS_Project\\Clipped_Output.gdb"
-
-# 3. الدوران على كل الطبقات وقصها تلقائياً
-feature_classes = arcpy.ListFeatureClasses()
-for fc in feature_classes:
-    out_name = os.path.join(output_gdb, f"{fc}_Clip")
-    arcpy.analysis.Clip(fc, clip_boundary, out_name)
-    print(f"✅ تم قص الطبقة بنجاح: {out_name}")`
+      code: "# -*- coding: utf-8 -*-\n\"\"\"\n\u0642\u0635 \u0643\u0644 \u0637\u0628\u0642\u0627\u062a \u0627\u0644\u0640 Feature Classes \u062f\u0627\u062e\u0644 File Geodatabase \u0639\u0644\u0649 \u062d\u062f\u0648\u062f \u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u062f\u0631\u0627\u0633\u0629.\n\u0627\u0644\u0645\u062a\u0637\u0644\u0628\u0627\u062a: ArcGIS Pro \u0645\u0639 ArcPy (\u062a\u0631\u062e\u064a\u0635 Analysis Extension \u063a\u064a\u0631 \u0645\u0637\u0644\u0648\u0628 \u0644\u0644\u0640 Clip).\n\u0627\u0644\u062a\u0634\u063a\u064a\u0644: \u0645\u0646 \u0646\u0627\u0641\u0630\u0629 Python \u062f\u0627\u062e\u0644 ArcGIS Pro\u060c \u0623\u0648 \u0643\u0645\u0644\u0641 .py \u0645\u0646 Python Command Prompt \u0627\u0644\u062e\u0627\u0635 \u0628\u0640 ArcGIS Pro.\n\"\"\"\nimport os\nimport arcpy\n\n# ===== \u0625\u0639\u062f\u0627\u062f\u0627\u062a: \u0639\u062f\u0651\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u0633\u0627\u0631\u0627\u062a \u0641\u0642\u0637 =====\nINPUT_GDB = r\"C:\\GIS_Project\\Input_Data.gdb\"\nBOUNDARY = r\"C:\\GIS_Project\\Study_Area_Boundary.shp\"\nOUTPUT_GDB = r\"C:\\GIS_Project\\Clipped_Output.gdb\"\nSUFFIX = \"_Clip\"\n# =========================================\n\n\ndef ensure_file_gdb(gdb_path):\n    \"\"\"\u064a\u0646\u0634\u0626 \u0627\u0644\u0640 File Geodatabase \u0644\u0648 \u0645\u0634 \u0645\u0648\u062c\u0648\u062f.\"\"\"\n    if arcpy.Exists(gdb_path):\n        return\n    folder, name = os.path.split(gdb_path)\n    if not os.path.isdir(folder):\n        raise FileNotFoundError(f\"\u0627\u0644\u0645\u062c\u0644\u062f \u0627\u0644\u0623\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f: {folder}\")\n    arcpy.management.CreateFileGDB(folder, name)\n\n\ndef collect_feature_classes(gdb_path):\n    \"\"\"\u064a\u0631\u062c\u0639 \u0642\u0627\u0626\u0645\u0629 (\u0627\u0644\u0645\u0633\u0627\u0631 \u0627\u0644\u0643\u0627\u0645\u0644\u060c \u0627\u0644\u0627\u0633\u0645) \u0644\u0643\u0644 Feature Class \u062f\u0627\u062e\u0644 \u0627\u0644\u0640 GDB \u0628\u0645\u0627 \u0641\u064a\u0647\u0627 \u0627\u0644\u0640 Feature Datasets.\"\"\"\n    items = []\n    arcpy.env.workspace = gdb_path\n    for fc in arcpy.ListFeatureClasses() or []:\n        items.append((os.path.join(gdb_path, fc), fc))\n    for ds in arcpy.ListDatasets(feature_type=\"Feature\") or []:\n        for fc in arcpy.ListFeatureClasses(feature_dataset=ds) or []:\n            items.append((os.path.join(gdb_path, ds, fc), fc))\n    return items\n\n\ndef main():\n    for label, path in ((\"INPUT_GDB\", INPUT_GDB), (\"BOUNDARY\", BOUNDARY)):\n        if not arcpy.Exists(path):\n            raise FileNotFoundError(f\"{label} \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f: {path}\")\n\n    ensure_file_gdb(OUTPUT_GDB)\n    arcpy.env.overwriteOutput = True\n\n    layers = collect_feature_classes(INPUT_GDB)\n    if not layers:\n        print(\"\u26a0\ufe0f \u0644\u0645 \u064a\u062a\u0645 \u0627\u0644\u0639\u062b\u0648\u0631 \u0639\u0644\u0649 \u0623\u064a Feature Class \u062f\u0627\u062e\u0644 \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a.\")\n        return\n\n    ok, failed = 0, []\n    for full_path, name in layers:\n        out_path = os.path.join(OUTPUT_GDB, f\"{name}{SUFFIX}\")\n        try:\n            arcpy.analysis.Clip(full_path, BOUNDARY, out_path)\n            ok += 1\n            print(f\"\u2705 \u062a\u0645 \u0642\u0635 \u0627\u0644\u0637\u0628\u0642\u0629: {name}\")\n        except arcpy.ExecuteError:\n            failed.append((name, arcpy.GetMessages(2)))\n            print(f\"\u274c \u0641\u0634\u0644 \u0642\u0635 \u0627\u0644\u0637\u0628\u0642\u0629: {name}\")\n\n    print(f\"\\n\u0627\u0644\u0646\u062a\u064a\u062c\u0629: {ok} \u0646\u062c\u062d\u062a \u0645\u0646 \u0623\u0635\u0644 {len(layers)}\")\n    for name, msg in failed:\n        print(f\"  - {name}: {msg}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
     },
     {
       id: "gee-ndvi",
@@ -323,32 +307,7 @@ for fc in feature_classes:
         "الصق الكود في المحرر الأوسط (Code Editor) واضغط زر (Run) في الأعلى.",
         "ستظهر خريطة الـ NDVI فوراً، ولتحميلها افتح تبويب (Tasks) على اليمين واضغط Run بجانب Export_NDVI_Map لحفظها على Google Drive بصيغة GeoTIFF."
       ],
-      code: `// 1. تحديد منطقة الدراسة (ارسم مضلعاً باسم geometry أو استخدم إحداثيات نقطة)
-var roi = typeof geometry !== 'undefined' ? geometry : ee.Geometry.Point([30.7503, 28.1099]).buffer(10000);
-
-// 2. استدعاء مرئيات Sentinel-2 السطحية وفلترة التاريخ والسحب
-var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-  .filterBounds(roi)
-  .filterDate('2025-01-01', '2025-12-31')
-  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
-  .median()
-  .clip(roi);
-
-// 3. حساب مؤشر الغطاء النباتي NDVI = (NIR - Red) / (NIR + Red)
-var ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI');
-
-// 4. عرض النتيجة على الخريطة بألوان قياسية
-Map.centerObject(roi, 11);
-Map.addLayer(ndvi, {min: -0.1, max: 0.8, palette: ['blue', 'white', 'yellow', 'green', 'darkgreen']}, 'NDVI Map');
-
-// 5. تصدير المرئية إلى Google Drive لفتحها في ArcGIS / QGIS
-Export.image.toDrive({
-  image: ndvi,
-  description: 'Export_NDVI_Map',
-  scale: 10,
-  region: roi,
-  maxPixels: 1e13
-});`
+      code: "// ============================================================\n// \u0645\u0624\u0634\u0631 \u0627\u0644\u063a\u0637\u0627\u0621 \u0627\u0644\u0646\u0628\u0627\u062a\u064a NDVI \u0645\u0646 Sentinel-2 \u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u062f\u0631\u0627\u0633\u0629\n// \u0627\u0644\u062a\u0634\u063a\u064a\u0644: \u0627\u0641\u062a\u062d code.earthengine.google.com \u0648\u0627\u0644\u0635\u0642 \u0627\u0644\u0643\u0648\u062f \u0641\u064a Code Editor \u0648\u0627\u0636\u063a\u0637 Run.\n// \u0627\u0631\u0633\u0645 \u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u062f\u0631\u0627\u0633\u0629 \u0628\u0623\u062f\u0627\u0629 \u0627\u0644\u0645\u0636\u0644\u0639 (Draw a shape) \u0644\u062a\u0638\u0647\u0631 \u0628\u0627\u0633\u0645 geometry\u060c\n// \u0623\u0648 \u0633\u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0625\u062d\u062f\u0627\u062b\u064a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a \u0628\u0627\u0644\u0623\u0633\u0641\u0644 (\u0639\u062f\u0651\u0644\u0647 \u0644\u0645\u0646\u0637\u0642\u062a\u0643).\n// ============================================================\n\n// ===== \u0625\u0639\u062f\u0627\u062f\u0627\u062a: \u0639\u062f\u0651\u0644 \u0647\u0630\u0647 \u0627\u0644\u0642\u064a\u0645 \u0641\u0642\u0637 =====\nvar START_DATE = '2025-01-01';   // \u0628\u062f\u0627\u064a\u0629 \u0641\u062a\u0631\u0629 \u0627\u0644\u0645\u0631\u0626\u064a\u0627\u062a (YYYY-MM-DD)\nvar END_DATE   = '2025-12-31';   // \u0646\u0647\u0627\u064a\u0629 \u0627\u0644\u0641\u062a\u0631\u0629\nvar MAX_CLOUD  = 10;             // \u0623\u0642\u0635\u0649 \u0646\u0633\u0628\u0629 \u0633\u062d\u0628 \u0645\u0633\u0645\u0648\u062d \u0628\u0647\u0627 %\nvar EXPORT_SCALE = 10;           // \u062f\u0642\u0629 \u0627\u0644\u062a\u0635\u062f\u064a\u0631 \u0628\u0627\u0644\u0645\u062a\u0631 (Sentinel-2 = 10 \u0645 \u0644\u0644\u0646\u0637\u0627\u0642\u0627\u062a B4 \u0648B8)\nvar EXPORT_NAME  = 'NDVI_Study_Area';\n// ========================================\n\n// 1) \u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u062f\u0631\u0627\u0633\u0629\nvar roi = (typeof geometry !== 'undefined')\n  ? geometry\n  : ee.Geometry.Point([30.7503, 28.1099]).buffer(10000);\n\n// 2) \u0645\u0631\u0626\u064a\u0627\u062a Sentinel-2 (\u0633\u0637\u062d \u0645\u064f\u0635\u062d\u0651\u062d) \u0645\u0639 \u0641\u0644\u062a\u0631 \u0627\u0644\u062d\u062f\u0648\u062f \u0648\u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0648\u0627\u0644\u0633\u062d\u0628\nvar s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')\n  .filterBounds(roi)\n  .filterDate(START_DATE, END_DATE)\n  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUD));\n\n// \u062a\u0646\u0628\u064a\u0647 \u0644\u0648 \u0645\u0641\u064a\u0634 \u0645\u0631\u0626\u064a\u0627\u062a (\u0628\u064a\u062d\u0635\u0644 \u063a\u0627\u0644\u0628\u0627\u064b \u0644\u0648 \u0627\u0644\u0641\u062a\u0631\u0629 \u0623\u0648 \u0627\u0644\u0633\u062d\u0628 \u0645\u0642\u064a\u0651\u062f\u064a\u0646 \u0623\u0643\u062a\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645)\ns2.size().evaluate(function (n) {\n  if (n === 0) {\n    print('\u26a0\ufe0f \u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0631\u0626\u064a\u0627\u062a \u0628\u0647\u0630\u0647 \u0627\u0644\u0634\u0631\u0648\u0637. \u062c\u0631\u0651\u0628 \u0641\u062a\u0631\u0629 \u0623\u0648\u0633\u0639 \u0623\u0648 \u0631\u0641\u0639 MAX_CLOUD.');\n  } else {\n    print('\u0639\u062f\u062f \u0627\u0644\u0645\u0631\u0626\u064a\u0627\u062a \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0629: ' + n);\n  }\n});\n\n// 3) \u0645\u0631\u0643\u0651\u0628 \u0648\u0633\u064a\u0637 \u062b\u0645 \u062d\u0633\u0627\u0628 NDVI = (B8 - B4) / (B8 + B4)\n//    B8 = Near Infrared\u060c B4 = Red \u0641\u064a Sentinel-2\nvar composite = s2.median().clip(roi);\nvar ndvi = composite.normalizedDifference(['B8', 'B4']).rename('NDVI');\n\n// 4) \u0627\u0644\u0639\u0631\u0636 \u0639\u0644\u0649 \u0627\u0644\u062e\u0631\u064a\u0637\u0629\nMap.centerObject(roi, 11);\nMap.addLayer(ndvi,\n  {min: -0.1, max: 0.8, palette: ['blue', 'white', 'yellow', 'green', 'darkgreen']},\n  'NDVI');\n\n// 5) \u0627\u0644\u062a\u0635\u062f\u064a\u0631 \u0625\u0644\u0649 Google Drive (\u0627\u0641\u062a\u062d \u062a\u0628\u0648\u064a\u0628 Tasks \u0648\u0627\u0636\u063a\u0637 Run \u0628\u062c\u0627\u0646\u0628 \u0627\u0644\u0645\u0647\u0645\u0629)\nExport.image.toDrive({\n  image: ndvi,\n  description: EXPORT_NAME,\n  folder: 'GEE_Exports',\n  region: roi,\n  scale: EXPORT_SCALE,\n  maxPixels: 1e13\n});\n"
     },
     {
       id: "pyqgis-area",
@@ -362,30 +321,7 @@ Export.image.toDrive({
         "اضغط على أيقونة المفكرة (Show Editor) داخل نافذة البايثون، والصق الكود ثم اضغط زر التشغيل الأخضر (Run Script).",
         "افتح جدول البيانات الوصفية (Attribute Table) للطبقة ستجد حقل الفدان محسوباً وجاهزاً."
       ],
-      code: `from qgis.core import QgsProject, QgsField, QgsExpression, QgsExpressionContext, QgsExpressionContextUtils
-from PyQt5.QtCore import QVariant
-
-# الحصول على الطبقة النشطة المحددة حالياً في QGIS
-layer = iface.activeLayer()
-
-if layer and layer.geometryType() == 2: # التأكد أنها طبقة مضلعات Polygon
-    layer.startEditing()
-    field_name = "Area_Fed"
-    
-    if layer.fields().indexFromName(field_name) == -1:
-        layer.dataProvider().addAttributes([QgsField(field_name, QVariant.Double, "double", 12, 4)])
-        layer.updateFields()
-    
-    idx = layer.fields().indexFromName(field_name)
-    for feat in layer.getFeatures():
-        area_m2 = feat.geometry().area()
-        area_feddan = area_m2 / 4200.833
-        layer.changeAttributeValue(feat.id(), idx, round(area_feddan, 4))
-        
-    layer.commitChanges()
-    print("✅ تم حساب المساحات بالفدان لجميع المضلعات بنجاح!")
-else:
-    print("⚠️ يرجى تحديد طبقة مضلعات (Polygon Layer) أولاً.")`
+      code: "# -*- coding: utf-8 -*-\n# ============================================================\n# \u062d\u0633\u0627\u0628 \u0645\u0633\u0627\u062d\u0629 \u0643\u0644 \u0645\u0636\u0644\u0639 \u0628\u0627\u0644\u0641\u062f\u0627\u0646 \u0641\u064a \u0627\u0644\u0637\u0628\u0642\u0629 \u0627\u0644\u0646\u0634\u0637\u0629 (QGIS Python Console)\n# \u0627\u0644\u062a\u0634\u063a\u064a\u0644: QGIS > Plugins > Python Console > \u0627\u0644\u0635\u0642 \u0627\u0644\u0643\u0648\u062f > Enter\n# \u0645\u0644\u0627\u062d\u0638\u0629 \u0645\u0647\u0645\u0629: \u0627\u0644\u0645\u0633\u0627\u062d\u0629 \u0628\u062a\u062a\u062d\u0633\u0628 \u0639\u0644\u0649 \u0627\u0644\u0625\u0647\u0644\u064a\u0644\u062c \u0627\u0644\u0645\u0631\u062c\u0639\u064a (ellipsoidal)\u060c \u0648\u062f\u0647 \u0635\u062d \u062d\u062a\u0649 \u0644\u0648\n# \u0627\u0644\u0637\u0628\u0642\u0629 \u0628\u0625\u062d\u062f\u0627\u062b\u064a\u0627\u062a \u062c\u063a\u0631\u0627\u0641\u064a\u0629 (\u062f\u0631\u062c\u0627\u062a)\u060c \u0644\u0623\u0646 \u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0645\u0633\u062a\u0648\u064a \u0628\u0627\u0644\u062f\u0631\u062c\u0627\u062a \u0628\u064a\u0637\u0644\u0639 \u0646\u062a\u064a\u062c\u0629 \u063a\u0644\u0637.\n# ============================================================\nfrom qgis.core import QgsDistanceArea, QgsField, QgsProject, QgsWkbTypes\nfrom qgis.PyQt.QtCore import QVariant\nfrom qgis.utils import iface\n\nFIELD_NAME = \"Area_Fed\"\nM2_PER_FEDDAN = 4200.833  # 1 \u0641\u062f\u0627\u0646 = 4200.833 \u0645\u00b2\nWGS84_ELLIPSOID = \"EPSG:7030\"\n\n\ndef build_distance_area(layer):\n    \"\"\"\u064a\u0646\u0634\u0626 \u062d\u0627\u0633\u0628\u0629 \u0645\u0633\u0627\u062d\u0627\u062a \u0628\u0627\u0644\u0625\u0647\u0644\u064a\u0644\u062c \u0627\u0644\u0645\u0631\u062c\u0639\u064a \u0644\u0644\u0645\u0634\u0631\u0648\u0639 (\u0623\u0648 WGS84 \u0644\u0648 \u0627\u0644\u0645\u0634\u0631\u0648\u0639 \u0645\u0634 \u0645\u0639\u0631\u0651\u0641).\"\"\"\n    da = QgsDistanceArea()\n    da.setSourceCrs(layer.crs(), QgsProject.instance().transformContext())\n    ellipsoid = QgsProject.instance().ellipsoid()\n    if not ellipsoid or ellipsoid == \"NONE\":\n        ellipsoid = WGS84_ELLIPSOID\n    da.setEllipsoid(ellipsoid)\n    return da\n\n\ndef main():\n    layer = iface.activeLayer()\n    if layer is None or layer.geometryType() != QgsWkbTypes.PolygonGeometry:\n        print(\"\u26a0\ufe0f \u062d\u062f\u0651\u062f \u0637\u0628\u0642\u0629 \u0645\u0636\u0644\u0639\u0627\u062a (Polygon) \u0623\u0648\u0644\u0627\u064b.\")\n        return\n\n    if not layer.startEditing():\n        print(\"\u26a0\ufe0f \u062a\u0639\u0630\u0651\u0631 \u062a\u0641\u0639\u064a\u0644 \u0648\u0636\u0639 \u0627\u0644\u062a\u0639\u062f\u064a\u0644. \u062a\u0623\u0643\u062f \u0623\u0646 \u0627\u0644\u0637\u0628\u0642\u0629 \u0644\u064a\u0633\u062a \u0644\u0644\u0642\u0631\u0627\u0621\u0629 \u0641\u0642\u0637.\")\n        return\n\n    try:\n        if layer.fields().indexFromName(FIELD_NAME) == -1:\n            layer.addAttribute(QgsField(FIELD_NAME, QVariant.Double, \"double\", 20, 4))\n            layer.updateFields()\n        idx = layer.fields().indexFromName(FIELD_NAME)\n\n        da = build_distance_area(layer)\n        count = 0\n        for feat in layer.getFeatures():\n            geom = feat.geometry()\n            if geom is None or geom.isEmpty():\n                continue\n            area_m2 = da.measureArea(geom)\n            layer.changeAttributeValue(feat.id(), idx, round(area_m2 / M2_PER_FEDDAN, 4))\n            count += 1\n\n        if not layer.commitChanges():\n            layer.rollBack()\n            print(\"\u274c \u0641\u0634\u0644 \u062d\u0641\u0638 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a:\", layer.commitErrors())\n            return\n        print(f\"\u2705 \u062a\u0645 \u062d\u0633\u0627\u0628 \u0645\u0633\u0627\u062d\u0629 {count} \u0645\u0636\u0644\u0639 \u0628\u0627\u0644\u0641\u062f\u0627\u0646 \u0641\u064a \u0627\u0644\u062d\u0642\u0644 {FIELD_NAME}.\")\n\n    except Exception as exc:\n        layer.rollBack()\n        print(\"\u274c \u062d\u062f\u062b \u062e\u0637\u0623\u060c \u062a\u0645 \u0627\u0644\u062a\u0631\u0627\u062c\u0639 \u0639\u0646 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a:\", exc)\n\n\nmain()\n"
     },
     {
       id: "autolisp-coords",
@@ -399,28 +335,7 @@ else:
         "اختر الملف الذي حفظته واضغط Load ثم Close.",
         "اكتب في شريط أوامر الأوتوكاد كلمة EXCOORDS واضغط Enter، ثم اختر البولي لاين وحدد مكان حفظ ملف الإحداثيات."
       ],
-      code: `(defun c:EXCOORDS ( / ent obj coords file i pt x y)
-  (vl-load-com)
-  (setq ent (entsel "\\nاختر خط البولي لاين لاستخراج إحداثياته (Select LWPOLYLINE): "))
-  (if ent
-    (progn
-      (setq obj (vlax-ename->vla-object (car ent)))
-      (setq coords (vlax-get obj 'Coordinates))
-      (setq file (open (getfiled "حفظ ملف الإحداثيات CSV" "Points_Export.csv" "csv" 1) "w"))
-      (write-line "Point_No,Easting,Northing" file)
-      (setq i 0)
-      (while (< i (length coords))
-        (setq x (nth i coords))
-        (setq y (nth (1+ i) coords))
-        (write-line (strcat (itoa (1+ (/ i 2))) "," (rtos x 2 3) "," (rtos y 2 3)) file)
-        (setq i (+ i 2))
-      )
-      (close file)
-      (princ "\\n✅ تم تصدير الإحداثيات إلى ملف CSV بنجاح!")
-    )
-  )
-  (princ)
-)`
+      code: ";;; EXCOORDS: export the vertex coordinates of an LWPOLYLINE to a CSV file.\n;;; Usage: APPLOAD this file, then type EXCOORDS at the command line.\n;;; Prompts are in English on purpose to avoid encoding issues in AutoCAD.\n\n(defun c:EXCOORDS ( / ent obj coords file path n k x y)\n  (vl-load-com)\n  (setq ent (entsel \"\\nSelect a LWPOLYLINE: \"))\n  (cond\n    ((null ent)\n     (princ \"\\nCancelled.\"))\n    ((/= (cdr (assoc 0 (entget (car ent)))) \"LWPOLYLINE\")\n     (princ \"\\nThe selected object is not a LWPOLYLINE.\"))\n    (t\n     (setq path (getfiled \"Save coordinates as CSV\" \"Points_Export\" \"csv\" 1))\n     (cond\n       ((null path)\n        (princ \"\\nCancelled.\"))\n       ((null (setq file (open path \"w\")))\n        (princ \"\\nCould not open the file for writing.\"))\n       (t\n        (setq obj    (vlax-ename->vla-object (car ent)))\n        ;; LWPOLYLINE Coordinates is a flat list: x0 y0 x1 y1 ...\n        (setq coords (vlax-safearray->list\n                       (vlax-variant-value (vlax-get obj 'Coordinates))))\n        (setq n (/ (length coords) 2))\n        (write-line \"Point_No,Easting,Northing\" file)\n        (setq k 0)\n        (while (< k n)\n          (setq x (nth (* 2 k) coords)\n                y (nth (1+ (* 2 k)) coords))\n          (write-line (strcat (itoa (1+ k)) \",\"\n                              (rtos x 2 4) \",\"\n                              (rtos y 2 4))\n                      file)\n          (setq k (1+ k)))\n        (close file)\n        (princ (strcat \"\\nExported \" (itoa n) \" points to: \" path))))))\n  (princ)\n)\n"
     }
   ];
 
@@ -1041,7 +956,64 @@ else:
     if (window.toast) window.toast("تم تحميل ملف التدريب العملي: " + t.datasetName, "success");
   };
 
-  // توليد كود GIS مخصص مع شرح خطوات التركيب والتشغيل داخل البرنامج
+  // ===== توليد كود GIS مع فحص ثابت وإعادة توليد تلقائية عند وجود أخطاء =====
+  const LAB_RULES = String.raw`
+القواعد الإلزامية للكود:
+- استخدم فقط دوال وأوامر موثّقة رسمياً في البيئة المطلوبة. لو لست متأكداً من دالة فلا تكتبها، واذكر أنها غير مؤكدة خارج الكود.
+- ضع كل المسارات في متغيرات واضحة في أول الكود. مسارات ويندوز تُكتب داخل raw string بباكسلاش واحد، مثال: r"C:\GIS_Project\data.gdb".
+- تحقق من وجود المدخلات قبل التشغيل، وأنشئ المخرجات (File Geodatabase أو مجلد) إن لم تكن موجودة.
+- عالج الأخطاء بـ try/except في ArcPy، وبفحص null/nil في AutoLISP، واطبع رسالة واضحة.
+- في AutoLISP عرّف الأمر بالشكل (defun c:NAME ...)، واستخدم (vl-load-com) إذا استخدمت vlax.
+- اكتب الكود كاملاً داخل بلوك برمجي واحد على الأقل، ولا تكتب كود ناقص بـ "..." .`;
+
+  function extractCodeBlocks(text) {
+    const blocks = [];
+    const re = /```([\w+-]*)[ \t]*\n([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(text))) blocks.push({ lang: (m[1] || "").toLowerCase(), code: m[2] });
+    return blocks;
+  }
+
+  function langFor(env, lang) {
+    if (lang) return lang;
+    if (/autolisp|autocad|civil/i.test(env)) return "lisp";
+    if (/arcpy|pyqgis|python/i.test(env)) return "python";
+    return "js";
+  }
+
+  function runStaticChecks(text, env) {
+    const V = window.GEOLabVerifier;
+    const errors = [], warnings = [];
+    if (!V) {
+      warnings.push("فاحص الكود (geo-lab-verifier.js) غير محمّل، الكود لم يُفحص.");
+      return { ok: true, errors, warnings, checked: 0 };
+    }
+    const blocks = extractCodeBlocks(text).filter(b => b.code.trim());
+    if (!blocks.length) errors.push("الرد لم يحتوِ على كود داخل بلوك برمجي.");
+    blocks.forEach((b, i) => {
+      const r = V.verify(b.code, langFor(env, b.lang));
+      r.errors.forEach(x => errors.push(`[كود ${i + 1}] ${x}`));
+      r.warnings.forEach(x => warnings.push(`[كود ${i + 1}] ${x}`));
+    });
+    return { ok: errors.length === 0, errors, warnings, checked: blocks.length };
+  }
+
+  function renderGenResult(text, check) {
+    const md = typeof window.md === "function" ? window.md(text) : esc(text);
+    let banner;
+    if (check.ok && check.checked) {
+      banner = `<div style="background:rgba(16,185,129,.12);border:1px solid #10b981;border-radius:10px;padding:10px;margin-bottom:10px;font-size:13px">
+        ✅ الكود اجتاز الفحص الثابت (${check.checked} بلوك). ده بيتأكد من الشكل والمسارات والدوال المعتمدة، بس لازم تجربه على نسخة من بياناتك قبل الاعتماد عليه في شغل حقيقي.</div>`;
+    } else {
+      banner = `<div style="background:rgba(248,113,113,.12);border:1px solid #f87171;border-radius:10px;padding:10px;margin-bottom:10px;font-size:13px">
+        ❌ الكود لسه فيه مشاكل بعد المحاولتين. راجعها قبل الاستخدام:<ul style="margin:6px 0 0;padding-right:18px">${check.errors.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+    }
+    const warn = check.warnings.length
+      ? `<details style="margin-bottom:10px;font-size:12px;color:#fbbf24"><summary>⚠️ ملاحظات تحتاج انتباهك (${check.warnings.length})</summary><ul style="margin:6px 0 0;padding-right:18px">${check.warnings.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>`
+      : "";
+    return banner + warn + md;
+  }
+
   window.GEODoctorGenerateCode = async function () {
     const env = $("gisCodeEnv")?.value || "ArcPy";
     const req = $("gisCodePrompt")?.value.trim();
@@ -1051,9 +1023,9 @@ else:
     if (!req) return window.toast && window.toast("اكتب وصف المهمة التي تريد تحويلها لكود أولاً", "warn");
 
     btn.disabled = true;
-    btn.textContent = "⏳ جاري كتابة الكود وإعداد دليل التشغيل خطوة بخطوة...";
+    btn.textContent = "⏳ جاري كتابة الكود وفحصه...";
     out.style.display = "block";
-    out.innerHTML = "جاري توليد الكود المخصص لبيئة <b>" + esc(env) + "</b>...";
+    out.innerHTML = "جاري توليد الكود لبيئة <b>" + esc(env) + "</b>...";
 
     const sysPrompt = `أنت خبير برمجة نظم معلومات جغرافية واستشعار عن بعد ومساحة (GeoDev GIS Code Architect).
 المطلوب: تحويل طلب المستخدم إلى كود احترافي جاهز للتشغيل في بيئة (${env}).
@@ -1062,17 +1034,26 @@ else:
 (ضع الكود داخل بلوك برمجي مع تعليقات توضيحية باللغة العربية داخل الكود).
 ### 2. خطوات تشغيل الكود داخل البرنامج خطوة بخطوة (للمبتدئ والباحث)
 (اشرح في نقاط مرقمة 1، 2، 3 من أي قائمة داخل البرنامج يفتح نافذة الكود، وأين يلصقه، وكيف يغير مسارات ملفاته).
-### 3. النتيجة المتوقعة ونصائح لتجنب الأخطاء`;
+### 3. النتيجة المتوقعة ونصائح لتجنب الأخطاء
+${LAB_RULES}`;
+
+    const baseMsg = `البيئة المطلوبة: ${env}\nالمهمة المطلوبة: ${req}`;
+    let userMsg = baseMsg;
+    let text = "", check = null;
 
     try {
-      const r = await window.callAIWithRetry(`البيئة المطلوبة: ${env}\nالمهمة المطلوبة: ${req}`, {
-        sysPrompt,
-        tier: "default",
-        onText: ({ text }) => {
-          out.innerHTML = typeof window.md === "function" ? window.md(text) : esc(text);
-        }
-      });
-      out.innerHTML = typeof window.md === "function" ? window.md(r.text) : esc(r.text);
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const r = await window.callAIWithRetry(userMsg, {
+          sysPrompt,
+          tier: "default",
+          onText: ({ text: t }) => { out.innerHTML = typeof window.md === "function" ? window.md(t) : esc(t); }
+        });
+        text = r.text;
+        check = runStaticChecks(text, env);
+        if (check.ok) break;
+        userMsg = `${baseMsg}\n\nالمحاولة السابقة فيها الأخطاء دي، صحّحها وأعد كتابة الكود كاملاً:\n- ${check.errors.join("\n- ")}`;
+      }
+      out.innerHTML = renderGenResult(text, check);
     } catch (e) {
       out.innerHTML = `<span style="color:#f87171">حدث خطأ أثناء توليد الكود: ${esc(e.message || e)}</span>`;
     } finally {
