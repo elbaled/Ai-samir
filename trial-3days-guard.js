@@ -1,27 +1,24 @@
 /* ============================================================================
-   نظام الفترة التجريبية (3 أيام) + إخفاء الأدوات عن شاشة التسجيل + رسالة انتهاء PRO
+   نظام الفترة التجريبية (3 أيام) + إخفاء الأدوات عن شاشة التسجيل + رسالة انتهاء PRO (V3)
+   - مستثنى تماماً: المدير العام، منسقو الكورسات، ومشتركو PRO / PRO Plus
+   - مرتبط مباشرة بالتايمر الفعلي: تظهر النافذة فقط للحسابات التجريبية بعد انتهاء عداد الـ 3 أيام
    ============================================================================ */
 (function () {
   "use strict";
-  if (window.GEOTrial3DaysGuardV2Init) return;
-  window.GEOTrial3DaysGuardV2Init = true;
+  if (window.GEOTrial3DaysGuardV3Init) return;
+  window.GEOTrial3DaysGuardV3Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
   const ADMIN_WHATSAPP = "201015912371";
   const TRIAL_DAYS_NEW = 3;
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  const NOV_17_START = new Date("2026-11-17T00:00:00+02:00").getTime();
-  const NOV_18_START = new Date("2026-11-18T00:00:00+02:00").getTime();
-  const NOV_19_START = new Date("2026-11-19T00:00:00+02:00").getTime();
-
   let currentUser = null;
-  let isAdminUser = false;
-  let hasActivePaidSub = false;
+  let isPrivilegedOrPaidUser = false;
   let isTrialExpired = false;
   let trialEndTimestamp = 0;
 
-  // 1. استبدال "7 أيام" (سواء مع PRO أو مجاناً أو تجريبي) بـ "3 أيام" في كل نصوص الصفحة
+  // 1. استبدال أي نصوص قديمة (7 أو 14 أو 30 يوماً) بـ "3 أيام"
   function updateTrialTextsInUI() {
     if (!document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
@@ -47,12 +44,39 @@
 
     toolBoxes.forEach(box => {
       if (!box) return;
-      // إذا كان الصندوق محقوناً بالخطأ داخل شاشة تسجيل الدخول أو قبل الدخول -> احذفه/أخفه
       const insideAuth = box.closest("#authView, #loginScreen, #authModal, .auth-card, [id*='auth'], [id*='login']");
       if (!loggedIn || insideAuth) {
         box.remove();
       }
     });
+  }
+
+  // فحص هل التايمر الحي في أعلى المنصة ما زال يعمل أو الحساب لديه شارة PRO / ADMIN
+  function hasLiveTimerOrProBadgeInDOM() {
+    try {
+      const text = document.body ? document.body.innerText || "" : "";
+      if (/\bADMIN\b/i.test(text)) return true;
+
+      // فحص التايمر الحي بصيغة مثل: 2d 14h أو 0d 5h أو 15m
+      const timerMatch = text.match(/(\d+)\s*d\s+(\d+)\s*h(?:\s+(\d+)\s*m)?/i);
+      if (timerMatch) {
+        const d = Number(timerMatch[1] || 0);
+        const h = Number(timerMatch[2] || 0);
+        const m = Number(timerMatch[3] || 0);
+        if (d > 0 || h > 0 || m > 0) {
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  function hideExpiredModalForce() {
+    const overlay = document.getElementById("gdProExpiredOverlay");
+    if (overlay) {
+      overlay.style.display = "none";
+      overlay.remove();
+    }
   }
 
   function injectStyles() {
@@ -193,24 +217,29 @@
     document.head.appendChild(style);
   }
 
-  function computeExpectedTrialEnd(createdAtMs) {
-    if (!createdAtMs || isNaN(createdAtMs)) {
-      return Date.now() + TRIAL_DAYS_NEW * DAY_MS;
-    }
-    if (createdAtMs >= NOV_19_START) {
-      return createdAtMs + TRIAL_DAYS_NEW * DAY_MS;
-    }
-    if (createdAtMs >= NOV_18_START) {
-      return createdAtMs + 2 * DAY_MS;
-    }
-    if (createdAtMs >= NOV_17_START) {
-      return NOV_19_START + DAY_MS - 1000;
-    }
-    return createdAtMs;
+  function parseTimestampMs(raw) {
+    if (!raw) return 0;
+    if (typeof raw.toMillis === "function") return raw.toMillis();
+    if (typeof raw === "number") return raw < 1e12 ? raw * 1000 : raw;
+    if (typeof raw === "string") return new Date(raw).getTime() || 0;
+    return 0;
   }
 
   function showExpiredModal() {
-    if (!currentUser || isAdminUser || hasActivePaidSub) return;
+    // حظر قاطع لظهور النافذة للأدمن أو المشتركين أو إذا كان التايمر ما زال نشطاً
+    if (!currentUser || isPrivilegedOrPaidUser || !isTrialExpired) {
+      hideExpiredModalForce();
+      return;
+    }
+
+    const email = String(currentUser.email || "").toLowerCase();
+    if (email === ADMIN_EMAIL || hasLiveTimerOrProBadgeInDOM()) {
+      isPrivilegedOrPaidUser = true;
+      isTrialExpired = false;
+      hideExpiredModalForce();
+      return;
+    }
+
     let overlay = document.getElementById("gdProExpiredOverlay");
     if (!overlay) {
       overlay = document.createElement("div");
@@ -218,14 +247,13 @@
       document.body.appendChild(overlay);
     }
 
-    const userEmail = currentUser && currentUser.email ? currentUser.email : "";
     const waMsg = encodeURIComponent(
-      `مرحبا، انتهت الفترة التجريبية في منصة GeoDev Studio Pro وأريد تفعيل اشتراك PRO أو PRO Plus.\nحسابي: ${userEmail}`
+      `مرحبا، انتهت الفترة التجريبية في منصة GeoDev Studio Pro وأريد تفعيل اشتراك PRO أو PRO Plus.\nحسابي: ${email}`
     );
 
     overlay.innerHTML = `
       <div class="gd-exp-card">
-        <div class="gd-exp-badge">⏳ انتهت الفترة التجريبية (3 أيام)</div>
+        <div class="gd-exp-badge">انتهت الفترة التجريبية (3 أيام)</div>
         <h3 class="gd-exp-title">انتهى اشتراكك البرو (PRO)</h3>
         <p class="gd-exp-desc">
           انتهت مدة التجربة المجانية لحسابك. للاستمرار في استخدام أدوات المساحة والـ GIS، توليد الليسبات والأكواد، والأكاديمية، اشترك الآن في إحدى الباقات وكلم إدارة المنصة للتفعيل الفوري:
@@ -233,7 +261,7 @@
 
         <div class="gd-exp-plans">
           <div class="gd-exp-plan-box">
-            <h4>💎 باقة PRO</h4>
+            <h4>باقة PRO</h4>
             <div class="gd-exp-price">50 ج <span style="font-size:11px;font-weight:700;">أول شهر</span></div>
             <div class="gd-exp-subprice">
               التجديد: 70 ج / شهر<br>
@@ -242,7 +270,7 @@
           </div>
 
           <div class="gd-exp-plan-box plus">
-            <h4>👑 باقة PRO Plus</h4>
+            <h4>باقة PRO Plus</h4>
             <div class="gd-exp-price">80 ج <span style="font-size:11px;font-weight:700;">أول شهر</span></div>
             <div class="gd-exp-subprice">
               التجديد: 100 ج / شهر<br>
@@ -252,11 +280,11 @@
         </div>
 
         <div style="background:#f1f5f9;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;color:#0f172a;margin-bottom:12px;text-align:center;">
-          💳 التحويل عبر فودافون كاش: <span style="color:#dc2626;direction:ltr;display:inline-block;">01015912371</span>
+          التحويل عبر فودافون كاش: <span style="color:#dc2626;direction:ltr;display:inline-block;">01015912371</span>
         </div>
 
         <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${waMsg}" target="_blank" rel="noopener" class="gd-exp-wa-btn">
-          💬 اشترك في البرو وكلم المنصة (واتساب)
+          اشترك في البرو وكلم المنصة (واتساب)
         </a>
 
         <button type="button" class="gd-exp-close-btn" onclick="document.getElementById('gdProExpiredOverlay').style.display='none'">
@@ -271,7 +299,8 @@
     document.addEventListener(
       "click",
       function (e) {
-        if (!currentUser || isAdminUser || hasActivePaidSub || !isTrialExpired) return;
+        if (!currentUser || isPrivilegedOrPaidUser || !isTrialExpired) return;
+        if (hasLiveTimerOrProBadgeInDOM()) return;
         if (e.target.closest("#gdProExpiredOverlay") || e.target.closest("a[href*='wa.me']")) return;
 
         const interactiveTarget = e.target.closest(
@@ -289,59 +318,112 @@
 
   async function syncUserTrialInFirestore(user) {
     if (!user) return;
-    isAdminUser = !!(user.email && user.email.toLowerCase() === ADMIN_EMAIL);
-    if (isAdminUser) {
+    const email = String(user.email || "").toLowerCase();
+
+    // 1. استثناء المدير العام فوراً
+    if (email === ADMIN_EMAIL) {
+      isPrivilegedOrPaidUser = true;
       isTrialExpired = false;
-      hasActivePaidSub = true;
+      hideExpiredModalForce();
       return;
     }
 
+    const now = Date.now();
     const creationTimeMs = user.metadata && user.metadata.creationTime
       ? new Date(user.metadata.creationTime).getTime()
-      : Date.now();
+      : now;
 
-    const expectedEnd = computeExpectedTrialEnd(creationTimeMs);
-    trialEndTimestamp = expectedEnd;
+    // 3 أيام كاملة من تاريخ إنشاء الحساب
+    const default3DaysEnd = creationTimeMs + TRIAL_DAYS_NEW * DAY_MS;
+    trialEndTimestamp = default3DaysEnd;
 
     if (window.firebase && typeof firebase.firestore === "function") {
+      const db = firebase.firestore();
+
+      // 2. استثناء منسقي الكورسات (Course Managers)
+      if (email) {
+        try {
+          const mgrSnap = await db.collection("geodev_course_managers").doc(email).get();
+          if (mgrSnap.exists && mgrSnap.data().enabled === true) {
+            isPrivilegedOrPaidUser = true;
+            isTrialExpired = false;
+            hideExpiredModalForce();
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // 3. فحص بيانات الاشتراك والتايمر المخزنة للمستخدم
       try {
-        const db = firebase.firestore();
         const userRef = db.collection("users").doc(user.uid);
         const snap = await userRef.get();
         const data = snap.exists ? snap.data() : {};
 
-        const plan = String(data.plan || "").toLowerCase();
-        const proUntil = Number(data.pro_until || 0);
-        if ((plan === "pro" || plan === "pro_plus" || plan.includes("plus")) && (!proUntil || proUntil > Date.now())) {
-          hasActivePaidSub = true;
+        if (data.role === "admin" || data.isAdmin === true) {
+          isPrivilegedOrPaidUser = true;
           isTrialExpired = false;
-          localStorage.setItem("gd_user_plan", plan);
+          hideExpiredModalForce();
           return;
         }
 
-        hasActivePaidSub = false;
-        const currentStoredEnd = Number(data.trial_end || 0);
-        if (!currentStoredEnd || currentStoredEnd > expectedEnd) {
+        const plan = String(data.plan || data.tier || data.subscription || "").toLowerCase();
+        const proUntil = parseTimestampMs(data.pro_until || data.proUntil || data.expiresAt || data.expiry);
+        const isPaid =
+          ((plan.includes("pro") || plan.includes("plus") || data.isPro === true) && (!proUntil || proUntil > now)) ||
+          (proUntil - now > 4 * DAY_MS);
+
+        if (isPaid) {
+          isPrivilegedOrPaidUser = true;
+          isTrialExpired = false;
+          localStorage.setItem("gd_user_plan", plan || "pro");
+          hideExpiredModalForce();
+          return;
+        }
+
+        // 4. فحص تايمر الفترة التجريبية الفعلي للحساب التجريبي فقط
+        const storedTrialEnd = parseTimestampMs(data.trial_end || data.trialEnd);
+        if (storedTrialEnd > 0) {
+          trialEndTimestamp = storedTrialEnd;
+        } else {
+          // حساب جديد: نضبط له 3 أيام من لحظة التسجيل
+          trialEndTimestamp = default3DaysEnd;
           await userRef.set(
             {
               email: user.email || "",
               trial_days: TRIAL_DAYS_NEW,
-              trial_end: expectedEnd,
-              updatedAt: Date.now()
+              trial_end: trialEndTimestamp,
+              updatedAt: now
             },
             { merge: true }
           );
-        } else {
-          trialEndTimestamp = currentStoredEnd;
         }
-      } catch (_) {}
+      } catch (_) {
+        // في حال تعذر الوصول لـ Firestore، نعتمد على التايمر الظاهر في الواجهة
+        if (hasLiveTimerOrProBadgeInDOM()) {
+          isPrivilegedOrPaidUser = true;
+          isTrialExpired = false;
+          hideExpiredModalForce();
+          return;
+        }
+      }
     }
 
-    isTrialExpired = Date.now() > trialEndTimestamp;
+    // التحقق النهائي: هل انتهى تايمر الـ 3 أيام فعلياً؟
+    if (hasLiveTimerOrProBadgeInDOM()) {
+      isPrivilegedOrPaidUser = true;
+      isTrialExpired = false;
+      hideExpiredModalForce();
+      return;
+    }
+
+    isPrivilegedOrPaidUser = false;
+    isTrialExpired = now > trialEndTimestamp;
     localStorage.setItem("gd_trial_end", String(trialEndTimestamp));
 
     if (isTrialExpired) {
-      setTimeout(showExpiredModal, 1200);
+      setTimeout(showExpiredModal, 1400);
+    } else {
+      hideExpiredModalForce();
     }
   }
 
@@ -351,18 +433,24 @@
     enforceAuthVisibilityForTools();
     attachProtectionInterceptor();
 
-    // مراقبة مستمرة لمنع ظهور الأدوات في شاشة التسجيل ولتحديث نص الـ 3 أيام
     const guardInterval = setInterval(() => {
       updateTrialTextsInUI();
       enforceAuthVisibilityForTools();
-    }, 350);
-    setTimeout(() => clearInterval(guardInterval), 15000);
+      if (isPrivilegedOrPaidUser || !isTrialExpired || hasLiveTimerOrProBadgeInDOM()) {
+        hideExpiredModalForce();
+      }
+    }, 400);
+    setTimeout(() => clearInterval(guardInterval), 18000);
 
     const checkAuth = () => {
       if (window.firebase && firebase.apps && firebase.apps.length) {
         firebase.auth().onAuthStateChanged(user => {
           currentUser = user || null;
+          isPrivilegedOrPaidUser = false;
+          isTrialExpired = false;
+          hideExpiredModalForce();
           enforceAuthVisibilityForTools();
+
           if (currentUser) {
             syncUserTrialInFirestore(currentUser);
           }
