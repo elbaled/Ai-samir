@@ -1,24 +1,28 @@
-/* GeoDev Studio Pro Service Worker v1.0 */
-const CACHE_NAME = "geodev-pro-v1";
+/* GeoDev Service Worker v6.0 */
+const CACHE_NAME = "geodev-v6";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
+    ).then(() => self.clients.claim())
+  );
 });
 
 // استقبال أوامر عرض الإشعارات من التطبيق
 self.addEventListener("message", event => {
   if (event.data && event.data.type === "SHOW_NOTIFICATION") {
     const { title, body, url } = event.data;
-    self.registration.showNotification(title || "GeoDev Studio Pro", {
+    self.registration.showNotification(title || "GeoDev", {
       body: body || "",
-      icon: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-      badge: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+      icon: "/GEO_DEV_AI/icon-192.png",
+      badge: "/GEO_DEV_AI/icon-192.png",
       vibrate: [200, 100, 200],
-      data: { url: url || "./index.html" }
+      data: { url: url || "/GEO_DEV_AI/index.html" }
     });
   }
 });
@@ -31,7 +35,7 @@ self.addEventListener("notificationclick", event => {
       for (const client of clientList) {
         if ("focus" in client) return client.focus();
       }
-      if (clients.openWindow) return clients.openWindow("./index.html");
+      if (clients.openWindow) return clients.openWindow("/GEO_DEV_AI/index.html");
     })
   );
 });
