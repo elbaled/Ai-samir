@@ -7,6 +7,26 @@
   window.GEOAdminDashboardSegV5Init = true;
 
   const ADMIN_EMAIL = "eng.ahmedsamir.gis@gmail.com";
+  // حارس حماية: إغلاق نافذة انتهاء التجربة تلقائياً عن الأدمن والمشتركين النشطين
+  setInterval(() => {
+    const modal = Array.from(document.querySelectorAll("div")).find(el =>
+      el.textContent &&
+      el.textContent.includes("انتهت الفترة التجريبية (3 أيام)") &&
+      getComputedStyle(el).position === "fixed"
+    );
+    if (!modal) return;
+
+    const user = window.firebase && firebase.auth ? firebase.auth().currentUser : null;
+    const email = String(user?.email || "").toLowerCase();
+    const pageText = document.body.innerText || "";
+    const hasActiveTimerOrPro = /(\d+)\s*d\s+\d+\s*h/i.test(pageText) || pageText.includes("ADMIN");
+
+    if (email === ADMIN_EMAIL || hasActiveTimerOrPro) {
+      modal.style.display = "none";
+      modal.remove();
+    }
+  }, 400);
+
   const DAY_MS = 24 * 60 * 60 * 1000;
 
   let isSuperAdmin = false;
