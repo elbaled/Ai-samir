@@ -2787,5 +2787,45 @@
   if (document.body) {
     announceObserver.observe(document.body, { childList: true, subtree: true });
   }
+  // إضافة زر صفحة فيسبوك الرسمية في هيدر الأكاديمية وفي الفوتر
+  function injectFacebookPageLink() {
+    const FB_URL = "https://www.facebook.com/share/1KSRJUeJjo/";
+
+    // 1. إضافة الزر داخل هيدر الأكاديمية
+    const academyHeader = document.querySelector("#s-academy .academy-header");
+    if (academyHeader && !document.getElementById("gdAcademyFbBtn")) {
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;";
+      wrap.innerHTML = `
+        <a id="gdAcademyFbBtn" href="${FB_URL}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:8px;background:#1877F2;color:#ffffff;padding:9px 15px;border-radius:11px;font-size:13px;font-weight:800;text-decoration:none;border:1px solid rgba(255,255,255,0.18);box-shadow:0 4px 12px rgba(24,119,242,0.28);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+          </svg>
+          <span>تابع صفحة GeoDev الرسمية على فيسبوك</span>
+        </a>
+      `;
+      academyHeader.appendChild(wrap);
+    }
+
+    // 2. إضافة أيقونة فيسبوك في الهيدر العلوي أو الفوتر الرئيسي إن وجد
+    const mainFooter = document.querySelector("footer, .footer");
+    if (mainFooter && !document.getElementById("gdFooterFbLink")) {
+      const fbFooter = document.createElement("a");
+      fbFooter.id = "gdFooterFbLink";
+      fbFooter.href = FB_URL;
+      fbFooter.target = "_blank";
+      fbFooter.rel = "noopener noreferrer";
+      fbFooter.textContent = "صفحتنا على فيسبوك";
+      fbFooter.style.cssText = "display:inline-block;margin:6px 10px;color:#38bdf8;font-weight:800;text-decoration:none;font-size:12.5px;";
+      mainFooter.appendChild(fbFooter);
+    }
+  }
+
+  injectFacebookPageLink();
+  const fbObserver = new MutationObserver(injectFacebookPageLink);
+  if (document.body) {
+    fbObserver.observe(document.body, { childList: true, subtree: true });
+  }
 
 })();
