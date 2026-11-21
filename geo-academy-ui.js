@@ -1,9 +1,9 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الرسمية المتكاملة (V13)
-   - نظام استخراج الشهادات الرقمية التلقائية (PDF Certificate) عند إكمال 100% من أي مسار
-   - اختيار نوع الوصول لكل محاضرة (مجانية للجميع / بالكود ومشتركي PRO) عند الرفع والتعديل
-   - أيقونات Lucide SVG الهندسية الرسمية + حركات انتقال هادئة
-   - صلاحيات منسق الكورسات + تعديل المحاضرات + التقييم + إعلان المحاضرة + رابط فيسبوك
+   GEO Academy UI - النسخة الرسمية المتكاملة (V16)
+   - إصلاح زر "إكمال المحاضرة" ليظهر ويعمل فوراً أسفل الفيديو لجميع الطلاب
+   - خيار "آخر محاضرة في الكورس" -> يظهر بعدها مباشرة زر "الحصول على الشهادة"
+   - لوحة تحكم الأدمن في الشهادات (معاينة + إصدار شهادة لأي طالب + سجل الشهادات)
+   - الشهادة الرسمية (عربي + إنجليزي) بتوقيع م. أحمد سمير + الختم الأزرق + QR Code
    ============================================================================ */
 (function () {
   "use strict";
@@ -112,6 +112,7 @@
   let notes = [];
   let memories = [];
   let completedLectures = [];
+  let issuedCertificatesLog = [];
   let teacherMessages = [];
   let uploadedCourses = [];
   let instructorsList = [];
@@ -120,8 +121,6 @@
   let selectedInstructorFilter = "all";
   let selectedCourseDetailId = null;
   let isEditingCourseMode = false;
-  let videoFinishedWatching = false;
-  let ytWatchTimer = null;
   let courseComments = [];
   let activeTab = "courses";
   let eventsBound = false;
@@ -182,13 +181,26 @@
     box.dataset.type = type;
     box.classList.add("show");
     clearTimeout(box._timer);
-    box._timer = setTimeout(() => box.classList.remove("show"), 4200);
+    box._timer = setTimeout(() => box.classList.remove("show"), 4500);
+  }
+
+  function isTrackEligibleForCertificate(trackId) {
+    if (isAdminUser) return true;
+    const trackLectures = uploadedCourses.filter(c => c.category === trackId);
+    if (trackLectures.length === 0) return false;
+    const allDone = trackLectures.every(c => completedLectures.includes(c.id));
+    if (allDone) return true;
+    const finalLecture = trackLectures.find(c => c.isFinalLecture === true);
+    if (finalLecture && completedLectures.includes(finalLecture.id)) return true;
+    return false;
   }
 
   /* ============================================================================
-     توليد وطباعة الشهادة الرقمية الرسمية باسم الطالب (A4 Landscape PDF)
+     توليد وطباعة الشهادة الرقمية الرسمية (نسختين: عربي + إنجليزي + QR Code)
+     - متضمنة التوقيع الشخصي للمهندس أحمد سمير (SVG Vector)
+     - الختم الدائري الرسمي باللون الأزرق (منصة جيوديف • شعار GD • مهندس أحمد سمير)
      ============================================================================ */
-  function generateTrackCertificate(trackId) {
+  async function generateTrackCertificate(trackId, customStudentAr = "", customStudentEn = "") {
     if (!currentUser) {
       return notify("يجب تسجيل الدخول لاستخراج الشهادة.", "error");
     }
@@ -197,306 +209,344 @@
     if (!track) return;
 
     const trackLectures = uploadedCourses.filter(c => c.category === track.id);
-    const doneLectures = trackLectures.filter(c => completedLectures.includes(c.id));
 
-    if (!isAdminUser && (trackLectures.length === 0 || doneLectures.length < trackLectures.length)) {
-      return notify("يجب إكمال جميع محاضرات المسار بنسبة 100% أولاً لاستخراج الشهادة.", "error");
+    if (!isTrackEligibleForCertificate(track.id)) {
+      return notify("يجب إكمال محاضرات الكورس أو إكمال المحاضرة الأخيرة أولاً لاستخراج الشهادة.", "error");
     }
 
-    const savedCertName = localStorage.getItem("gd_cert_student_name") || "";
-    const defaultName =
-      savedCertName ||
+    const savedArName = localStorage.getItem("gd_cert_name_ar") || "";
+    const savedEnName = localStorage.getItem("gd_cert_name_en") || "";
+
+    const defaultEn =
+      savedEnName ||
       currentUser.displayName ||
-      (currentUser.email ? currentUser.email.split("@")[0].replace(/[._]/g, " ").toUpperCase() : "STUDENT");
+      (currentUser.email ? currentUser.email.split("@")[0].replace(/[._]/g, " ").toUpperCase() : "TRAINEE NAME");
 
-    const studentName = prompt(
-      "اكتب اسمك الكامل كما تريد أن يظهر في الشهادة (يفضل باللغة الإنجليزية أو العربية بوضوح):",
-      defaultName
-    );
-    if (!studentName || !studentName.trim()) return;
+    let studentNameAr = customStudentAr;
+    if (!studentNameAr) {
+      studentNameAr = prompt(
+        "1/2 — اكتب اسمك الكامل باللغة العربية كما سيظهر في النسخة العربية من الشهادة:",
+        savedArName || "أحمد سمير عبد القادر"
+      );
+    }
+    if (!studentNameAr || !studentNameAr.trim()) return;
 
-    const cleanStudentName = studentName.trim();
-    localStorage.setItem("gd_cert_student_name", cleanStudentName);
+    let studentNameEn = customStudentEn;
+    if (!studentNameEn) {
+      studentNameEn = prompt(
+        "2/2 — اكتب اسمك الكامل باللغة الإنجليزية كما سيظهر في النسخة الإنجليزية من الشهادة:",
+        defaultEn
+      );
+    }
+    if (!studentNameEn || !studentNameEn.trim()) return;
 
-    const uidPart = String(currentUser.uid || "GD").slice(0, 6).toUpperCase();
+    const cleanAr = studentNameAr.trim();
+    const cleanEn = studentNameEn.trim().toUpperCase();
+    if (!customStudentAr) {
+      localStorage.setItem("gd_cert_name_ar", cleanAr);
+      localStorage.setItem("gd_cert_name_en", cleanEn);
+    }
+
+    const uidPart = String(currentUser.uid || "GD").slice(0, 5).toUpperCase();
+    const randPart = Math.random().toString(36).substring(2, 5).toUpperCase();
     const trackCode = track.id.replace(/[^A-Z0-9]/gi, "").slice(0, 4).toUpperCase() || "GEO";
-    const serialNumber = `GD-${trackCode}-${uidPart}-${new Date().getFullYear()}`;
-    const issueDate = new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric"
-    });
+    const serialNumber = `GD-${trackCode}-${uidPart}${randPart}-${new Date().getFullYear()}`;
+    const verifyUrl = `https://elbaled.github.io/GEO_DEV_AI/?verify=${encodeURIComponent(serialNumber)}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=4&color=0f172a&bgcolor=ffffff&data=${encodeURIComponent(verifyUrl)}`;
 
-    const certWindow = window.open("", "_blank", "width=1100,height=780");
+    const now = new Date();
+    const issueDateEn = now.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+    const issueDateAr = now.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
+    const totalCount = trackLectures.length || 1;
+
+    // تسجيل الشهادة في سجل المنصة ليراها الأدمن
+    const db = getDb();
+    if (db) {
+      try {
+        await db.collection("geodev_certificates").doc(serialNumber).set({
+          serialNumber,
+          trackId: track.id,
+          trackTitle: track.title,
+          studentNameAr: cleanAr,
+          studentNameEn: cleanEn,
+          userEmail: currentUser.email || "",
+          uid: currentUser.uid,
+          issuedByAdmin: Boolean(customStudentAr),
+          issueDateAr,
+          issueDateEn,
+          createdAt: Date.now()
+        });
+      } catch (_) {}
+    }
+
+    const trackEnglishTitles = {
+      "AutoCAD + AI": "Applied AutoCAD Surveying & AI Automation",
+      "GIS": "Geographic Information Systems (GIS) & Spatial Analysis",
+      "Surveying": "Land Surveying & Technical Office Calculations",
+      "Civil 3D": "Autodesk Civil 3D Infrastructure & Road Design",
+      "Remote Sensing": "Remote Sensing & Satellite Image Processing",
+      "Programming": "GIS Automation & Python Spatial Programming"
+    };
+    const trackTitleEn = trackEnglishTitles[track.id] || track.id;
+
+    const certWindow = window.open("", "_blank", "width=1140,height=820");
     if (!certWindow) {
       return notify("يرجى السماح بالنوافذ المنبثقة (Pop-ups) في المتصفح لفتح الشهادة.", "error");
     }
 
+    const handwrittenSignatureSVG = `
+      <svg width="145" height="58" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto -4px;">
+        <path d="M 38 78 C 40 94, 44 96, 56 84 C 74 66, 94 36, 104 16 C 103 42, 102 68, 103 86 C 105 90, 108 82, 110 86 C 112 90, 115 80, 118 86 C 121 91, 125 78, 128 87 C 136 74, 152 46, 154 28 C 155 17, 134 17, 102 28 C 66 40, 24 58, 25 66 C 26 73, 74 62, 185 38"
+              fill="none" stroke="#1e3a8a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    const officialBlueStampSVG = `
+      <svg width="118" height="118" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-5deg);">
+        <defs>
+          <path id="gdStampTopArc" d="M 22,70 A 48,48 0 1,1 118,70" />
+          <path id="gdStampBottomArc" d="M 118,72 A 48,48 0 1,1 22,72" />
+        </defs>
+        <circle cx="70" cy="70" r="64" fill="rgba(29, 78, 216, 0.04)" stroke="#1d4ed8" stroke-width="2.6"/>
+        <circle cx="70" cy="70" r="59" fill="none" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3 2"/>
+        <circle cx="70" cy="70" r="36" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
+        <text fill="#1d4ed8" font-family="'Cairo', sans-serif" font-size="11.5" font-weight="800">
+          <textPath href="#gdStampTopArc" startOffset="50%" text-anchor="middle">• منصة جيوديف • GEODEV •</textPath>
+        </text>
+        <g transform="translate(70, 70)">
+          <circle cx="0" cy="-3" r="18" fill="none" stroke="#1d4ed8" stroke-width="1.2" opacity="0.35"/>
+          <ellipse cx="0" cy="-3" rx="9" ry="18" fill="none" stroke="#1d4ed8" stroke-width="1" opacity="0.35"/>
+          <line x1="-18" y1="-3" x2="18" y2="-3" stroke="#1d4ed8" stroke-width="1" opacity="0.35"/>
+          <text x="0" y="2" text-anchor="middle" fill="#1d4ed8" font-family="'Cinzel', Georgia, serif" font-size="17" font-weight="900" letter-spacing="0.5">GD</text>
+          <text x="0" y="13" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif" font-size="6.2" font-weight="800" letter-spacing="1">ACADEMY</text>
+        </g>
+        <text fill="#1d4ed8" font-family="'Cairo', sans-serif" font-size="11" font-weight="800">
+          <textPath href="#gdStampBottomArc" startOffset="50%" text-anchor="middle">مهندس أحمد سمير</textPath>
+        </text>
+      </svg>
+    `;
+
     certWindow.document.write(`<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>شهادة إتمام - ${escapeHTML(cleanStudentName)} | GeoDev</title>
+  <title>شهادة إتمام رسمية (عربي + إنجليزي) | ${escapeHTML(cleanEn)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;700;800&family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     @page { size: A4 landscape; margin: 0; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 20px;
-      background: #090d16;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1e293b;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      gap: 22px;
+      font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
     }
-    .no-print-bar {
-      margin-bottom: 16px;
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 10px 18px;
+      border-radius: 12px;
       display: flex;
-      gap: 12px;
+      align-items: center;
+      gap: 14px;
+      color: #f8fafc;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
-    .print-btn {
-      background: linear-gradient(135deg, #e09f24, #b45309);
-      color: #090d16;
+    .toolbar button {
+      background: #1d4ed8;
+      color: #ffffff;
       border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 900;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
+      font-family: 'Cairo', sans-serif;
     }
-    .cert-sheet {
+    .cert-page {
       width: 297mm;
       height: 210mm;
-      background: radial-gradient(circle at top right, #131c31 0%, #090d16 70%);
-      color: #f8fafc;
+      background: #fdfcf9;
+      color: #0f172a;
       position: relative;
-      padding: 14mm;
-      border: 4px solid #e09f24;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.65);
+      padding: 12mm 15mm;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      page-break-after: always;
     }
-    .cert-inner-border {
+    .cert-page:last-of-type { page-break-after: auto; }
+    .outer-frame { position: absolute; inset: 6mm; border: 3px solid #0f172a; pointer-events: none; }
+    .inner-frame { position: absolute; inset: 8.5mm; border: 1.5px solid #b48327; pointer-events: none; }
+    .watermark-grid {
       position: absolute;
-      inset: 6mm;
-      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      inset: 10mm;
+      background-image:
+        linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+      background-size: 14mm 14mm;
       pointer-events: none;
     }
-    .cert-corner {
-      position: absolute;
-      width: 24mm;
-      height: 24mm;
-      border: 3px solid #e09f24;
-      pointer-events: none;
+    .header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1.5px solid #cbd5e1; padding-bottom: 5mm; z-index: 2;
     }
-    .tl { top: 4mm; left: 4mm; border-right: 0; border-bottom: 0; }
-    .tr { top: 4mm; right: 4mm; border-left: 0; border-bottom: 0; }
-    .bl { bottom: 4mm; left: 4mm; border-right: 0; border-top: 0; }
-    .br { bottom: 4mm; right: 4mm; border-left: 0; border-top: 0; }
-
-    .cert-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(224, 159, 36, 0.35);
-      padding-bottom: 8mm;
-      z-index: 2;
+    .inst-brand { display: flex; align-items: center; gap: 12px; }
+    .monogram {
+      width: 50px; height: 50px; border: 2px solid #b48327; background: #0f172a; color: #f8fafc;
+      display: grid; place-items: center; font-family: 'Cinzel', serif; font-weight: 800; font-size: 19px; letter-spacing: 1px;
     }
-    .brand-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .inst-name { font-family: 'Cinzel', 'Cairo', serif; font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+    .inst-sub { font-size: 11.5px; color: #475569; font-weight: 600; }
+    .meta-serial { font-family: 'Plus Jakarta Sans', monospace; font-size: 11px; color: #334155; line-height: 1.6; }
+    .meta-serial strong { color: #0f172a; font-size: 12.5px; display: block; }
+    .body-center { text-align: center; z-index: 2; padding: 1mm 10mm; }
+    .cert-subtitle-top { font-size: 12.5px; font-weight: 700; color: #b48327; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2.5mm; }
+    .cert-heading-ar { font-family: 'Amiri', serif; font-size: 37px; font-weight: 700; color: #0f172a; margin: 0 0 3.5mm; }
+    .cert-heading-en { font-family: 'Cinzel', serif; font-size: 31px; font-weight: 800; color: #0f172a; letter-spacing: 1.5px; margin: 0 0 3.5mm; }
+    .cert-lead { font-size: 15.5px; color: #334155; margin-bottom: 2.5mm; }
+    .recipient-name-ar {
+      font-family: 'Amiri', serif; font-size: 34px; font-weight: 700; color: #0f172a;
+      border-bottom: 2px solid #b48327; display: inline-block; padding: 0 16mm 2mm; margin-bottom: 4.5mm;
     }
-    .brand-emblem {
-      width: 54px;
-      height: 54px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #e09f24, #b45309);
-      color: #090d16;
-      display: grid;
-      place-items: center;
-      font-weight: 900;
-      font-size: 20px;
+    .recipient-name-en {
+      font-family: 'Cinzel', serif; font-size: 29px; font-weight: 700; color: #0f172a;
+      border-bottom: 2px solid #b48327; display: inline-block; padding: 0 14mm 2mm; margin-bottom: 4.5mm; letter-spacing: 1px;
     }
-    .brand-title {
-      font-size: 24px;
-      font-weight: 900;
-      color: #fbbf24;
-      letter-spacing: 0.5px;
+    .cert-statement { font-size: 14.8px; color: #1e293b; line-height: 1.8; max-width: 230mm; margin: 0 auto; }
+    .course-name-highlight { font-weight: 800; color: #0f172a; font-size: 17px; }
+    .footer-row {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      border-top: 1.5px solid #cbd5e1; padding-top: 4mm; z-index: 2;
     }
-    .brand-sub {
-      font-size: 12px;
-      color: #38bdf8;
-      font-weight: 700;
-    }
-    .serial-box {
-      text-align: left;
-      direction: ltr;
-      font-size: 12px;
-      color: #94a3b8;
-    }
-    .serial-box strong {
-      display: block;
-      color: #fbbf24;
-      font-size: 14px;
-    }
-
-    .cert-body {
-      text-align: center;
-      z-index: 2;
-      padding: 4mm 12mm;
-    }
-    .cert-kicker {
-      color: #38bdf8;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 4mm;
-    }
-    .cert-main-title {
-      font-size: 36px;
-      font-weight: 900;
-      color: #ffffff;
-      margin: 0 0 6mm;
-    }
-    .cert-present-text {
-      font-size: 16px;
-      color: #cbd5e1;
-      margin-bottom: 4mm;
-    }
-    .student-name {
-      font-size: 34px;
-      font-weight: 900;
-      color: #fbbf24;
-      border-bottom: 2px dashed rgba(224, 159, 36, 0.6);
-      display: inline-block;
-      padding: 2mm 14mm 3mm;
-      margin-bottom: 6mm;
-    }
-    .course-desc {
-      font-size: 16px;
-      color: #e2e8f0;
-      line-height: 1.75;
-      max-width: 220mm;
-      margin: 0 auto;
-    }
-    .course-highlight {
-      color: #38bdf8;
-      font-weight: 900;
-      font-size: 19px;
-    }
-
-    .cert-footer {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      border-top: 1px solid rgba(224, 159, 36, 0.35);
-      padding-top: 6mm;
-      z-index: 2;
-    }
-    .sig-block {
-      text-align: center;
-      min-width: 65mm;
-    }
-    .sig-line {
-      border-top: 1.5px solid #e09f24;
-      margin-top: 8mm;
-      padding-top: 2mm;
-      font-size: 13px;
-      font-weight: 800;
-      color: #fbbf24;
-    }
-    .sig-sub {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-    .seal-badge {
-      width: 28mm;
-      height: 28mm;
-      border-radius: 50%;
-      border: 2.5px double #e09f24;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fbbf24;
-      font-size: 10px;
-      font-weight: 900;
-      text-align: center;
-      background: rgba(224, 159, 36, 0.08);
-    }
-
+    .qr-verify-box { display: flex; align-items: center; gap: 9px; }
+    .qr-verify-box img { width: 72px; height: 72px; border: 1px solid #cbd5e1; padding: 3px; background: #ffffff; }
+    .qr-caption { font-size: 10.5px; color: #475569; line-height: 1.5; max-width: 44mm; }
+    .sig-area { text-align: center; min-width: 72mm; }
+    .sig-name { font-family: 'Amiri', 'Cinzel', serif; font-size: 16.5px; font-weight: 700; color: #0f172a; margin-bottom: 1.5mm; }
+    .sig-rule { border-top: 1.5px solid #0f172a; padding-top: 1.5mm; font-size: 12px; font-weight: 700; color: #334155; }
+    .sig-role { font-size: 10.5px; color: #64748b; }
     @media print {
-      body { padding: 0; background: #090d16; }
-      .no-print-bar { display: none !important; }
-      .cert-sheet { box-shadow: none; }
+      body { padding: 0; background: #ffffff; gap: 0; }
+      .toolbar { display: none !important; }
+      .cert-page { box-shadow: none; margin: 0; }
     }
   </style>
 </head>
 <body>
-  <div class="no-print-bar">
-    <button class="print-btn" onclick="window.print()">حفظ الشهادة كملف PDF أو طباعتها</button>
+  <div class="toolbar">
+    <span>تم تجهيز الشهادتين الرسميتين (العربية + الإنجليزية) بالتوقيع الشخصي والختم الأزرق ورمز QR</span>
+    <button type="button" onclick="window.print()">حفظ النسختين كملف PDF / طباعة</button>
   </div>
 
-  <div class="cert-sheet">
-    <div class="cert-inner-border"></div>
-    <div class="cert-corner tl"></div>
-    <div class="cert-corner tr"></div>
-    <div class="cert-corner bl"></div>
-    <div class="cert-corner br"></div>
-
-    <div class="cert-header">
-      <div class="brand-box">
-        <div class="brand-emblem">GD</div>
+  <!-- النسخة الأولى: باللغة العربية -->
+  <section class="cert-page" dir="rtl">
+    <div class="outer-frame"></div>
+    <div class="inner-frame"></div>
+    <div class="watermark-grid"></div>
+    <header class="header-row">
+      <div class="inst-brand">
+        <div class="monogram">GD</div>
         <div>
-          <div class="brand-title">GeoDev Academy</div>
-          <div class="brand-sub">Geomatics • GIS • Surveying • AI Engineering</div>
+          <div class="inst-name">أكاديمية ومنصة جيوديف (GeoDev)</div>
+          <div class="inst-sub">لعلوم المساحة والخرائط ونظم المعلومات الجغرافية والهندسة الرقمية</div>
         </div>
       </div>
-      <div class="serial-box">
-        Certificate ID
+      <div class="meta-serial" style="text-align:left;direction:ltr;">
+        <span>Certificate Serial No.</span>
         <strong>${escapeHTML(serialNumber)}</strong>
-        Issued: ${escapeHTML(issueDate)}
+        <span>تاريخ الإصدار: ${escapeHTML(issueDateAr)}</span>
       </div>
-    </div>
-
-    <div class="cert-body">
-      <div class="cert-kicker">CERTIFICATE OF COMPLETION</div>
-      <h1 class="cert-main-title">شهادة إتمام واجتياز برنامج تدريبي</h1>
-      <div class="cert-present-text">تشهد إدارة أكاديمية ومنصة <b>GeoDev</b> بأن المتدرب / المهندس:</div>
-      <div class="student-name">${escapeHTML(cleanStudentName)}</div>
-      <p class="course-desc">
-        قد أتم بنجاح جميع المحاضرات والتطبيقات العملية المقررة في المسار التدريبي التطبيقي:<br>
-        <span class="course-highlight">${escapeHTML(track.title)} (${escapeHTML(track.id)})</span><br>
-        بإجمالي (${trackLectures.length || 1}) محاضرة تطبيقية متكاملة على منصة GeoDev التعليمية.
+    </header>
+    <main class="body-center">
+      <div class="cert-subtitle-top">وثيقة اعتماد واجتياز برنامج تدريبي</div>
+      <h1 class="cert-heading-ar">شهادة إتمام واجتياز برنامج تدريبي</h1>
+      <div class="cert-lead">تشهد إدارة أكاديمية ومنصة <b>جيوديف (GeoDev)</b> بأن الطالب / المهندس:</div>
+      <div class="recipient-name-ar">${escapeHTML(cleanAr)}</div>
+      <p class="cert-statement">
+        قد أتمّ بنجاحٍ وتفوّق جميع المحاضرات والتطبيقات العملية المقررة في البرنامج التدريبي التطبيقي:<br>
+        <span class="course-name-highlight">«${escapeHTML(track.title)} — (${escapeHTML(track.id)})»</span><br>
+        بواقع (${totalCount}) محاضرة تدريبية، وقد مُنحت له هذه الشهادة تقديراً لالتزامه واجتيازه كافة متطلبات البرنامج بنجاح.
       </p>
-    </div>
-
-    <div class="cert-footer">
-      <div class="sig-block">
-        <div style="font-size:14px;font-weight:800;color:#e2e8f0;">${escapeHTML(issueDate)}</div>
-        <div class="sig-line">تاريخ الإصدار والاعتماد</div>
-        <div class="sig-sub">elbaled.github.io/GEO_DEV_AI</div>
+    </main>
+    <footer class="footer-row">
+      <div class="qr-verify-box">
+        <img src="${qrApiUrl}" alt="QR Verification">
+        <div class="qr-caption">
+          <strong>رمز التحقق الرقمي</strong><br>
+          امسح الرمز للتحقق من موثوقية الشهادة على منصة جيوديف.<br>
+          <span style="direction:ltr;display:inline-block;font-size:9.5px;">${escapeHTML(serialNumber)}</span>
+        </div>
       </div>
-
-      <div class="seal-badge">
-        <span>GEODEV</span>
-        <span>VERIFIED</span>
-        <span>100%</span>
+      <div>${officialBlueStampSVG}</div>
+      <div class="sig-area">
+        ${handwrittenSignatureSVG}
+        <div class="sig-name">المهندس / أحمد سمير عبد القادر</div>
+        <div class="sig-rule">مؤسس ومدير منصة جيوديف (GeoDev)</div>
+        <div class="sig-role">مهندس مساحة وخرائط ونظم معلومات جغرافية</div>
       </div>
+    </footer>
+  </section>
 
-      <div class="sig-block">
-        <div style="font-size:15px;font-weight:900;color:#38bdf8;">م. أحمد سمير عبد القادر</div>
-        <div class="sig-line">مؤسس ومدير منصة GeoDev</div>
-        <div class="sig-sub">مهندس مساحة وخرائط ونظم معلومات جغرافية</div>
+  <!-- النسخة الثانية: باللغة الإنجليزية -->
+  <section class="cert-page" dir="ltr">
+    <div class="outer-frame"></div>
+    <div class="inner-frame"></div>
+    <div class="watermark-grid"></div>
+    <header class="header-row">
+      <div class="inst-brand">
+        <div class="monogram">GD</div>
+        <div>
+          <div class="inst-name">GeoDev Academy</div>
+          <div class="inst-sub">Geomatics, Surveying, GIS &amp; AI Engineering Platform</div>
+        </div>
       </div>
-    </div>
-  </div>
+      <div class="meta-serial" style="text-align:right;">
+        <span>Certificate Serial No.</span>
+        <strong>${escapeHTML(serialNumber)}</strong>
+        <span>Issued on: ${escapeHTML(issueDateEn)}</span>
+      </div>
+    </header>
+    <main class="body-center">
+      <div class="cert-subtitle-top">Official Academic &amp; Technical Credential</div>
+      <h1 class="cert-heading-en">CERTIFICATE OF COMPLETION</h1>
+      <div class="cert-lead">This is to formally certify that the student / engineer</div>
+      <div class="recipient-name-en">${escapeHTML(cleanEn)}</div>
+      <p class="cert-statement">
+        has successfully completed with distinction all required lectures and practical engineering modules in:<br>
+        <span class="course-name-highlight">${escapeHTML(trackTitleEn)} (${escapeHTML(track.id)})</span><br>
+        comprising (${totalCount}) applied training sessions, and is hereby awarded this credential in recognition of his/her achievement.
+      </p>
+    </main>
+    <footer class="footer-row">
+      <div class="qr-verify-box">
+        <img src="${qrApiUrl}" alt="QR Verification">
+        <div class="qr-caption">
+          <strong>Digital Verification</strong><br>
+          Scan to verify credential authenticity on GeoDev.<br>
+          <span style="font-size:9.5px;">ID: ${escapeHTML(serialNumber)}</span>
+        </div>
+      </div>
+      <div>${officialBlueStampSVG}</div>
+      <div class="sig-area">
+        ${handwrittenSignatureSVG}
+        <div class="sig-name" style="font-family:'Cinzel',serif;">Eng. Ahmed Samir Abdelkader</div>
+        <div class="sig-rule">Founder &amp; Director, GeoDev Platform</div>
+        <div class="sig-role">Surveying, Mapping &amp; GIS Engineer</div>
+      </div>
+    </footer>
+  </section>
 </body>
 </html>`);
     certWindow.document.close();
@@ -621,6 +671,11 @@
         background: rgba(224, 159, 36, 0.16); color: #fbbf24; border: 1px solid rgba(224, 159, 36, 0.45);
         display: inline-flex; align-items: center; gap: 4px;
       }
+      #s-academy .access-pill-final {
+        font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 8px;
+        background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45);
+        display: inline-flex; align-items: center; gap: 4px;
+      }
 
       #s-academy .access-mode-toggle {
         display: grid;
@@ -653,6 +708,11 @@
         background: rgba(224, 159, 36, 0.2);
         border-color: #e09f24;
         color: #fbbf24;
+      }
+      #s-academy .access-toggle-option.selected-final {
+        background: rgba(56, 189, 248, 0.22);
+        border-color: #38bdf8;
+        color: #38bdf8;
       }
 
       #s-academy .courses-sub-switcher {
@@ -1256,6 +1316,16 @@
     }
   }
 
+  async function loadIssuedCertificatesLog() {
+    if (!isAdminUser) return;
+    const db = getDb();
+    if (!db) return;
+    try {
+      const snap = await db.collection("geodev_certificates").orderBy("createdAt", "desc").limit(50).get();
+      issuedCertificatesLog = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (_) {}
+  }
+
   function renderSmartNotificationBanner() {
     const wrap = $("gdSmartVideoAlertWrap");
     if (!wrap || !uploadedCourses.length) return;
@@ -1322,13 +1392,14 @@
 
     const lecture = uploadedCourses.find(c => c.id === lectureId);
     if (lecture) {
-      const trackLectures = uploadedCourses.filter(c => c.category === lecture.category);
-      const doneInTrack = trackLectures.filter(c => completedLectures.includes(c.id)).length;
-      const pct = trackLectures.length ? Math.round((doneInTrack / trackLectures.length) * 100) : 100;
-      if (pct === 100) {
-        notify(`تهانينا! أتممت مسار (${lecture.category}) بنسبة 100% ويمكنك الآن استخراج شهادتك من تبويب «تقدمي والشهادات».`, "success");
+      const eligible = isTrackEligibleForCertificate(lecture.category);
+      if (eligible) {
+        notify(`مبارك! أتممت الكورس بنجاح. اضغط الآن على زر «الحصول على الشهادة» بالأسفل.`, "success");
       } else {
-        notify(`تم إكمال المحاضرة بنجاح. نسبة تقدمك في (${lecture.category}) أصبحت ${pct}% (${doneInTrack}/${trackLectures.length}).`, "success");
+        const trackLectures = uploadedCourses.filter(c => c.category === lecture.category);
+        const doneInTrack = trackLectures.filter(c => completedLectures.includes(c.id)).length;
+        const pct = trackLectures.length ? Math.round((doneInTrack / trackLectures.length) * 100) : 100;
+        notify(`تم إكمال المحاضرة بنجاح (${doneInTrack}/${trackLectures.length} — ${pct}%) وتم فتح المحاضرة التالية.`, "success");
       }
     }
   }
@@ -1408,13 +1479,13 @@
     return `
       <div class="academy-card admin-upload-card">
         <h3>${ico("upload-cloud", 20)} رفع محاضرة أو فيديو جديد في دوراتنا</h3>
-        <p class="academy-muted">اكتب بيانات المحاضرة وارفع الفيديو أو الرابط، ثم اختر هل المحاضرة <b>مجانية للجميع</b> أم <b>بالكود ومشتركي PRO</b>.</p>
+        <p class="academy-muted">ارفع المحاضرة وحدد نوع الفتح (مجانية / بالكود)، وحدد هل هي <b>المحاضرة الأخيرة في الكورس</b> ليظهر للطالب زر الحصول على الشهادة بعدها.</p>
 
         <form id="academyAdminCourseForm">
           <div class="admin-upload-grid">
             <div>
               <label class="academy-muted">عنوان المحاضرة أو الفيديو *</label>
-              <input type="text" id="acUpTitle" class="academy-input" placeholder="مثال: المحاضرة 1 - أساسيات ربط AutoCAD بالـ AI" required>
+              <input type="text" id="acUpTitle" class="academy-input" placeholder="مثال: المحاضرة الأخيرة - المشروع التطبيقي" required>
             </div>
             <div>
               <label class="academy-muted">اسم المحاضر *</label>
@@ -1456,7 +1527,7 @@
             </div>
           </div>
 
-          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">نظام فتح المحاضرة للمستخدمين *</label>
+          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">1. نظام فتح المحاضرة للمستخدمين *</label>
           <input type="hidden" id="acUpAccessType" value="code">
           <div class="access-mode-toggle" id="acUpAccessToggleGroup">
             <button type="button" class="access-toggle-option" data-set-upload-access="free">
@@ -1464,6 +1535,17 @@
             </button>
             <button type="button" class="access-toggle-option selected-code" data-set-upload-access="code">
               ${ico("key-round", 16)} بالكود (مشتركو الكود و PRO)
+            </button>
+          </div>
+
+          <label class="academy-muted" style="font-weight:800;color:#38bdf8;">2. ترتيب المحاضرة في الكورس (إصدار الشهادة بعد الإكمال) *</label>
+          <input type="hidden" id="acUpIsFinal" value="no">
+          <div class="access-mode-toggle" id="acUpFinalToggleGroup">
+            <button type="button" class="access-toggle-option selected-code" data-set-upload-final="no">
+              ${ico("layers", 16)} محاضرة ضمن الكورس
+            </button>
+            <button type="button" class="access-toggle-option" data-set-upload-final="yes">
+              ${ico("award", 16)} آخر محاضرة (تمنح الشهادة بعدها)
             </button>
           </div>
 
@@ -1478,11 +1560,12 @@
   function renderEditCourseFormHTML(item) {
     if (!canManageCourses() || !isEditingCourseMode) return "";
     const currentAccess = String(item.accessType || "code").toLowerCase() === "free" ? "free" : "code";
+    const currentFinal = item.isFinalLecture === true ? "yes" : "no";
 
     return `
       <div class="academy-card admin-upload-card" style="margin:14px 0;border-color:#38bdf8;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">${ico("edit-3", 18)} تعديل بيانات المحاضرة ونظام الفتح</h4>
+          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">${ico("edit-3", 18)} تعديل بيانات المحاضرة ونظام الفتح والشهادة</h4>
           <button type="button" class="academy-btn secondary" id="cancelEditCourseBtn" style="padding:5px 11px;font-size:12px;">
             ${ico("x", 14)} إلغاء التعديل
           </button>
@@ -1531,7 +1614,7 @@
             </div>
           </div>
 
-          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">نظام فتح المحاضرة للمستخدمين *</label>
+          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">1. نظام فتح المحاضرة للمستخدمين *</label>
           <input type="hidden" id="edCourseAccessType" value="${currentAccess}">
           <div class="access-mode-toggle" id="edCourseAccessToggleGroup">
             <button type="button" class="access-toggle-option ${currentAccess === "free" ? "selected-free" : ""}" data-set-edit-access="free">
@@ -1539,6 +1622,17 @@
             </button>
             <button type="button" class="access-toggle-option ${currentAccess === "code" ? "selected-code" : ""}" data-set-edit-access="code">
               ${ico("key-round", 16)} بالكود (مشتركو الكود و PRO)
+            </button>
+          </div>
+
+          <label class="academy-muted" style="font-weight:800;color:#38bdf8;">2. هل هذه آخر محاضرة في الكورس (تمنح الشهادة بعدها)؟</label>
+          <input type="hidden" id="edCourseIsFinal" value="${currentFinal}">
+          <div class="access-mode-toggle" id="edCourseFinalToggleGroup">
+            <button type="button" class="access-toggle-option ${currentFinal === "no" ? "selected-code" : ""}" data-set-edit-final="no">
+              ${ico("layers", 16)} محاضرة ضمن الكورس
+            </button>
+            <button type="button" class="access-toggle-option ${currentFinal === "yes" ? "selected-final" : ""}" data-set-edit-final="yes">
+              ${ico("award", 16)} آخر محاضرة (تمنح الشهادة بعدها)
             </button>
           </div>
 
@@ -1557,8 +1651,9 @@
 
     const isCompleted = completedLectures.includes(item.id);
     const hasAccess = canWatchLectureContent(item);
-    const canShowCompleteBtn = isCompleted || videoFinishedWatching || canManageCourses();
     const isFree = String(item.accessType || "code").toLowerCase() === "free";
+    const isFinal = item.isFinalLecture === true;
+    const trackEligibleForCert = isTrackEligibleForCertificate(item.category);
 
     const likesArr = Array.isArray(item.likes) ? item.likes : [];
     const dislikesArr = Array.isArray(item.dislikes) ? item.dislikes : [];
@@ -1573,6 +1668,9 @@
             ${isFree
               ? `<span class="access-pill-free">${ico("globe", 13)} مجانية للجميع</span>`
               : `<span class="access-pill-code">${ico("key-round", 13)} بالكود / PRO</span>`}
+            ${isFinal
+              ? `<span class="access-pill-final">${ico("award", 13)} المحاضرة الختامية (تؤهل للشهادة)</span>`
+              : ""}
           </div>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             ${canManageCourses() ? `
@@ -1595,19 +1693,20 @@
         ${buildVideoPlayerHTML(item)}
 
         ${hasAccess ? `
-          <div style="margin:12px 0 8px;padding:12px;border-radius:12px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
-            ${isCompleted ? `
-              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;">
-                ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح وفتح المحاضرة التالية
-              </div>
-            ` : canShowCompleteBtn ? `
-              <button type="button" class="academy-btn success" style="width:100%;" data-complete-lecture="${escapeHTML(item.id)}">
-                ${ico("check-circle-2", 17)} إكمال المحاضرة وفتح المحاضرة التالية
+          <div style="margin:12px 0 10px;padding:13px;border-radius:12px;background:var(--bg,#101827);border:1.5px solid ${isCompleted ? "#22c55e" : "#e09f24"};">
+            ${!isCompleted ? `
+              <button type="button" class="academy-btn success" style="width:100%;font-size:14px;padding:12px;" data-complete-lecture="${escapeHTML(item.id)}">
+                ${ico("check-circle-2", 18)} ${isFinal ? "إكمال المحاضرة الأخيرة والحصول على الشهادة" : "إكمال المحاضرة وفتح المحاضرة التالية"}
               </button>
             ` : `
-              <div class="academy-muted" style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
-                ${ico("clock", 15)} شاهد المحاضرة كاملة حتى النهاية ليظهر لك زر «إكمال المحاضرة» وتُفتح المحاضرة التالية.
+              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:${trackEligibleForCert ? "10px" : "0"};">
+                ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح
               </div>
+              ${trackEligibleForCert ? `
+                <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-generate-cert="${escapeHTML(item.category)}">
+                  ${ico("award", 18)} الحصول على شهادة إتمام الكورس المعتمدة (عربي + إنجليزي)
+                </button>
+              ` : ""}
             `}
           </div>
         ` : ""}
@@ -1866,13 +1965,14 @@
 
       <div class="academy-card">
         <h3>${ico("play-square", 19)} محاضرات ودروس المنصة (${filteredLectures.length})</h3>
-        <p class="academy-muted">المحاضرات الموسومة بـ (مجانية) متاحة لجميع المسجلين، والموسومة بـ (بالكود / PRO) تفتح لمشتركي الكود والـ PRO.</p>
+        <p class="academy-muted">أكمل كل محاضرة بالضغط على زر «إكمال المحاضرة» أسفل الفيديو للانتقال للمحاضرة التالية والحصول على الشهادة في النهاية.</p>
 
         <div class="academy-grid">
           ${filteredLectures.length ? filteredLectures.map(item => {
             const unlocked = isLectureUnlocked(item);
             const done = completedLectures.includes(item.id);
             const isFree = String(item.accessType || "code").toLowerCase() === "free";
+            const isFinal = item.isFinalLecture === true;
             const trackList = uploadedCourses.filter(c => c.category === item.category);
             const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
             const likesCount = Array.isArray(item.likes) ? item.likes.length : 0;
@@ -1881,10 +1981,13 @@
               <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
                   <span class="hub-card-badge">${escapeHTML(item.category)} • محاضرة ${lectureNum}</span>
-                  <div style="display:flex;align-items:center;gap:5px;">
+                  <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
                     ${isFree
                       ? `<span class="access-pill-free">${ico("globe", 12)} مجانية</span>`
                       : `<span class="access-pill-code">${ico("key-round", 12)} بالكود</span>`}
+                    ${isFinal
+                      ? `<span class="access-pill-final">${ico("award", 12)} ختامية</span>`
+                      : ""}
                     ${done
                       ? `<span style="color:#4ade80;font-size:11.5px;font-weight:900;display:inline-flex;align-items:center;gap:3px;">${ico("check-circle-2", 13)} مكتملة</span>`
                       : !unlocked
@@ -1917,33 +2020,7 @@
 
     bindCourseUploadForm();
     bindEditCourseForm();
-    setupVideoWatchCompletionWatcher();
     refreshAcademyIcons(content);
-  }
-
-  function setupVideoWatchCompletionWatcher() {
-    clearTimeout(ytWatchTimer);
-    if (!selectedCourseDetailId || videoFinishedWatching) return;
-
-    const html5Vid = $("academyHtml5Video");
-    if (html5Vid) {
-      html5Vid.addEventListener("ended", () => {
-        videoFinishedWatching = true;
-        renderCourses();
-        notify("أتممت مشاهدة المحاضرة. يمكنك الآن الضغط على زر إكمال المحاضرة.", "success");
-      });
-      return;
-    }
-
-    const ytFrame = $("academyYtIframe");
-    if (ytFrame) {
-      ytWatchTimer = setTimeout(() => {
-        videoFinishedWatching = true;
-        if (activeTab === "courses" && selectedCourseDetailId) {
-          renderCourses();
-        }
-      }, 45000);
-    }
   }
 
   function renderOfficialCourses(query = "") {
@@ -2053,6 +2130,59 @@
     refreshAcademyIcons(content);
   }
 
+  function renderAdminCertificatesPanelHTML() {
+    if (!isAdminUser) return "";
+    return `
+      <div class="academy-card admin-upload-card" style="margin-bottom:16px;">
+        <h3>${ico("shield-check", 20)} لوحة تحكم الأدمن في الشهادات المعتمدة</h3>
+        <p class="academy-muted">يمكنك من هنا معاينة الشهادة أو إصدار شهادة رسمية مخصصة لأي طالب فوراً، ومتابعة سجل الشهادات الصادرة من المنصة:</p>
+
+        <div class="admin-upload-grid">
+          <div>
+            <label class="academy-muted">اسم الطالب باللغة العربية *</label>
+            <input type="text" id="adminCertNameAr" class="academy-input" placeholder="مثال: أحمد سمير عبد القادر">
+          </div>
+          <div>
+            <label class="academy-muted">اسم الطالب باللغة الإنجليزية *</label>
+            <input type="text" id="adminCertNameEn" class="academy-input" placeholder="مثال: AHMED SAMIR ABDELKADER" style="direction:ltr;">
+          </div>
+          <div>
+            <label class="academy-muted">المسار / الكورس *</label>
+            <select id="adminCertTrack" class="academy-input">
+              ${ourTracks.map(t => `<option value="${t.id}">${t.title}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <button type="button" id="adminIssueCustomCertBtn" class="academy-btn gold" style="width:100%;">
+          ${ico("award", 17)} معاينة وإصدار الشهادة الرسمية الآن (عربي + إنجليزي)
+        </button>
+
+        ${issuedCertificatesLog.length ? `
+          <div style="margin-top:14px;">
+            <strong style="font-size:13px;color:#fbbf24;">سجل آخر الشهادات الصادرة (${issuedCertificatesLog.length}):</strong>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;max-height:220px;overflow-y:auto;">
+              ${issuedCertificatesLog.map(cert => `
+                <div style="background:var(--bg,#101827);border:1px solid var(--ln,#334155);border-radius:10px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;">
+                  <div>
+                    <strong>${escapeHTML(cert.studentNameAr || "")}</strong> — <span style="direction:ltr;display:inline-block;">${escapeHTML(cert.studentNameEn || "")}</span>
+                    <div class="academy-muted">${escapeHTML(cert.trackTitle || cert.trackId)} • ${escapeHTML(cert.issueDateAr || "")} • <code style="color:#38bdf8;">${escapeHTML(cert.serialNumber)}</code></div>
+                  </div>
+                  <button type="button" class="academy-btn secondary" style="padding:5px 10px;font-size:11.5px;"
+                    data-reprint-cert-track="${escapeHTML(cert.trackId)}"
+                    data-reprint-cert-ar="${escapeHTML(cert.studentNameAr || "")}"
+                    data-reprint-cert-en="${escapeHTML(cert.studentNameEn || "")}">
+                    ${ico("printer", 14)} عرض / طباعة
+                  </button>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
   function renderProgress() {
     const content = $("academyContent");
     if (!content) return;
@@ -2061,8 +2191,8 @@
       const trackLectures = uploadedCourses.filter(c => c.category === track.id);
       const total = trackLectures.length;
       const done = trackLectures.filter(c => completedLectures.includes(c.id)).length;
-      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-      const canCertify = (total > 0 && percent === 100) || isAdminUser;
+      const canCertify = isTrackEligibleForCertificate(track.id);
+      const percent = canCertify && total > 0 ? 100 : total > 0 ? Math.round((done / total) * 100) : 0;
       return { ...track, total, done, percent, canCertify };
     });
 
@@ -2071,9 +2201,11 @@
     const overallPct = totalAllLectures > 0 ? Math.round((totalAllCompleted / totalAllLectures) * 100) : 0;
 
     content.innerHTML = `
+      ${renderAdminCertificatesPanelHTML()}
+
       <div class="academy-card" style="margin-bottom:15px;border-color:#e09f24;">
         <h3>${ico("award", 21)} تقدمك التعليمي والشهادات المعتمدة (${overallPct}%)</h3>
-        <p>بمجرد إتمامك <b>100%</b> من محاضرات أي مسار تدريبي، يظهر لك زر استخراج <b>شهادة الإتمام الرقمية الرسمية (PDF)</b> باسمك فوراً.</p>
+        <p>بمجرد إتمامك <b>100%</b> من محاضرات المسار أو إكمال المحاضرة الختامية، يظهر لك زر <b>الحصول على الشهادة المعتمدة (عربي + إنجليزي)</b>.</p>
         <div class="academy-progress"><span style="width:${overallPct}%"></span></div>
         <div class="academy-muted">أتممت <b>${totalAllCompleted}</b> من أصل <b>${totalAllLectures}</b> محاضرة مرفوعة على المنصة.</div>
       </div>
@@ -2090,15 +2222,15 @@
             <p class="academy-muted">
               ${tr.total === 0
                 ? "لم تُرفع محاضرات في هذا الكورس بعد."
-                : tr.percent === 100
-                ? "أتممت جميع محاضرات هذا الكورس بنجاح. شهادتك جاهزة للاستخراج الآن."
-                : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس واستخراج الشهادة.`}
+                : tr.canCertify
+                ? "مبارك! شهادتك المعتمدة جاهزة للاستخراج باللغتين العربية والإنجليزية."
+                : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس والحصول على الشهادة.`}
             </p>
 
             <div style="display:flex;flex-direction:column;gap:7px;">
               ${tr.canCertify ? `
                 <button type="button" class="academy-btn gold" style="width:100%;" data-generate-cert="${escapeHTML(tr.id)}">
-                  ${ico("award", 16)} استخراج شهادة إتمام الكورس (PDF)
+                  ${ico("award", 16)} الحصول على الشهادة (عربي + إنجليزي)
                 </button>
               ` : ""}
               ${tr.total > 0 ? `
@@ -2270,7 +2402,8 @@
     await Promise.all([
       loadInstructors(),
       loadUploadedCourses(),
-      loadUserCompletedLectures()
+      loadUserCompletedLectures(),
+      loadIssuedCertificatesLog()
     ]);
 
     if (api && api.ready) {
@@ -2284,12 +2417,12 @@
 
     setStatus(
       isAdminUser
-        ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات ونظام الشهادات مفعّلة."
+        ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات ولوحة الشهادات مفعّلة."
         : isCourseManagerUser
         ? "مرحباً بك (محاضر / منسق كورسات) — يمكنك رفع وتعديل الدورات والمحاضرين."
         : hasCoursesAccess || isProSubscriber
-        ? "مرحباً بك — اشتراكك مفعّل ويمكنك مشاهدة جميع المحاضرات المجانية والمدفوعة واستخراج الشهادات."
-        : "مرحباً بك — يمكنك مشاهدة جميع المحاضرات المجانية، والمحاضرات المدفوعة متاحة بكود الكورسات أو باقة PRO."
+        ? "مرحباً بك — اشتراكك مفعّل ويمكنك مشاهدة جميع المحاضرات واستخراج الشهادات."
+        : "مرحباً بك — يمكنك مشاهدة المحاضرات المجانية، والمحاضرات المدفوعة متاحة بكود الكورسات أو باقة PRO."
     );
     renderTab();
   }
@@ -2371,6 +2504,7 @@
       const pdfFile = $("acUpPdfFile")?.files?.[0];
       const driveUrl = $("acUpDriveUrl")?.value.trim();
       const accessType = $("acUpAccessType")?.value === "free" ? "free" : "code";
+      const isFinalLecture = $("acUpIsFinal")?.value === "yes";
 
       if (!title || !desc || !instructorName) {
         notify("اكتب عنوان المحاضرة واسم المحاضر والوصف أولاً.", "error");
@@ -2411,6 +2545,7 @@
           pdfName,
           driveUrl: driveUrl || "",
           accessType,
+          isFinalLecture,
           likes: [],
           dislikes: [],
           authorEmail: currentUser.email || ADMIN_EMAIL,
@@ -2427,7 +2562,7 @@
 
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
         renderSmartNotificationBanner();
-        notify(`تم نشر المحاضرة (${accessType === "free" ? "مجانية للجميع" : "بالكود ومشتركي PRO"}) بنجاح.`, "success");
+        notify(`تم نشر المحاضرة بنجاح.`, "success");
         renderCourses();
       } catch (err) {
         notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
@@ -2462,6 +2597,7 @@
       const videoFile = $("edCourseVideoFile")?.files?.[0];
       const pdfFile = $("edCoursePdfFile")?.files?.[0];
       const accessType = $("edCourseAccessType")?.value === "free" ? "free" : "code";
+      const isFinalLecture = $("edCourseIsFinal")?.value === "yes";
 
       if (!title || !desc || !instructorName) {
         return notify("اكتب عنوان المحاضرة واسم المحاضر والوصف.", "error");
@@ -2501,6 +2637,7 @@
           pdfUrl,
           pdfName,
           accessType,
+          isFinalLecture,
           updatedAt: Date.now()
         };
 
@@ -2645,7 +2782,6 @@
     return `<h3 style="display:flex;align-items:center;gap:7px;">${ico("graduation-cap", 19)} نتائج البحث (${results.length})</h3><div class="academy-search-grid">${cards || '<div class="academy-empty">لم يتم العثور على نتائج.</div>'}</div>${summary}${analysis}`;
   }
 
-  // تحديث نص الإعلان العائم الأول إلى "شاهد أول محاضرة من الأساسيات على المنصة الآن"
   function updateTopAnnouncementBanner() {
     const elements = document.querySelectorAll("div, p, span, strong, h4");
     elements.forEach(el => {
@@ -2679,13 +2815,39 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
-      // زر استخراج الشهادة الرقمية (PDF)
-      const certBtn = event.target.closest("[data-generate-cert]");
-      if (certBtn) {
-        generateTrackCertificate(certBtn.dataset.generateCert);
+      // إصدار شهادة مخصصة من لوحة الأدمن
+      if (event.target.closest("#adminIssueCustomCertBtn") && isAdminUser) {
+        const nameAr = $("adminCertNameAr")?.value.trim();
+        const nameEn = $("adminCertNameEn")?.value.trim();
+        const trackId = $("adminCertTrack")?.value || "AutoCAD + AI";
+        if (!nameAr || !nameEn) {
+          return notify("اكتب اسم الطالب بالعربية والإنجليزية أولاً.", "error");
+        }
+        await generateTrackCertificate(trackId, nameAr, nameEn);
+        await loadIssuedCertificatesLog();
+        renderProgress();
         return;
       }
 
+      // إعادة طباعة شهادة من سجل الأدمن
+      const reprintBtn = event.target.closest("[data-reprint-cert-track]");
+      if (reprintBtn && isAdminUser) {
+        await generateTrackCertificate(
+          reprintBtn.dataset.reprintCertTrack,
+          reprintBtn.dataset.reprintCertAr,
+          reprintBtn.dataset.reprintCertEn
+        );
+        return;
+      }
+
+      // زر الحصول على الشهادة للطلاب
+      const certBtn = event.target.closest("[data-generate-cert]");
+      if (certBtn) {
+        await generateTrackCertificate(certBtn.dataset.generateCert);
+        return;
+      }
+
+      // أزرار اختيار نوع الفتح (مجانية / بالكود) في الرفع
       const upAccessBtn = event.target.closest("[data-set-upload-access]");
       if (upAccessBtn) {
         const mode = upAccessBtn.dataset.setUploadAccess === "free" ? "free" : "code";
@@ -2703,6 +2865,25 @@
         return;
       }
 
+      // أزرار اختيار هل هي آخر محاضرة في الرفع
+      const upFinalBtn = event.target.closest("[data-set-upload-final]");
+      if (upFinalBtn) {
+        const val = upFinalBtn.dataset.setUploadFinal === "yes" ? "yes" : "no";
+        const hiddenInput = $("acUpIsFinal");
+        if (hiddenInput) hiddenInput.value = val;
+        const group = $("acUpFinalToggleGroup");
+        if (group) {
+          group.querySelectorAll("[data-set-upload-final]").forEach(btn => {
+            btn.classList.remove("selected-code", "selected-final");
+            if (btn.dataset.setUploadFinal === val) {
+              btn.classList.add(val === "yes" ? "selected-final" : "selected-code");
+            }
+          });
+        }
+        return;
+      }
+
+      // أزرار اختيار نوع الفتح في التعديل
       const edAccessBtn = event.target.closest("[data-set-edit-access]");
       if (edAccessBtn) {
         const mode = edAccessBtn.dataset.setEditAccess === "free" ? "free" : "code";
@@ -2714,6 +2895,24 @@
             btn.classList.remove("selected-free", "selected-code");
             if (btn.dataset.setEditAccess === mode) {
               btn.classList.add(mode === "free" ? "selected-free" : "selected-code");
+            }
+          });
+        }
+        return;
+      }
+
+      // أزرار اختيار هل هي آخر محاضرة في التعديل
+      const edFinalBtn = event.target.closest("[data-set-edit-final]");
+      if (edFinalBtn) {
+        const val = edFinalBtn.dataset.setEditFinal === "yes" ? "yes" : "no";
+        const hiddenInput = $("edCourseIsFinal");
+        if (hiddenInput) hiddenInput.value = val;
+        const group = $("edCourseFinalToggleGroup");
+        if (group) {
+          group.querySelectorAll("[data-set-edit-final]").forEach(btn => {
+            btn.classList.remove("selected-code", "selected-final");
+            if (btn.dataset.setEditFinal === val) {
+              btn.classList.add(val === "yes" ? "selected-final" : "selected-code");
             }
           });
         }
@@ -2768,7 +2967,6 @@
           if (isLectureUnlocked(targetLecture)) {
             await checkUserSubscriptionsStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
-            videoFinishedWatching = false;
             await loadCommentsForCourse(selectedCourseDetailId);
           } else {
             notify("هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
@@ -2781,6 +2979,9 @@
       const tab = event.target.closest("[data-academy-tab]");
       if (tab) {
         activeTab = tab.dataset.academyTab;
+        if (activeTab === "progress" && isAdminUser) {
+          await loadIssuedCertificatesLog();
+        }
         renderTab();
         const stage = $("academyContent");
         if (stage) stage.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -2855,7 +3056,6 @@
         await checkUserSubscriptionsStatus(currentUser);
         selectedCourseDetailId = lectureId;
         isEditingCourseMode = false;
-        videoFinishedWatching = false;
         await loadCommentsForCourse(selectedCourseDetailId);
         renderCourses();
         const detailBox = $("academyCourseDetailBox");
@@ -2874,7 +3074,6 @@
       if (event.target.closest("#academyCloseCourseDetail")) {
         selectedCourseDetailId = null;
         isEditingCourseMode = false;
-        clearTimeout(ytWatchTimer);
         renderCourses();
         return;
       }
