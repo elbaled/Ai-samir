@@ -1,8 +1,7 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الرسمية المتكاملة (V11)
-   - استبدال جميع الإيموجي العادية بأيقونات Lucide SVG الهندسية الرسمية
-   - حركات انتقال (Motions) أكاديمية هادئة واحترافية
-   - الكورسات تفتح بكود الكورسات الخاص (CRS-XXXX-XXXX) فقط
+   GEO Academy UI - النسخة الرسمية المتكاملة (V12)
+   - اختيار نوع الوصول لكل محاضرة (مجانية للجميع / بالكود ومشتركي PRO) عند الرفع والتعديل
+   - أيقونات Lucide SVG الهندسية الرسمية + حركات انتقال هادئة
    - صلاحيات منسق الكورسات + تعديل المحاضرات + التقييم (أعجبني / لم يعجبني)
    ============================================================================ */
 (function () {
@@ -26,8 +25,8 @@
       id: "courses",
       title: "الكورسات والدورات",
       icon: "graduation-cap",
-      badge: "كود الكورسات",
-      desc: "كورسات المنصة التطبيقية، المحاضرون، ونظام فتح المحاضرات التتابعي."
+      badge: "دورات المنصة",
+      desc: "كورسات المنصة التطبيقية (المجانية والمدفوعة)، المحاضرون، ونظام التعلم التتابعي."
     },
     {
       id: "official-courses",
@@ -89,7 +88,7 @@
       phone: "01015912371",
       teachingSince: "2024",
       specialties: "AutoCAD + AI، نظم المعلومات الجغرافية GIS، المساحة والرفع المساحي، أتمتة الليسبات والبرمجة الهندسية.",
-      bio: "مؤسس منصة GeoDev Studio Pro، متخصص في دمج الذكاء الاصطناعي مع برامج المساحة والأوتوكاد وتطوير الأدوات الهندسية للمكاتب الفنية."
+      bio: "مؤسس منصة GeoDev، متخصص في دمج الذكاء الاصطناعي مع برامج المساحة والأوتوكاد وتطوير الأدوات الهندسية للمكاتب الفنية."
     },
     {
       id: "inst_amr_ashraf",
@@ -129,6 +128,14 @@
 
   function canManageCourses() {
     return Boolean(isAdminUser || isCourseManagerUser);
+  }
+
+  // التحقق هل المستخدم يملك صلاحية مشاهدة المحاضرة (مجانية للكل أو بالكود/PRO)
+  function canWatchLectureContent(item) {
+    if (canManageCourses()) return true;
+    const accessType = String(item?.accessType || "code").toLowerCase();
+    if (accessType === "free") return Boolean(currentUser);
+    return Boolean(hasCoursesAccess || isProSubscriber);
   }
 
   function refreshAcademyIcons(root = document) {
@@ -193,7 +200,6 @@
         color: var(--tx, #e8edf7);
       }
 
-      /* إخفاء أي حقن خارجي قديم داخل تبويب الكورسات والدورات الخاصة بالمنصة */
       #s-academy[data-current-tab="courses"] #gdAcademyAiBridgeBox,
       #s-academy[data-current-tab="courses"] #gdDawodCoursesBox,
       #s-academy[data-current-tab="courses"] .dawod-courses-section,
@@ -286,6 +292,52 @@
       #s-academy .academy-hub-card.active .hub-card-badge { background: #e09f24; color: #0f172a; border-color: #e09f24; }
       #s-academy .hub-card-title { margin: 0; font-size: 15px; font-weight: 900; color: var(--tx, #f8fafc); }
       #s-academy .hub-card-desc { margin: 0; font-size: 12px; line-height: 1.65; color: var(--mt, #94a3b8); }
+
+      /* شارات نوع الوصول (مجانية / بالكود) */
+      #s-academy .access-pill-free {
+        font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 8px;
+        background: rgba(22, 163, 74, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.45);
+        display: inline-flex; align-items: center; gap: 4px;
+      }
+      #s-academy .access-pill-code {
+        font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 8px;
+        background: rgba(224, 159, 36, 0.16); color: #fbbf24; border: 1px solid rgba(224, 159, 36, 0.45);
+        display: inline-flex; align-items: center; gap: 4px;
+      }
+
+      /* أزرار التبديل السريع بين "مجانية" و "بالكود" في نموذج الرفع والتعديل */
+      #s-academy .access-mode-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 6px 0 12px;
+      }
+      #s-academy .access-toggle-option {
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--ln, #334155);
+        background: var(--bg, #101827);
+        color: var(--tx, #e8edf7);
+        font-size: 13px;
+        font-weight: 900;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: all 0.2s ease;
+      }
+      #s-academy .access-toggle-option.selected-free {
+        background: rgba(22, 163, 74, 0.22);
+        border-color: #22c55e;
+        color: #4ade80;
+      }
+      #s-academy .access-toggle-option.selected-code {
+        background: rgba(224, 159, 36, 0.2);
+        border-color: #e09f24;
+        color: #fbbf24;
+      }
 
       #s-academy .courses-sub-switcher {
         display: flex;
@@ -413,7 +465,6 @@
       #s-academy .course-video-frame video,
       #s-academy .course-video-frame iframe { width: 100%; max-height: 420px; display: block; border: 0; }
 
-      /* شريط أزرار أعجبني / لم يعجبني */
       #s-academy .lecture-reaction-bar {
         display: flex;
         align-items: center;
@@ -450,7 +501,6 @@
         color: #f87171;
       }
 
-      /* جدار قفل الفيديو وخانة تفعيل كود الكورسات */
       #s-academy .locked-video-wall {
         background: linear-gradient(135deg, #0f172a, #1e293b);
         border: 1.5px solid #e09f24;
@@ -956,6 +1006,8 @@
 
   function isLectureUnlocked(lectureItem) {
     if (canManageCourses()) return true;
+    // المحاضرة المجانية مفتوحة دائماً بدون قيد تسلسل
+    if (String(lectureItem?.accessType || "code").toLowerCase() === "free") return true;
     const sameTrack = uploadedCourses.filter(c => c.category === lectureItem.category);
     const idx = sameTrack.findIndex(c => c.id === lectureItem.id);
     if (idx <= 0) return true;
@@ -974,12 +1026,10 @@
   }
 
   function buildVideoPlayerHTML(item) {
-    if (!hasCoursesAccess && !canManageCourses()) {
+    if (!canWatchLectureContent(item)) {
       const userEmail = currentUser && currentUser.email ? currentUser.email : "";
       const waText = encodeURIComponent(
-        isProSubscriber
-          ? `مرحبا، أنا مستخدم PRO في منصة GeoDev Studio Pro وأريد الحصول على الكود الخاص بي لفتح الكورسات.\nحسابي: ${userEmail}`
-          : `مرحبا، أريد الحصول على كود تفعيل الكورسات في منصة GeoDev Studio Pro لفتح محاضرة: ${item.title}\nحسابي: ${userEmail}`
+        `مرحبا، أريد الحصول على مفتاح اشتراك البرو (PRO) أو كود الكورسات لفتح محاضرة: ${item.title}\nحسابي: ${userEmail}`
       );
 
       return `
@@ -987,20 +1037,18 @@
           <div class="pro-course-notice-banner">
             ${ico("shield-alert", 18)}
             <span>
-              ${isProSubscriber
-                ? "إذا كنت مستخدم البرو (PRO)، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات."
-                : "تشغيل الفيديوهات متاح بكود الكورسات الخاص فقط — إذا كنت مستخدم البرو، كلم الأدمن للحصول على الكود الخاص بك لفتح الكورسات."}
+              هذه المحاضرة متاحة لمشتركي باقة الـ PRO ومشتركي كود الكورسات فقط.
             </span>
           </div>
 
           <div style="color:#fbbf24;margin-bottom:8px;">${ico("lock", 32)}</div>
-          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:16px;">هذا المحتوى محمي بكود الكورسات</h4>
+          <h4 style="margin:0 0 8px;color:#fbbf24;font-size:16px;">هذا المحتوى مخصص للمشتركين بالكود أو باقة PRO</h4>
           <p style="margin:0 0 14px;font-size:12.5px;color:#cbd5e1;line-height:1.7;">
-            تواصل مع إدارة المنصة للحصول على كود الكورسات الخاص بك (<code>CRS-XXXX-XXXX</code>)، أو أدخل الكود في الخانة بالأسفل لفتح جميع المحاضرات فوراً:
+            تواصل مع إدارة المنصة للحصول على مفتاح اشتراك الـ PRO أو كود الكورسات الخاص بك (<code>CRS-XXXX-XXXX</code>)، أو أدخل الكود بالأسفل للتفعيل الفوري:
           </p>
 
           <a href="https://wa.me/${ADMIN_WHATSAPP}?text=${waText}" target="_blank" rel="noopener noreferrer" class="academy-btn gold" style="width:100%;max-width:360px;">
-            ${ico("message-square", 16)} كلم الأدمن للحصول على كود الكورسات
+            ${ico("message-square", 16)} كلم الأدمن للحصول على الكود (01015912371)
           </a>
 
           <div class="course-redeem-box">
@@ -1032,7 +1080,7 @@
     return `
       <div class="academy-card admin-upload-card">
         <h3>${ico("upload-cloud", 20)} رفع محاضرة أو فيديو جديد في دوراتنا</h3>
-        <p class="academy-muted">اكتب اسم المحاضر (مثل: المهندس أحمد سمير أو المهندس عمرو أشرف) وسيظهر على بطاقة المحاضرة ويرتبط بملف المحاضر تلقائياً.</p>
+        <p class="academy-muted">اكتب بيانات المحاضرة وارفع الفيديو أو الرابط، ثم اختر هل المحاضرة <b>مجانية للجميع</b> أم <b>بالكود ومشتركي PRO</b>.</p>
 
         <form id="academyAdminCourseForm">
           <div class="admin-upload-grid">
@@ -1080,6 +1128,17 @@
             </div>
           </div>
 
+          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">نظام فتح المحاضرة للمستخدمين *</label>
+          <input type="hidden" id="acUpAccessType" value="code">
+          <div class="access-mode-toggle" id="acUpAccessToggleGroup">
+            <button type="button" class="access-toggle-option" data-set-upload-access="free">
+              ${ico("globe", 16)} مجانية (تفتح للكل)
+            </button>
+            <button type="button" class="access-toggle-option selected-code" data-set-upload-access="code">
+              ${ico("key-round", 16)} بالكود (مشتركو الكود و PRO)
+            </button>
+          </div>
+
           <button type="submit" id="acUpSubmitBtn" class="academy-btn gold" style="width:100%;margin-top:6px;">
             ${ico("plus-circle", 17)} نشر المحاضرة وإرسال إشعار للمستخدمين
           </button>
@@ -1090,10 +1149,12 @@
 
   function renderEditCourseFormHTML(item) {
     if (!canManageCourses() || !isEditingCourseMode) return "";
+    const currentAccess = String(item.accessType || "code").toLowerCase() === "free" ? "free" : "code";
+
     return `
       <div class="academy-card admin-upload-card" style="margin:14px 0;border-color:#38bdf8;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">${ico("edit-3", 18)} تعديل بيانات المحاضرة والملفات المرفقة</h4>
+          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">${ico("edit-3", 18)} تعديل بيانات المحاضرة ونظام الفتح</h4>
           <button type="button" class="academy-btn secondary" id="cancelEditCourseBtn" style="padding:5px 11px;font-size:12px;">
             ${ico("x", 14)} إلغاء التعديل
           </button>
@@ -1142,6 +1203,17 @@
             </div>
           </div>
 
+          <label class="academy-muted" style="font-weight:800;color:#fbbf24;">نظام فتح المحاضرة للمستخدمين *</label>
+          <input type="hidden" id="edCourseAccessType" value="${currentAccess}">
+          <div class="access-mode-toggle" id="edCourseAccessToggleGroup">
+            <button type="button" class="access-toggle-option ${currentAccess === "free" ? "selected-free" : ""}" data-set-edit-access="free">
+              ${ico("globe", 16)} مجانية (تفتح للكل)
+            </button>
+            <button type="button" class="access-toggle-option ${currentAccess === "code" ? "selected-code" : ""}" data-set-edit-access="code">
+              ${ico("key-round", 16)} بالكود (مشتركو الكود و PRO)
+            </button>
+          </div>
+
           <button type="submit" id="edCourseSaveBtn" class="academy-btn success" style="width:100%;margin-top:6px;">
             ${ico("save", 17)} حفظ التعديلات على المحاضرة
           </button>
@@ -1156,7 +1228,9 @@
     if (!item) return "";
 
     const isCompleted = completedLectures.includes(item.id);
+    const hasAccess = canWatchLectureContent(item);
     const canShowCompleteBtn = isCompleted || videoFinishedWatching || canManageCourses();
+    const isFree = String(item.accessType || "code").toLowerCase() === "free";
 
     const likesArr = Array.isArray(item.likes) ? item.likes : [];
     const dislikesArr = Array.isArray(item.dislikes) ? item.dislikes : [];
@@ -1166,7 +1240,12 @@
     return `
       <div class="academy-card course-detail-box" id="academyCourseDetailBox">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
+            ${isFree
+              ? `<span class="access-pill-free">${ico("globe", 13)} مجانية للجميع</span>`
+              : `<span class="access-pill-code">${ico("key-round", 13)} بالكود / PRO</span>`}
+          </div>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             ${canManageCourses() ? `
               <button type="button" class="academy-btn gold" id="academyToggleEditCourseBtn" style="padding:7px 13px;font-size:12.5px;">
@@ -1187,7 +1266,7 @@
 
         ${buildVideoPlayerHTML(item)}
 
-        ${hasCoursesAccess || canManageCourses() ? `
+        ${hasAccess ? `
           <div style="margin:12px 0 8px;padding:12px;border-radius:12px;background:var(--bg,#101827);border:1px solid var(--ln,#334155);">
             ${isCompleted ? `
               <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;">
@@ -1205,7 +1284,6 @@
           </div>
         ` : ""}
 
-        <!-- أزرار أعجبني / لم يعجبني تحت زر تم الإكمال مباشرة -->
         <div class="lecture-reaction-bar">
           <button type="button" class="reaction-btn ${userLiked ? "liked" : ""}" data-react-lecture="like" data-course-id="${escapeHTML(item.id)}">
             ${ico("thumbs-up", 16)} أعجبني (${likesArr.length})
@@ -1216,12 +1294,12 @@
         </div>
 
         <div class="course-attachments-bar">
-          ${safeURL(item.pdfUrl) && (hasCoursesAccess || canManageCourses()) ? `
+          ${safeURL(item.pdfUrl) && hasAccess ? `
             <a href="${safeURL(item.pdfUrl)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(item.pdfName || item.title + ".pdf")}" class="academy-btn pdf-btn">
               ${ico("file-text", 16)} تحميل ملف PDF المرفق
             </a>
           ` : ""}
-          ${safeURL(item.driveUrl) && (hasCoursesAccess || canManageCourses()) ? `
+          ${safeURL(item.driveUrl) && hasAccess ? `
             <a href="${safeURL(item.driveUrl)}" target="_blank" rel="noopener noreferrer" class="academy-btn drive-btn">
               ${ico("folder-down", 16)} تحميل الملفات (Google Drive / MediaFire)
             </a>
@@ -1427,7 +1505,7 @@
           </h3>
           <span class="hub-card-badge">${uploadedCourses.length} محاضرة مرفوعة</span>
         </div>
-        <p class="academy-muted" style="margin:6px 0 0;">اختر التخصص لعرض محاضراته مرتبة بالتسلسل (يجب إكمال كل محاضرة لفتح المحاضرة التي تليها):</p>
+        <p class="academy-muted" style="margin:6px 0 0;">اختر التخصص لعرض المحاضرات المجانية والمدفوعة مرتبة بالتسلسل:</p>
 
         <div class="tracks-pills">
           <button type="button" class="track-pill-btn ${selectedTrackFilter === "all" && selectedInstructorFilter === "all" ? "active" : ""}" data-filter-track="all">
@@ -1460,25 +1538,31 @@
 
       <div class="academy-card">
         <h3>${ico("play-square", 19)} محاضرات ودروس المنصة (${filteredLectures.length})</h3>
-        <p class="academy-muted">التصفح متاح للجميع، وتشغيل الفيديوهات متاح بكود الكورسات الخاص فقط.</p>
+        <p class="academy-muted">المحاضرات الموسومة بـ (مجانية) متاحة لجميع المسجلين، والموسومة بـ (بالكود / PRO) تفتح لمشتركي الكود والـ PRO.</p>
 
         <div class="academy-grid">
           ${filteredLectures.length ? filteredLectures.map(item => {
             const unlocked = isLectureUnlocked(item);
             const done = completedLectures.includes(item.id);
+            const isFree = String(item.accessType || "code").toLowerCase() === "free";
             const trackList = uploadedCourses.filter(c => c.category === item.category);
             const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
             const likesCount = Array.isArray(item.likes) ? item.likes.length : 0;
 
             return `
               <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
                   <span class="hub-card-badge">${escapeHTML(item.category)} • محاضرة ${lectureNum}</span>
-                  ${done
-                    ? `<span style="color:#4ade80;font-size:12px;font-weight:900;display:inline-flex;align-items:center;gap:4px;">${ico("check-circle-2", 14)} مكتملة</span>`
-                    : unlocked
-                    ? `<span style="color:#38bdf8;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">${ico("unlock", 14)} مفتوحة</span>`
-                    : `<span style="color:#f87171;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:4px;">${ico("lock", 14)} مقفولة</span>`}
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    ${isFree
+                      ? `<span class="access-pill-free">${ico("globe", 12)} مجانية</span>`
+                      : `<span class="access-pill-code">${ico("key-round", 12)} بالكود</span>`}
+                    ${done
+                      ? `<span style="color:#4ade80;font-size:11.5px;font-weight:900;display:inline-flex;align-items:center;gap:3px;">${ico("check-circle-2", 13)} مكتملة</span>`
+                      : !unlocked
+                      ? `<span style="color:#f87171;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;gap:3px;">${ico("lock", 13)} مقفولة</span>`
+                      : ""}
+                  </div>
                 </div>
                 <h3>${escapeHTML(item.title)}</h3>
                 ${item.instructorName ? `<div class="lecturer-tag">${ico("user-check", 14)} ${escapeHTML(item.instructorName)}</div>` : ""}
@@ -1486,8 +1570,8 @@
                 ${likesCount > 0 ? `<div class="academy-muted" style="margin-bottom:8px;display:inline-flex;align-items:center;gap:5px;">${ico("thumbs-up", 13)} ${likesCount} إعجاب</div>` : ""}
 
                 ${unlocked ? `
-                  <button type="button" class="academy-btn gold" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
-                    ${ico("play-circle", 16)} فتح المحاضرة والتفاصيل
+                  <button type="button" class="academy-btn ${isFree ? "success" : "gold"}" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
+                    ${ico("play-circle", 16)} ${isFree ? "مشاهدة المحاضرة المجانية" : "فتح المحاضرة والتفاصيل"}
                   </button>
                 ` : `
                   <button type="button" class="academy-btn secondary" style="width:100%;" disabled>
@@ -1858,11 +1942,9 @@
         ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات مفعّلة."
         : isCourseManagerUser
         ? "مرحباً بك (محاضر / منسق كورسات) — يمكنك رفع وتعديل الدورات والمحاضرين."
-        : hasCoursesAccess
-        ? "مرحباً بك — اشتراك الكورسات مفعّل بالكود الخاص بك."
-        : isProSubscriber
-        ? "مرحباً بك (مستخدم PRO) — كلم الأدمن للحصول على كود تفعيل الكورسات الخاص بك."
-        : "مرحباً بك — تصفح تفاصيل الدورات متاح لك، وتشغيل الفيديوهات متاح بكود الكورسات الخاص فقط."
+        : hasCoursesAccess || isProSubscriber
+        ? "مرحباً بك — اشتراكك مفعّل ويمكنك مشاهدة جميع المحاضرات المجانية والمدفوعة."
+        : "مرحباً بك — يمكنك مشاهدة جميع المحاضرات المجانية، والمحاضرات المدفوعة متاحة بكود الكورسات أو باقة PRO."
     );
     renderTab();
   }
@@ -1943,6 +2025,7 @@
       let videoUrl = $("acUpVideoUrl")?.value.trim();
       const pdfFile = $("acUpPdfFile")?.files?.[0];
       const driveUrl = $("acUpDriveUrl")?.value.trim();
+      const accessType = $("acUpAccessType")?.value === "free" ? "free" : "code";
 
       if (!title || !desc || !instructorName) {
         notify("اكتب عنوان المحاضرة واسم المحاضر والوصف أولاً.", "error");
@@ -1982,6 +2065,7 @@
           pdfUrl,
           pdfName,
           driveUrl: driveUrl || "",
+          accessType,
           likes: [],
           dislikes: [],
           authorEmail: currentUser.email || ADMIN_EMAIL,
@@ -1998,7 +2082,7 @@
 
         localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
         renderSmartNotificationBanner();
-        notify("تم نشر المحاضرة باسم المحاضر وإرسال إشعار للجميع.", "success");
+        notify(`تم نشر المحاضرة (${accessType === "free" ? "مجانية للجميع" : "بالكود ومشتركي PRO"}) بنجاح.`, "success");
         renderCourses();
       } catch (err) {
         notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
@@ -2032,6 +2116,7 @@
       const driveUrl = $("edCourseDriveUrl")?.value.trim() || "";
       const videoFile = $("edCourseVideoFile")?.files?.[0];
       const pdfFile = $("edCoursePdfFile")?.files?.[0];
+      const accessType = $("edCourseAccessType")?.value === "free" ? "free" : "code";
 
       if (!title || !desc || !instructorName) {
         return notify("اكتب عنوان المحاضرة واسم المحاضر والوصف.", "error");
@@ -2070,6 +2155,7 @@
           driveUrl,
           pdfUrl,
           pdfName,
+          accessType,
           updatedAt: Date.now()
         };
 
@@ -2219,6 +2305,42 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
+      // أزرار اختيار (مجانية / بالكود) في نموذج الرفع الجديد
+      const upAccessBtn = event.target.closest("[data-set-upload-access]");
+      if (upAccessBtn) {
+        const mode = upAccessBtn.dataset.setUploadAccess === "free" ? "free" : "code";
+        const hiddenInput = $("acUpAccessType");
+        if (hiddenInput) hiddenInput.value = mode;
+        const group = $("acUpAccessToggleGroup");
+        if (group) {
+          group.querySelectorAll("[data-set-upload-access]").forEach(btn => {
+            btn.classList.remove("selected-free", "selected-code");
+            if (btn.dataset.setUploadAccess === mode) {
+              btn.classList.add(mode === "free" ? "selected-free" : "selected-code");
+            }
+          });
+        }
+        return;
+      }
+
+      // أزرار اختيار (مجانية / بالكود) في نموذج تعديل المحاضرة
+      const edAccessBtn = event.target.closest("[data-set-edit-access]");
+      if (edAccessBtn) {
+        const mode = edAccessBtn.dataset.setEditAccess === "free" ? "free" : "code";
+        const hiddenInput = $("edCourseAccessType");
+        if (hiddenInput) hiddenInput.value = mode;
+        const group = $("edCourseAccessToggleGroup");
+        if (group) {
+          group.querySelectorAll("[data-set-edit-access]").forEach(btn => {
+            btn.classList.remove("selected-free", "selected-code");
+            if (btn.dataset.setEditAccess === mode) {
+              btn.classList.add(mode === "free" ? "selected-free" : "selected-code");
+            }
+          });
+        }
+        return;
+      }
+
       if (event.target.closest("#academyRedeemCourseCodeBtn")) {
         const val = $("academyCourseCodeInput")?.value || "";
         await redeemCourseCode(val);
