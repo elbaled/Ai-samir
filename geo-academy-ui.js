@@ -1,10 +1,9 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الرسمية المتكاملة (V19)
-   - عداد مشاهدات عام يبدأ من 50 مشاهدة ويزيد تلقائياً مع كل فتح ويظهر للجميع
-   - زر "الانتقال للمحاضرة التالية" بعد إكمال المحاضرة العادية
-   - زر "الحصول على الشهادة" يظهر فقط بعد إكمال "المحاضرة الأخيرة"
-   - اسم الكورس في الشهادة: "أساسيات الأوتوكاد"
-   - نافذة إدخال الاسم المستقلة (عربي + إنجليزي) + توقيع م. أحمد سمير + الختم الأزرق + QR Code
+   GEO Academy UI - النسخة الرسمية المتكاملة (V20)
+   - نظام الاختبارات التفاعلية بعد المحاضرة (Mini Quizzes) بشرط اجتياز 70% فأكثر
+   - زر "تصحيح الاختبار" + زر "إعادة الاختبار" عند الرسوب + فتح المحاضرة التالية تلقائياً عند النجاح
+   - قفل المحاضرة التالية من الخارج حتى يتم اجتياز اختبار المحاضرة السابقة
+   - عداد مشاهدات عام (50+) + الشهادة الرسمية المزدوجة (عربي + إنجليزي) + QR Code
    ============================================================================ */
 (function () {
   "use strict";
@@ -14,6 +13,7 @@
   const FB_PAGE_URL = "https://www.facebook.com/share/1KSRJUeJjo/";
   const DAY_MS = 24 * 60 * 60 * 1000;
   const BASE_VIEWS_START = 50;
+  const PASS_PERCENTAGE = 70;
 
   const ourTracks = [
     { id: "AutoCAD + AI", title: "AutoCAD + AI", icon: "bot", desc: "ربط الأوتوكاد بالذكاء الاصطناعي وأتمتة الليسبات." },
@@ -30,7 +30,7 @@
       title: "الكورسات والدورات",
       icon: "graduation-cap",
       badge: "دورات المنصة",
-      desc: "كورسات المنصة التطبيقية (المجانية والمدفوعة)، المحاضرون، ونظام التعلم التتابعي."
+      desc: "كورسات المنصة التطبيقية، الاختبارات التفاعلية، ونظام التعلم التتابعي."
     },
     {
       id: "official-courses",
@@ -123,6 +123,9 @@
   let selectedInstructorFilter = "all";
   let selectedCourseDetailId = null;
   let isEditingCourseMode = false;
+  let isManagingQuizMode = false;
+  let activeQuizAnswers = {}; // { [lectureId]: { [qIndex]: chosenOptionIndex } }
+  let activeQuizResult = {};  // { [lectureId]: { score, total, percent, passed } }
   let courseComments = [];
   let activeTab = "courses";
   let eventsBound = false;
@@ -140,13 +143,15 @@
     return Boolean(hasCoursesAccess || isProSubscriber);
   }
 
-  // حساب عدد المشاهدات الفعلي (يبدأ من 50 فصاعداً)
+  function getLectureQuizQuestions(item) {
+    return Array.isArray(item?.quizQuestions) ? item.quizQuestions : [];
+  }
+
   function getLectureViewsCount(item) {
     const raw = Number(item?.viewsCount || 0);
     return raw >= BASE_VIEWS_START ? raw : BASE_VIEWS_START + raw;
   }
 
-  // زيادة عداد المشاهدات وحفظه في Firestore ليظهر لجميع المستخدمين
   async function incrementLectureViews(courseId) {
     const item = uploadedCourses.find(c => c.id === courseId);
     if (!item) return;
@@ -212,7 +217,6 @@
     box._timer = setTimeout(() => box.classList.remove("show"), 4500);
   }
 
-  // الشهادة لا تُمنح إلا إذا وُجدت محاضرة محددة كـ "آخر محاضرة" وأكملها المستخدم
   function isTrackEligibleForCertificate(trackId) {
     const trackLectures = uploadedCourses.filter(c => c.category === trackId);
     if (trackLectures.length === 0) return false;
@@ -233,7 +237,7 @@
     if (!track) return;
 
     if (!customStudentAr && !isTrackEligibleForCertificate(track.id)) {
-      return notify("يجب إكمال المحاضرة الأخيرة في الكورس أولاً لاستخراج الشهادة.", "error");
+      return notify("يجب إكمال المحاضرة الأخيرة في الكورس واجتياز اختبارها أولاً لاستخراج الشهادة.", "error");
     }
 
     if (customStudentAr && customStudentEn) {
@@ -536,7 +540,6 @@
     <button type="button" onclick="window.print()">حفظ النسختين كملف PDF / طباعة</button>
   </div>
 
-  <!-- النسخة الأولى: باللغة العربية -->
   <section class="cert-page" dir="rtl">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -585,7 +588,6 @@
     </footer>
   </section>
 
-  <!-- النسخة الثانية: باللغة الإنجليزية -->
   <section class="cert-page" dir="ltr">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -766,6 +768,70 @@
         font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 8px;
         background: rgba(148, 163, 184, 0.14); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.32);
         display: inline-flex; align-items: center; gap: 5px;
+      }
+
+      /* تنسيق صندوق الاختبار التفاعلي بعد المحاضرة */
+      #s-academy .lecture-quiz-box {
+        background: linear-gradient(145deg, #0b1120, #131c31);
+        border: 1.5px solid #38bdf8;
+        border-radius: 15px;
+        padding: 16px;
+        margin: 14px 0;
+        color: #f8fafc;
+      }
+      #s-academy .quiz-q-card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 11px;
+      }
+      #s-academy .quiz-q-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #fbbf24;
+        margin-bottom: 9px;
+        line-height: 1.6;
+      }
+      #s-academy .quiz-options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      #s-academy .quiz-option-btn {
+        width: 100%;
+        text-align: right;
+        padding: 10px 13px;
+        border-radius: 10px;
+        border: 1.5px solid #334155;
+        background: #090d16;
+        color: #e2e8f0;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        transition: all 0.18s ease;
+      }
+      #s-academy .quiz-option-btn:hover {
+        border-color: #38bdf8;
+      }
+      #s-academy .quiz-option-btn.selected {
+        background: rgba(56, 189, 248, 0.18);
+        border-color: #38bdf8;
+        color: #38bdf8;
+      }
+      #s-academy .quiz-option-btn.correct-ans {
+        background: rgba(22, 163, 74, 0.22);
+        border-color: #22c55e;
+        color: #4ade80;
+      }
+      #s-academy .quiz-option-btn.wrong-ans {
+        background: rgba(220, 38, 38, 0.22);
+        border-color: #ef4444;
+        color: #f87171;
       }
 
       #s-academy .access-mode-toggle {
@@ -1144,7 +1210,7 @@
 
         <div class="academy-header">
           <h2><i data-lucide="graduation-cap"></i> الأكاديمية الجغرافية</h2>
-          <p>منظومة تعليمية متكاملة تجمع دورات المنصة التفاعلية، المحاضرين، الشهادات الرقمية المعتمدة، الباحث الذكي، والمدرس الذكي.</p>
+          <p>منظومة تعليمية متكاملة تجمع دورات المنصة التفاعلية، الاختبارات التقييمية، الشهادات المعتمدة، الباحث الذكي، والمدرس الذكي.</p>
           <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">
             <a id="gdAcademyFbBtn" href="${FB_PAGE_URL}" target="_blank" rel="noopener noreferrer"
               style="display:inline-flex;align-items:center;gap:8px;background:#1877F2;color:#ffffff;padding:9px 15px;border-radius:11px;font-size:13px;font-weight:800;text-decoration:none;border:1px solid rgba(255,255,255,0.18);box-shadow:0 4px 12px rgba(24,119,242,0.28);">
@@ -1464,7 +1530,7 @@
     } catch (_) {}
   }
 
-  async function markLectureCompleted(lectureId) {
+  async function markLectureCompleted(lectureId, quizScorePct = null) {
     if (!currentUser || !lectureId) return;
     if (!completedLectures.includes(lectureId)) {
       completedLectures.push(lectureId);
@@ -1476,6 +1542,7 @@
       try {
         await db.collection("users").doc(currentUser.uid).collection("academy_completed_lectures").doc(lectureId).set({
           lectureId,
+          quizScorePct,
           completedAt: Date.now()
         });
       } catch (_) {}
@@ -1494,9 +1561,9 @@
     }
   }
 
+  // التحقق من فتح المحاضرة من الخارج: لا تُفتح إلا إذا اكتملت المحاضرة السابقة (بما فيها اجتياز اختبارها 70%)
   function isLectureUnlocked(lectureItem) {
     if (canManageCourses()) return true;
-    if (String(lectureItem?.accessType || "code").toLowerCase() === "free") return true;
     const sameTrack = uploadedCourses.filter(c => c.category === lectureItem.category);
     const idx = sameTrack.findIndex(c => c.id === lectureItem.id);
     if (idx <= 0) return true;
@@ -1562,6 +1629,183 @@
       return `<div class="course-video-frame"><iframe id="academyYtIframe" src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
     }
     return `<div class="course-video-frame"><video id="academyHtml5Video" src="${clean}" controls preload="metadata"></video></div>`;
+  }
+
+  /* ============================================================================
+     لوحة إدارة أسئلة اختبار المحاضرة للأدمن / منسق الكورسات
+     ============================================================================ */
+  function renderQuizManagerPanelHTML(item) {
+    if (!canManageCourses() || !isManagingQuizMode) return "";
+    const questions = getLectureQuizQuestions(item);
+
+    return `
+      <div class="academy-card admin-upload-card" style="margin:14px 0;border-color:#38bdf8;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <h4 style="margin:0;color:#fbbf24;display:flex;align-items:center;gap:7px;">
+            ${ico("help-circle", 18)} إدارة أسئلة اختبار المحاضرة (${questions.length} سؤال)
+          </h4>
+          <button type="button" class="academy-btn secondary" id="closeQuizManagerBtn" style="padding:5px 11px;font-size:12px;">
+            ${ico("x", 14)} إغلاق إدارة الاختبار
+          </button>
+        </div>
+
+        <p class="academy-muted">أضف 4 أو 5 أو 10 أسئلة اختيار من متعدد. لن تُفتح المحاضرة التالية للطالب إلا بعد حصوله على <b>70% فأكثر</b> في هذا الاختبار.</p>
+
+        <form id="academyAddQuizQuestionForm" data-quiz-course-id="${escapeHTML(item.id)}" style="background:var(--bg,#101827);padding:12px;border-radius:12px;border:1px solid var(--ln,#334155);margin-bottom:14px;">
+          <label class="academy-muted">نص السؤال *</label>
+          <input type="text" id="qzQuestionText" class="academy-input" placeholder="مثال: ما هو الاختصار المستخدم لرسم خط متصل في الأوتوكاد؟" required>
+
+          <div class="admin-upload-grid">
+            <div>
+              <label class="academy-muted">الاختيار الأول (A) *</label>
+              <input type="text" id="qzOpt0" class="academy-input" placeholder="مثال: L + Enter" required>
+            </div>
+            <div>
+              <label class="academy-muted">الاختيار الثاني (B) *</label>
+              <input type="text" id="qzOpt1" class="academy-input" placeholder="مثال: PL + Enter" required>
+            </div>
+            <div>
+              <label class="academy-muted">الاختيار الثالث (C) *</label>
+              <input type="text" id="qzOpt2" class="academy-input" placeholder="مثال: C + Enter" required>
+            </div>
+            <div>
+              <label class="academy-muted">الاختيار الرابع (D) *</label>
+              <input type="text" id="qzOpt3" class="academy-input" placeholder="مثال: REC + Enter" required>
+            </div>
+          </div>
+
+          <label class="academy-muted" style="color:#4ade80;font-weight:800;">الإجابة الصحيحة *</label>
+          <select id="qzCorrectIdx" class="academy-input">
+            <option value="0">الاختيار الأول (A)</option>
+            <option value="1">الاختيار الثاني (B)</option>
+            <option value="2">الاختيار الثالث (C)</option>
+            <option value="3">الاختيار الرابع (D)</option>
+          </select>
+
+          <button type="submit" id="qzAddQuestionBtn" class="academy-btn gold" style="width:100%;">
+            ${ico("plus-circle", 16)} إضافة السؤال إلى اختبار المحاضرة
+          </button>
+        </form>
+
+        ${questions.length ? `
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${questions.map((q, idx) => `
+              <div style="background:var(--bg,#101827);border:1px solid var(--ln,#334155);border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <strong style="color:#fbbf24;font-size:13px;">${idx + 1}. ${escapeHTML(q.question)}</strong>
+                  <button type="button" class="academy-btn danger" style="padding:3px 9px;font-size:11px;"
+                    data-delete-quiz-q="${idx}" data-course-id="${escapeHTML(item.id)}">حذف</button>
+                </div>
+                <div style="margin-top:6px;font-size:12px;color:#cbd5e1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px;">
+                  ${(q.options || []).map((opt, oIdx) => `
+                    <span style="${oIdx === Number(q.correctIndex) ? "color:#4ade80;font-weight:900;" : ""}">
+                      ${["A", "B", "C", "D"][oIdx] || (oIdx + 1)}) ${escapeHTML(opt)} ${oIdx === Number(q.correctIndex) ? "✓" : ""}
+                    </span>
+                  `).join("")}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<div class="academy-muted">لا توجد أسئلة مضافة لهذه المحاضرة بعد.</div>`}
+      </div>
+    `;
+  }
+
+  /* ============================================================================
+     عرض الاختبار التفاعلي للطالب + زر تصحيح الاختبار + زر إعادة الاختبار
+     ============================================================================ */
+  function renderStudentLectureQuizHTML(item, isCompleted, isFinal, nextLecture, showCertBtn) {
+    const questions = getLectureQuizQuestions(item);
+    if (!questions.length) return "";
+
+    const userAnswers = activeQuizAnswers[item.id] || {};
+    const result = activeQuizResult[item.id] || null;
+    const minNeeded = Math.ceil((PASS_PERCENTAGE / 100) * questions.length);
+
+    return `
+      <div class="lecture-quiz-box" id="lectureQuizContainer">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <h4 style="margin:0;font-size:16px;font-weight:900;color:#38bdf8;display:flex;align-items:center;gap:7px;">
+            ${ico("file-check-2", 19)} اختبار تقييم المحاضرة (${questions.length} أسئلة)
+          </h4>
+          <span class="hub-card-badge">نسبة النجاح المطلوبة: ${PASS_PERCENTAGE}% (${minNeeded} من ${questions.length})</span>
+        </div>
+        <p class="academy-muted" style="margin:0 0 12px;">
+          أجب عن جميع الأسئلة التالية ثم اضغط على <b>«تصحيح الاختبار»</b>. يجب تحقيق <b>${PASS_PERCENTAGE}% فأكثر</b> لفتح المحاضرة التالية.
+        </p>
+
+        ${questions.map((q, qIdx) => {
+          const chosen = userAnswers[qIdx];
+          const isGraded = Boolean(result);
+
+          return `
+            <div class="quiz-q-card">
+              <div class="quiz-q-title">${qIdx + 1}. ${escapeHTML(q.question)}</div>
+              <div class="quiz-options-list">
+                ${(q.options || []).map((opt, oIdx) => {
+                  let extraClass = "";
+                  if (isGraded) {
+                    if (oIdx === Number(q.correctIndex)) extraClass = "correct-ans";
+                    else if (chosen === oIdx && oIdx !== Number(q.correctIndex)) extraClass = "wrong-ans";
+                  } else if (chosen === oIdx) {
+                    extraClass = "selected";
+                  }
+
+                  return `
+                    <button type="button" class="quiz-option-btn ${extraClass}"
+                      ${isGraded ? "disabled" : ""}
+                      data-select-quiz-opt="${oIdx}" data-q-idx="${qIdx}" data-course-id="${escapeHTML(item.id)}">
+                      <span style="font-weight:900;color:#fbbf24;">${["A", "B", "C", "D"][oIdx] || (oIdx + 1)})</span>
+                      <span>${escapeHTML(opt)}</span>
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          `;
+        }).join("")}
+
+        ${!result ? `
+          <button type="button" class="academy-btn gold" style="width:100%;font-size:14.5px;padding:12px;margin-top:6px;"
+            data-grade-quiz="${escapeHTML(item.id)}">
+            ${ico("check-square", 18)} تصحيح الاختبار واعتماد النتيجة
+          </button>
+        ` : result.passed ? `
+          <div style="margin-top:12px;padding:14px;border-radius:12px;background:rgba(22,163,74,0.16);border:1.5px solid #22c55e;text-align:center;">
+            <div style="color:#4ade80;font-weight:900;font-size:15px;margin-bottom:6px;">
+              مبارك! اجتزت الاختبار بنجاح — نتيجتك: ${result.score} من ${result.total} (${result.percent}%)
+            </div>
+            <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:10px;">
+              تم اعتماد إكمال المحاضرة وفتح الخطوة التالية لك:
+            </div>
+            ${showCertBtn ? `
+              <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-generate-cert="${escapeHTML(item.category)}">
+                ${ico("award", 18)} الحصول على شهادة إتمام الكورس المعتمدة (عربي + إنجليزي)
+              </button>
+            ` : nextLecture ? `
+              <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-open-uploaded-course="${escapeHTML(nextLecture.id)}">
+                ${ico("arrow-left-circle", 18)} الانتقال للمحاضرة التالية: ${escapeHTML(nextLecture.title)}
+              </button>
+            ` : `
+              <div class="academy-muted">بانتظار رفع المحاضرة التالية في الكورس...</div>
+            `}
+          </div>
+        ` : `
+          <div style="margin-top:12px;padding:14px;border-radius:12px;background:rgba(220,38,38,0.16);border:1.5px solid #ef4444;text-align:center;">
+            <div style="color:#f87171;font-weight:900;font-size:15px;margin-bottom:5px;">
+              لم تحقق نسبة النجاح المطلوبة (${PASS_PERCENTAGE}%) — نتيجتك: ${result.score} من ${result.total} (${result.percent}%)
+            </div>
+            <p style="margin:0 0 11px;font-size:12.5px;color:#cbd5e1;">
+              تحتاج إلى ${minNeeded} إجابات صحيحة على الأقل من أصل ${result.total} لفتح المحاضرة التالية.
+            </p>
+            <button type="button" class="academy-btn danger" style="width:100%;font-size:14px;padding:12px;"
+              data-retake-quiz="${escapeHTML(item.id)}">
+              ${ico("rotate-ccw", 17)} إعادة الاختبار من جديد
+            </button>
+          </div>
+        `}
+      </div>
+    `;
   }
 
   function renderAdminUploadCardHTML() {
@@ -1640,7 +1884,7 @@
           </div>
 
           <button type="submit" id="acUpSubmitBtn" class="academy-btn gold" style="width:100%;margin-top:6px;">
-            ${ico("plus-circle", 17)} نشر المحاضرة وإرسال إشعار للمستخدمين
+            ${ico("plus-circle", 17)} نشر المحاضرة (ويمكنك إضافة أسئلة الاختبار لها مباشرة)
           </button>
         </form>
       </div>
@@ -1744,6 +1988,8 @@
     const isFree = String(item.accessType || "code").toLowerCase() === "free";
     const isFinal = item.isFinalLecture === true;
     const viewsCount = getLectureViewsCount(item);
+    const quizQuestions = getLectureQuizQuestions(item);
+    const hasQuiz = quizQuestions.length > 0;
 
     const likesArr = Array.isArray(item.likes) ? item.likes : [];
     const dislikesArr = Array.isArray(item.dislikes) ? item.dislikes : [];
@@ -1761,6 +2007,7 @@
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
             <span class="views-pill-badge">${ico("eye", 13)} ${viewsCount} مشاهدة</span>
+            ${hasQuiz ? `<span class="hub-card-badge">${ico("help-circle", 13)} اختبار (${quizQuestions.length} أسئلة)</span>` : ""}
             ${isFree
               ? `<span class="access-pill-free">${ico("globe", 13)} مجانية للجميع</span>`
               : `<span class="access-pill-code">${ico("key-round", 13)} بالكود / PRO</span>`}
@@ -1770,6 +2017,9 @@
           </div>
           <div style="display:flex;gap:7px;flex-wrap:wrap;">
             ${canManageCourses() ? `
+              <button type="button" class="academy-btn purple" id="academyToggleQuizMgrBtn" style="padding:7px 13px;font-size:12.5px;">
+                ${ico("help-circle", 15)} أسئلة الاختبار (${quizQuestions.length})
+              </button>
               <button type="button" class="academy-btn gold" id="academyToggleEditCourseBtn" style="padding:7px 13px;font-size:12.5px;">
                 ${ico("edit-3", 15)} تعديل المحاضرة
               </button>
@@ -1780,6 +2030,7 @@
           </div>
         </div>
 
+        ${renderQuizManagerPanelHTML(item)}
         ${renderEditCourseFormHTML(item)}
 
         <h3 style="font-size:18.5px;margin-top:10px;">${ico("video", 20)} ${escapeHTML(item.title)}</h3>
@@ -1788,32 +2039,36 @@
 
         ${buildVideoPlayerHTML(item)}
 
-        ${hasAccess ? `
-          <div style="margin:12px 0 10px;padding:13px;border-radius:12px;background:var(--bg,#101827);border:1.5px solid ${isCompleted ? "#22c55e" : "#e09f24"};">
-            ${!isCompleted ? `
-              <button type="button" class="academy-btn success" style="width:100%;font-size:14px;padding:12px;" data-complete-lecture="${escapeHTML(item.id)}">
-                ${ico("check-circle-2", 18)} ${isFinal ? "إكمال المحاضرة الأخيرة والحصول على الشهادة" : "إكمال المحاضرة"}
-              </button>
-            ` : `
-              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:${(showCertBtn || nextLecture) ? "10px" : "0"};">
-                ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح
+        ${hasAccess ? (
+          hasQuiz
+            ? renderStudentLectureQuizHTML(item, isCompleted, isFinal, nextLecture, showCertBtn)
+            : `
+              <div style="margin:12px 0 10px;padding:13px;border-radius:12px;background:var(--bg,#101827);border:1.5px solid ${isCompleted ? "#22c55e" : "#e09f24"};">
+                ${!isCompleted ? `
+                  <button type="button" class="academy-btn success" style="width:100%;font-size:14px;padding:12px;" data-complete-lecture="${escapeHTML(item.id)}">
+                    ${ico("check-circle-2", 18)} ${isFinal ? "إكمال المحاضرة الأخيرة والحصول على الشهادة" : "إكمال المحاضرة"}
+                  </button>
+                ` : `
+                  <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:${(showCertBtn || nextLecture) ? "10px" : "0"};">
+                    ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح
+                  </div>
+                  ${showCertBtn ? `
+                    <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-generate-cert="${escapeHTML(item.category)}">
+                      ${ico("award", 18)} الحصول على شهادة إتمام الكورس المعتمدة (عربي + إنجليزي)
+                    </button>
+                  ` : nextLecture ? `
+                    <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-open-uploaded-course="${escapeHTML(nextLecture.id)}">
+                      ${ico("arrow-left-circle", 18)} الانتقال للمحاضرة التالية: ${escapeHTML(nextLecture.title)}
+                    </button>
+                  ` : `
+                    <div class="academy-muted" style="text-align:center;font-size:12.5px;">
+                      بانتظار رفع المحاضرة التالية في الكورس...
+                    </div>
+                  `}
+                `}
               </div>
-              ${showCertBtn ? `
-                <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-generate-cert="${escapeHTML(item.category)}">
-                  ${ico("award", 18)} الحصول على شهادة إتمام الكورس المعتمدة (عربي + إنجليزي)
-                </button>
-              ` : nextLecture ? `
-                <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-open-uploaded-course="${escapeHTML(nextLecture.id)}">
-                  ${ico("arrow-left-circle", 18)} الانتقال للمحاضرة التالية: ${escapeHTML(nextLecture.title)}
-                </button>
-              ` : `
-                <div class="academy-muted" style="text-align:center;font-size:12.5px;">
-                  بانتظار رفع المحاضرة التالية في الكورس...
-                </div>
-              `}
-            `}
-          </div>
-        ` : ""}
+            `
+        ) : ""}
 
         <div class="lecture-reaction-bar">
           <button type="button" class="reaction-btn ${userLiked ? "liked" : ""}" data-react-lecture="like" data-course-id="${escapeHTML(item.id)}">
@@ -2069,7 +2324,7 @@
 
       <div class="academy-card">
         <h3>${ico("play-square", 19)} محاضرات ودروس المنصة (${filteredLectures.length})</h3>
-        <p class="academy-muted">أكمل كل محاضرة بالضغط على زر «إكمال المحاضرة» أسفل الفيديو للانتقال للمحاضرة التالية والحصول على الشهادة بعد المحاضرة الختامية.</p>
+        <p class="academy-muted">أكمل كل محاضرة واجتز اختبارها بنسبة 70% فأكثر لفتح المحاضرة التالية تلقائياً.</p>
 
         <div class="academy-grid">
           ${filteredLectures.length ? filteredLectures.map(item => {
@@ -2081,6 +2336,7 @@
             const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
             const likesCount = Array.isArray(item.likes) ? item.likes.length : 0;
             const viewsCount = getLectureViewsCount(item);
+            const quizCount = getLectureQuizQuestions(item).length;
 
             return `
               <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
@@ -2104,9 +2360,10 @@
                 ${item.instructorName ? `<div class="lecturer-tag">${ico("user-check", 14)} ${escapeHTML(item.instructorName)}</div>` : ""}
                 <p>${escapeHTML(String(item.desc || "").slice(0, 110))}${String(item.desc || "").length > 110 ? "..." : ""}</p>
 
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap;">
                   <span class="views-pill-badge">${ico("eye", 13)} ${viewsCount} مشاهدة</span>
-                  ${likesCount > 0 ? `<span class="academy-muted" style="display:inline-flex;align-items:center;gap:4px;">${ico("thumbs-up", 13)} ${likesCount} إعجاب</span>` : ""}
+                  ${quizCount > 0 ? `<span class="views-pill-badge">${ico("help-circle", 13)} اختبار (${quizCount})</span>` : ""}
+                  ${likesCount > 0 ? `<span class="academy-muted" style="display:inline-flex;align-items:center;gap:4px;">${ico("thumbs-up", 13)} ${likesCount}</span>` : ""}
                 </div>
 
                 ${unlocked ? `
@@ -2115,7 +2372,7 @@
                   </button>
                 ` : `
                   <button type="button" class="academy-btn secondary" style="width:100%;" disabled>
-                    ${ico("lock", 15)} أكمل المحاضرة رقم ${lectureNum - 1} أولاً لفتحها
+                    ${ico("lock", 15)} أكمل المحاضرة رقم ${lectureNum - 1} واختبارها لفتحها
                   </button>
                 `}
               </div>
@@ -2129,6 +2386,7 @@
 
     bindCourseUploadForm();
     bindEditCourseForm();
+    bindAddQuizQuestionForm();
     refreshAcademyIcons(content);
   }
 
@@ -2314,7 +2572,7 @@
 
       <div class="academy-card" style="margin-bottom:15px;border-color:#e09f24;">
         <h3>${ico("award", 21)} تقدمك التعليمي والشهادات المعتمدة (${overallPct}%)</h3>
-        <p>بمجرد إتمامك <b>المحاضرة الختامية</b> في أي كورس، يظهر لك زر <b>الحصول على الشهادة المعتمدة (عربي + إنجليزي)</b>.</p>
+        <p>بمجرد إتمامك <b>المحاضرة الختامية</b> واجتياز اختبارها بنسبة 70% فأكثر، يظهر لك زر <b>الحصول على الشهادة المعتمدة</b>.</p>
         <div class="academy-progress"><span style="width:${overallPct}%"></span></div>
         <div class="academy-muted">أتممت <b>${totalAllCompleted}</b> من أصل <b>${totalAllLectures}</b> محاضرة مرفوعة على المنصة.</div>
       </div>
@@ -2526,11 +2784,11 @@
 
     setStatus(
       isAdminUser
-        ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات ولوحة الشهادات مفعّلة."
+        ? "مرحباً بك (مدير المنصة) — جميع الصلاحيات وإدارة الاختبارات والشهادات مفعّلة."
         : isCourseManagerUser
-        ? "مرحباً بك (محاضر / منسق كورسات) — يمكنك رفع وتعديل الدورات والمحاضرين."
+        ? "مرحباً بك (محاضر / منسق كورسات) — يمكنك رفع وتعديل الدورات والاختبارات."
         : hasCoursesAccess || isProSubscriber
-        ? "مرحباً بك — اشتراكك مفعّل ويمكنك مشاهدة جميع المحاضرات واستخراج الشهادات."
+        ? "مرحباً بك — اشتراكك مفعّل ويمكنك مشاهدة جميع المحاضرات واجتياز الاختبارات."
         : "مرحباً بك — يمكنك مشاهدة المحاضرات المجانية، والمحاضرات المدفوعة متاحة بكود الكورسات أو باقة PRO."
     );
     renderTab();
@@ -2590,6 +2848,61 @@
         btn.disabled = false;
         btn.innerHTML = `${ico("save", 17)} حفظ ونشر بطاقة المحاضر`;
         refreshAcademyIcons(btn);
+      }
+    });
+  }
+
+  function bindAddQuizQuestionForm() {
+    const form = $("academyAddQuizQuestionForm");
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!canManageCourses()) return;
+
+      const courseId = form.dataset.quizCourseId;
+      const item = uploadedCourses.find(c => c.id === courseId);
+      if (!item) return;
+
+      const qText = $("qzQuestionText")?.value.trim();
+      const opt0 = $("qzOpt0")?.value.trim();
+      const opt1 = $("qzOpt1")?.value.trim();
+      const opt2 = $("qzOpt2")?.value.trim();
+      const opt3 = $("qzOpt3")?.value.trim();
+      const correctIndex = Number($("qzCorrectIdx")?.value || 0);
+
+      if (!qText || !opt0 || !opt1 || !opt2 || !opt3) {
+        return notify("اكتب نص السؤال والاختيارات الأربعة كاملة.", "error");
+      }
+
+      const btn = $("qzAddQuestionBtn");
+      btn.disabled = true;
+      btn.textContent = "جاري حفظ السؤال...";
+
+      try {
+        const nextQuestions = getLectureQuizQuestions(item).slice();
+        nextQuestions.push({
+          question: qText,
+          options: [opt0, opt1, opt2, opt3],
+          correctIndex
+        });
+
+        const db = getDb();
+        if (db) {
+          await db.collection("geodev_academy_courses").doc(courseId).update({
+            quizQuestions: nextQuestions
+          });
+        }
+
+        item.quizQuestions = nextQuestions;
+        localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+        notify("تمت إضافة السؤال لاختبار المحاضرة بنجاح.", "success");
+        renderCourses();
+      } catch (err) {
+        notify("خطأ أثناء حفظ السؤال: " + (err.message || ""), "error");
+      } finally {
+        btn.disabled = false;
       }
     });
   }
@@ -2655,6 +2968,7 @@
           driveUrl: driveUrl || "",
           accessType,
           isFinalLecture,
+          quizQuestions: [],
           viewsCount: BASE_VIEWS_START,
           likes: [],
           dislikes: [],
@@ -2678,7 +2992,7 @@
         notify("حدث خطأ أثناء النشر: " + (err.message || ""), "error");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `${ico("plus-circle", 17)} نشر المحاضرة وإرسال إشعار للمستخدمين`;
+        btn.innerHTML = `${ico("plus-circle", 17)} نشر المحاضرة (ويمكنك إضافة أسئلة الاختبار لها مباشرة)`;
         refreshAcademyIcons(form);
       }
     });
@@ -2925,6 +3239,102 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
+      // 1. اختيار إجابة في اختبار المحاضرة
+      const quizOptBtn = event.target.closest("[data-select-quiz-opt]");
+      if (quizOptBtn) {
+        const cId = quizOptBtn.dataset.courseId;
+        const qIdx = Number(quizOptBtn.dataset.qIdx);
+        const oIdx = Number(quizOptBtn.dataset.selectQuizOpt);
+        if (!activeQuizAnswers[cId]) activeQuizAnswers[cId] = {};
+        activeQuizAnswers[cId][qIdx] = oIdx;
+        renderCourses();
+        return;
+      }
+
+      // 2. تصحيح الاختبار واعتماد النتيجة (70% فأكثر)
+      const gradeBtn = event.target.closest("[data-grade-quiz]");
+      if (gradeBtn) {
+        const cId = gradeBtn.dataset.gradeQuiz;
+        const item = uploadedCourses.find(c => c.id === cId);
+        if (!item) return;
+
+        const questions = getLectureQuizQuestions(item);
+        const userAns = activeQuizAnswers[cId] || {};
+
+        if (Object.keys(userAns).length < questions.length) {
+          return notify("من فضلك أجب على جميع أسئلة الاختبار أولاً قبل التصحيح.", "error");
+        }
+
+        let score = 0;
+        questions.forEach((q, idx) => {
+          if (Number(userAns[idx]) === Number(q.correctIndex)) {
+            score++;
+          }
+        });
+
+        const total = questions.length;
+        const percent = Math.round((score / total) * 100);
+        const passed = percent >= PASS_PERCENTAGE;
+
+        activeQuizResult[cId] = { score, total, percent, passed };
+
+        if (passed) {
+          await markLectureCompleted(cId, percent);
+        } else {
+          notify(`حصلت على ${score} من ${total} (${percent}%). اضغط على «إعادة الاختبار» لتحقيق ${PASS_PERCENTAGE}% فأكثر.`, "error");
+        }
+
+        renderCourses();
+        return;
+      }
+
+      // 3. إعادة الاختبار من جديد
+      const retakeBtn = event.target.closest("[data-retake-quiz]");
+      if (retakeBtn) {
+        const cId = retakeBtn.dataset.retakeQuiz;
+        delete activeQuizAnswers[cId];
+        delete activeQuizResult[cId];
+        renderCourses();
+        const qBox = $("lectureQuizContainer");
+        if (qBox) qBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+
+      // 4. فتح / إغلاق لوحة إدارة أسئلة الاختبار للأدمن
+      if (event.target.closest("#academyToggleQuizMgrBtn")) {
+        isManagingQuizMode = !isManagingQuizMode;
+        isEditingCourseMode = false;
+        renderCourses();
+        return;
+      }
+      if (event.target.closest("#closeQuizManagerBtn")) {
+        isManagingQuizMode = false;
+        renderCourses();
+        return;
+      }
+
+      // 5. حذف سؤال من اختبار المحاضرة للأدمن
+      const delQuizQBtn = event.target.closest("[data-delete-quiz-q]");
+      if (delQuizQBtn && canManageCourses()) {
+        const qIdx = Number(delQuizQBtn.dataset.deleteQuizQ);
+        const cId = delQuizQBtn.dataset.courseId;
+        const item = uploadedCourses.find(c => c.id === cId);
+        if (!item) return;
+
+        const nextQuestions = getLectureQuizQuestions(item).filter((_, idx) => idx !== qIdx);
+        const db = getDb();
+        if (db) {
+          await db.collection("geodev_academy_courses").doc(cId).update({
+            quizQuestions: nextQuestions
+          });
+        }
+        item.quizQuestions = nextQuestions;
+        localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+        notify("تم حذف السؤال من الاختبار.", "success");
+        renderCourses();
+        return;
+      }
+
       if (event.target.closest("#adminIssueCustomCertBtn") && isAdminUser) {
         const nameAr = $("adminCertNameAr")?.value.trim();
         const nameEn = $("adminCertNameEn")?.value.trim();
@@ -3038,6 +3448,7 @@
 
       if (event.target.closest("#academyToggleEditCourseBtn")) {
         isEditingCourseMode = !isEditingCourseMode;
+        isManagingQuizMode = false;
         renderCourses();
         return;
       }
@@ -3067,13 +3478,14 @@
           selectedTrackFilter = targetLecture.category || "all";
           selectedInstructorFilter = "all";
           isEditingCourseMode = false;
+          isManagingQuizMode = false;
           if (isLectureUnlocked(targetLecture)) {
             await checkUserSubscriptionsStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
             await incrementLectureViews(selectedCourseDetailId);
             await loadCommentsForCourse(selectedCourseDetailId);
           } else {
-            notify("هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
+            notify("هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرة السابقة واجتز اختبارها لفتحها.", "warn");
           }
           renderTab();
         }
@@ -3134,6 +3546,7 @@
         selectedTrackFilter = trackBtn.dataset.filterTrack;
         selectedCourseDetailId = null;
         isEditingCourseMode = false;
+        isManagingQuizMode = false;
         renderCourses();
         return;
       }
@@ -3145,6 +3558,7 @@
         selectedTrackFilter = jumpTrackBtn.dataset.jumpTrack;
         selectedCourseDetailId = null;
         isEditingCourseMode = false;
+        isManagingQuizMode = false;
         renderTab();
         return;
       }
@@ -3154,12 +3568,13 @@
         const lectureId = openCourseBtn.dataset.openUploadedCourse;
         const lectureObj = uploadedCourses.find(c => c.id === lectureId);
         if (!lectureObj || !isLectureUnlocked(lectureObj)) {
-          notify("يجب إكمال المحاضرة السابقة أولاً لفتح هذه المحاضرة.", "warn");
+          notify("يجب إكمال المحاضرة السابقة واجتياز اختبارها بنسبة 70% أولاً لفتح هذه المحاضرة.", "warn");
           return;
         }
         await checkUserSubscriptionsStatus(currentUser);
         selectedCourseDetailId = lectureId;
         isEditingCourseMode = false;
+        isManagingQuizMode = false;
         await incrementLectureViews(selectedCourseDetailId);
         await loadCommentsForCourse(selectedCourseDetailId);
         renderCourses();
@@ -3179,6 +3594,7 @@
       if (event.target.closest("#academyCloseCourseDetail")) {
         selectedCourseDetailId = null;
         isEditingCourseMode = false;
+        isManagingQuizMode = false;
         renderCourses();
         return;
       }
@@ -3242,6 +3658,7 @@
         if (selectedCourseDetailId === courseId) {
           selectedCourseDetailId = null;
           isEditingCourseMode = false;
+          isManagingQuizMode = false;
         }
         notify("تم حذف المحاضرة بنجاح.", "success");
         renderCourses();
