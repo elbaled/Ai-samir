@@ -195,12 +195,11 @@
     return false;
   }
 
+  
   /* ============================================================================
-     توليد وطباعة الشهادة الرقمية الرسمية (نسختين: عربي + إنجليزي + QR Code)
-     - متضمنة التوقيع الشخصي للمهندس أحمد سمير (SVG Vector)
-     - الختم الدائري الرسمي باللون الأزرق (منصة جيوديف • شعار GD • مهندس أحمد سمير)
+     نافذة إدخال بيانات الشهادة المستقلة (خانتان: عربي + إنجليزي بدون window.prompt)
      ============================================================================ */
-  async function generateTrackCertificate(trackId, customStudentAr = "", customStudentEn = "") {
+  function openCertificateNameDialog(trackId, customStudentAr = "", customStudentEn = "") {
     if (!currentUser) {
       return notify("يجب تسجيل الدخول لاستخراج الشهادة.", "error");
     }
@@ -208,44 +207,99 @@
     const track = ourTracks.find(t => t.id === trackId);
     if (!track) return;
 
-    const trackLectures = uploadedCourses.filter(c => c.category === track.id);
-
     if (!isTrackEligibleForCertificate(track.id)) {
       return notify("يجب إكمال محاضرات الكورس أو إكمال المحاضرة الأخيرة أولاً لاستخراج الشهادة.", "error");
     }
 
-    const savedArName = localStorage.getItem("gd_cert_name_ar") || "";
-    const savedEnName = localStorage.getItem("gd_cert_name_en") || "";
+    if (customStudentAr && customStudentEn) {
+      renderAndOpenCertificateWindow(track, customStudentAr, customStudentEn);
+      return;
+    }
 
-    const defaultEn =
-      savedEnName ||
+    const existingModal = document.getElementById("gdCertNameModal");
+    if (existingModal) existingModal.remove();
+
+    const savedAr = localStorage.getItem("gd_cert_name_ar") || "";
+    const savedEn =
+      localStorage.getItem("gd_cert_name_en") ||
       currentUser.displayName ||
-      (currentUser.email ? currentUser.email.split("@")[0].replace(/[._]/g, " ").toUpperCase() : "TRAINEE NAME");
+      (currentUser.email ? currentUser.email.split("@")[0].replace(/[._]/g, " ").toUpperCase() : "");
 
-    let studentNameAr = customStudentAr;
-    if (!studentNameAr) {
-      studentNameAr = prompt(
-        "1/2 — اكتب اسمك الكامل باللغة العربية كما سيظهر في النسخة العربية من الشهادة:",
-        savedArName || "أحمد سمير عبد القادر"
-      );
-    }
-    if (!studentNameAr || !studentNameAr.trim()) return;
+    const overlay = document.createElement("div");
+    overlay.id = "gdCertNameModal";
+    overlay.style.cssText = `
+      position: fixed; inset: 0; z-index: 999999;
+      background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center; padding: 16px; direction: rtl;
+    `;
 
-    let studentNameEn = customStudentEn;
-    if (!studentNameEn) {
-      studentNameEn = prompt(
-        "2/2 — اكتب اسمك الكامل باللغة الإنجليزية كما سيظهر في النسخة الإنجليزية من الشهادة:",
-        defaultEn
-      );
-    }
-    if (!studentNameEn || !studentNameEn.trim()) return;
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:440px;background:#0f172a;border:2px solid #e09f24;border-radius:18px;padding:20px;color:#f8fafc;box-shadow:0 20px 50px rgba(0,0,0,0.65);font-family:inherit;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <h3 style="margin:0;font-size:17px;font-weight:900;color:#fbbf24;">إصدار شهادة إتمام الكورس المعتمدة</h3>
+          <button type="button" id="gdCloseCertModalBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:0;border-radius:8px;width:30px;height:30px;cursor:pointer;font-weight:900;">✕</button>
+        </div>
+        <p style="margin:0 0 14px;font-size:12.5px;color:#cbd5e1;line-height:1.7;">
+          أدخل اسمك الكامل باللغتين العربية والإنجليزية ليتم طباعته في نسختي الشهادة الرسمية فوراً:
+        </p>
 
+        <form id="gdCertNameForm">
+          <label style="display:block;font-size:12.5px;font-weight:800;color:#38bdf8;margin-bottom:5px;">
+            1. الاسم الكامل باللغة العربية *
+          </label>
+          <input type="text" id="gdInputCertAr" required value="${escapeHTML(savedAr)}"
+            placeholder="مثال: أحمد سمير عبد القادر"
+            style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:11px;border:1.5px solid #334155;background:#1e293b;color:#ffffff;font:inherit;margin-bottom:12px;">
+
+          <label style="display:block;font-size:12.5px;font-weight:800;color:#38bdf8;margin-bottom:5px;">
+            2. الاسم الكامل باللغة الإنجليزية *
+          </label>
+          <input type="text" id="gdInputCertEn" required value="${escapeHTML(savedEn)}"
+            placeholder="Example: AHMED SAMIR ABDELKADER"
+            style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:11px;border:1.5px solid #334155;background:#1e293b;color:#ffffff;font:inherit;direction:ltr;text-align:left;margin-bottom:16px;">
+
+          <div style="display:flex;gap:9px;">
+            <button type="submit" style="flex:2;padding:12px;border-radius:11px;border:0;background:linear-gradient(135deg,#e09f24,#b45309);color:#090d16;font-weight:900;font-size:14px;cursor:pointer;font-family:inherit;">
+              استخراج وعرض الشهادة الآن
+            </button>
+            <button type="button" id="gdCancelCertModalBtn" style="flex:1;padding:12px;border-radius:11px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    document.getElementById("gdCloseCertModalBtn").onclick = closeModal;
+    document.getElementById("gdCancelCertModalBtn").onclick = closeModal;
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) closeModal();
+    });
+
+    document.getElementById("gdCertNameForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const arVal = document.getElementById("gdInputCertAr").value.trim();
+      const enVal = document.getElementById("gdInputCertEn").value.trim();
+      if (!arVal || !enVal) return;
+
+      localStorage.setItem("gd_cert_name_ar", arVal);
+      localStorage.setItem("gd_cert_name_en", enVal.toUpperCase());
+      closeModal();
+      await renderAndOpenCertificateWindow(track, arVal, enVal);
+    });
+  }
+
+  async function generateTrackCertificate(trackId, customStudentAr = "", customStudentEn = "") {
+    openCertificateNameDialog(trackId, customStudentAr, customStudentEn);
+  }
+
+  async function renderAndOpenCertificateWindow(track, studentNameAr, studentNameEn) {
+    const trackLectures = uploadedCourses.filter(c => c.category === track.id);
     const cleanAr = studentNameAr.trim();
     const cleanEn = studentNameEn.trim().toUpperCase();
-    if (!customStudentAr) {
-      localStorage.setItem("gd_cert_name_ar", cleanAr);
-      localStorage.setItem("gd_cert_name_en", cleanEn);
-    }
 
     const uidPart = String(currentUser.uid || "GD").slice(0, 5).toUpperCase();
     const randPart = Math.random().toString(36).substring(2, 5).toUpperCase();
@@ -259,7 +313,6 @@
     const issueDateAr = now.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
     const totalCount = trackLectures.length || 1;
 
-    // تسجيل الشهادة في سجل المنصة ليراها الأدمن
     const db = getDb();
     if (db) {
       try {
@@ -271,7 +324,6 @@
           studentNameEn: cleanEn,
           userEmail: currentUser.email || "",
           uid: currentUser.uid,
-          issuedByAdmin: Boolean(customStudentAr),
           issueDateAr,
           issueDateEn,
           createdAt: Date.now()
@@ -450,7 +502,6 @@
     <button type="button" onclick="window.print()">حفظ النسختين كملف PDF / طباعة</button>
   </div>
 
-  <!-- النسخة الأولى: باللغة العربية -->
   <section class="cert-page" dir="rtl">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -499,7 +550,6 @@
     </footer>
   </section>
 
-  <!-- النسخة الثانية: باللغة الإنجليزية -->
   <section class="cert-page" dir="ltr">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -551,6 +601,7 @@
 </html>`);
     certWindow.document.close();
   }
+
 
   function injectStyles() {
     if ($("academyStyles")) return;
