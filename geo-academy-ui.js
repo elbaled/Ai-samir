@@ -2751,4 +2751,41 @@
   } else {
     init();
   }
+     // تحديث نص الإعلان العائم الأول إلى "شاهد أول محاضرة من الأساسيات على المنصة الآن"
+  function updateTopAnnouncementBanner() {
+    const elements = document.querySelectorAll("div, p, span, strong, h4");
+    elements.forEach(el => {
+      if (el.children.length > 0) return;
+      const txt = el.textContent || "";
+
+      if (txt.includes("قريباً في GeoDev Studio Pro")) {
+        el.textContent = "متاح الآن في الأكاديمية";
+      } else if (txt.includes("قريباً سيتم توفير كورسات ودورات احترافية")) {
+        el.textContent = "شاهد أول محاضرة من الأساسيات على المنصة الآن";
+
+        // ربط زر "حسناً" بالانتقال المباشر لقسم الأكاديمية
+        const bannerCard = el.closest("div[style], .banner, .toast, [class*='announce'], [id*='announce']") || el.parentElement?.parentElement;
+        if (bannerCard && !bannerCard.dataset.academyLinked) {
+          bannerCard.dataset.academyLinked = "1";
+          const okBtn = Array.from(bannerCard.querySelectorAll("button")).find(b => b.textContent.includes("حسناً"));
+          if (okBtn) {
+            okBtn.textContent = "شاهد الآن";
+            okBtn.addEventListener("click", () => {
+              activeTab = "courses";
+              coursesSubView = "lectures";
+              if (typeof window.go === "function") window.go("academy");
+              renderTab();
+            });
+          }
+        }
+      }
+    });
+  }
+
+  updateTopAnnouncementBanner();
+  const announceObserver = new MutationObserver(updateTopAnnouncementBanner);
+  if (document.body) {
+    announceObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
 })();
