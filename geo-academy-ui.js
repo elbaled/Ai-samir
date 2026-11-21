@@ -2761,7 +2761,7 @@
       if (txt.includes("قريباً في GeoDev Studio Pro")) {
         el.textContent = "متاح الآن في الأكاديمية";
       } else if (txt.includes("قريباً سيتم توفير كورسات ودورات احترافية")) {
-        el.textContent = "شاهد أول محاضرة من الأساسيات على المنصة الآن";
+        el.textContent = "شاهد أول محاضرة من أساسيات الاتوكاد المساحي  على المنصة الآن";
 
         // ربط زر "حسناً" بالانتقال المباشر لقسم الأكاديمية
         const bannerCard = el.closest("div[style], .banner, .toast, [class*='announce'], [id*='announce']") || el.parentElement?.parentElement;
