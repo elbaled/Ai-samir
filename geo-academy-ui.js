@@ -1,9 +1,10 @@
 /* ============================================================================
-   GEO Academy UI - النسخة الرسمية المتكاملة (V16)
-   - إصلاح زر "إكمال المحاضرة" ليظهر ويعمل فوراً أسفل الفيديو لجميع الطلاب
-   - خيار "آخر محاضرة في الكورس" -> يظهر بعدها مباشرة زر "الحصول على الشهادة"
-   - لوحة تحكم الأدمن في الشهادات (معاينة + إصدار شهادة لأي طالب + سجل الشهادات)
-   - الشهادة الرسمية (عربي + إنجليزي) بتوقيع م. أحمد سمير + الختم الأزرق + QR Code
+   GEO Academy UI - النسخة الرسمية المتكاملة (V19)
+   - عداد مشاهدات عام يبدأ من 50 مشاهدة ويزيد تلقائياً مع كل فتح ويظهر للجميع
+   - زر "الانتقال للمحاضرة التالية" بعد إكمال المحاضرة العادية
+   - زر "الحصول على الشهادة" يظهر فقط بعد إكمال "المحاضرة الأخيرة"
+   - اسم الكورس في الشهادة: "أساسيات الأوتوكاد"
+   - نافذة إدخال الاسم المستقلة (عربي + إنجليزي) + توقيع م. أحمد سمير + الختم الأزرق + QR Code
    ============================================================================ */
 (function () {
   "use strict";
@@ -12,6 +13,7 @@
   const ADMIN_WHATSAPP = "201015912371";
   const FB_PAGE_URL = "https://www.facebook.com/share/1KSRJUeJjo/";
   const DAY_MS = 24 * 60 * 60 * 1000;
+  const BASE_VIEWS_START = 50;
 
   const ourTracks = [
     { id: "AutoCAD + AI", title: "AutoCAD + AI", icon: "bot", desc: "ربط الأوتوكاد بالذكاء الاصطناعي وأتمتة الليسبات." },
@@ -138,6 +140,32 @@
     return Boolean(hasCoursesAccess || isProSubscriber);
   }
 
+  // حساب عدد المشاهدات الفعلي (يبدأ من 50 فصاعداً)
+  function getLectureViewsCount(item) {
+    const raw = Number(item?.viewsCount || 0);
+    return raw >= BASE_VIEWS_START ? raw : BASE_VIEWS_START + raw;
+  }
+
+  // زيادة عداد المشاهدات وحفظه في Firestore ليظهر لجميع المستخدمين
+  async function incrementLectureViews(courseId) {
+    const item = uploadedCourses.find(c => c.id === courseId);
+    if (!item) return;
+
+    const currentViews = getLectureViewsCount(item);
+    const nextViews = currentViews + 1;
+    item.viewsCount = nextViews;
+    localStorage.setItem("gd_academy_uploaded_courses", JSON.stringify(uploadedCourses));
+
+    const db = getDb();
+    if (db) {
+      try {
+        await db.collection("geodev_academy_courses").doc(courseId).update({
+          viewsCount: nextViews
+        });
+      } catch (_) {}
+    }
+  }
+
   function refreshAcademyIcons(root = document) {
     try {
       if (window.lucide && typeof window.lucide.createIcons === "function") {
@@ -184,18 +212,15 @@
     box._timer = setTimeout(() => box.classList.remove("show"), 4500);
   }
 
+  // الشهادة لا تُمنح إلا إذا وُجدت محاضرة محددة كـ "آخر محاضرة" وأكملها المستخدم
   function isTrackEligibleForCertificate(trackId) {
-    if (isAdminUser) return true;
     const trackLectures = uploadedCourses.filter(c => c.category === trackId);
     if (trackLectures.length === 0) return false;
-    const allDone = trackLectures.every(c => completedLectures.includes(c.id));
-    if (allDone) return true;
     const finalLecture = trackLectures.find(c => c.isFinalLecture === true);
-    if (finalLecture && completedLectures.includes(finalLecture.id)) return true;
-    return false;
+    if (!finalLecture) return false;
+    return completedLectures.includes(finalLecture.id);
   }
 
-  
   /* ============================================================================
      نافذة إدخال بيانات الشهادة المستقلة (خانتان: عربي + إنجليزي بدون window.prompt)
      ============================================================================ */
@@ -207,8 +232,8 @@
     const track = ourTracks.find(t => t.id === trackId);
     if (!track) return;
 
-    if (!isTrackEligibleForCertificate(track.id)) {
-      return notify("يجب إكمال محاضرات الكورس أو إكمال المحاضرة الأخيرة أولاً لاستخراج الشهادة.", "error");
+    if (!customStudentAr && !isTrackEligibleForCertificate(track.id)) {
+      return notify("يجب إكمال المحاضرة الأخيرة في الكورس أولاً لاستخراج الشهادة.", "error");
     }
 
     if (customStudentAr && customStudentEn) {
@@ -313,13 +338,32 @@
     const issueDateAr = now.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
     const totalCount = trackLectures.length || 1;
 
+    const trackArabicCertTitles = {
+      "AutoCAD + AI": "أساسيات الأوتوكاد",
+      "GIS": "نظم المعلومات الجغرافية GIS",
+      "Surveying": "المساحة والرفع المساحي",
+      "Civil 3D": "تصميم الطرق والبنية التحتية Civil 3D",
+      "Remote Sensing": "الاستشعار عن بعد",
+      "Programming": "برمجة GIS و Python"
+    };
+    const trackEnglishTitles = {
+      "AutoCAD + AI": "AutoCAD Fundamentals",
+      "GIS": "Geographic Information Systems (GIS) & Spatial Analysis",
+      "Surveying": "Land Surveying & Technical Office Calculations",
+      "Civil 3D": "Autodesk Civil 3D Infrastructure & Road Design",
+      "Remote Sensing": "Remote Sensing & Satellite Image Processing",
+      "Programming": "GIS Automation & Python Spatial Programming"
+    };
+    const trackTitleAr = trackArabicCertTitles[track.id] || track.title;
+    const trackTitleEn = trackEnglishTitles[track.id] || track.id;
+
     const db = getDb();
     if (db) {
       try {
         await db.collection("geodev_certificates").doc(serialNumber).set({
           serialNumber,
           trackId: track.id,
-          trackTitle: track.title,
+          trackTitle: trackTitleAr,
           studentNameAr: cleanAr,
           studentNameEn: cleanEn,
           userEmail: currentUser.email || "",
@@ -330,16 +374,6 @@
         });
       } catch (_) {}
     }
-
-    const trackEnglishTitles = {
-      "AutoCAD + AI": "Applied AutoCAD Surveying & AI Automation",
-      "GIS": "Geographic Information Systems (GIS) & Spatial Analysis",
-      "Surveying": "Land Surveying & Technical Office Calculations",
-      "Civil 3D": "Autodesk Civil 3D Infrastructure & Road Design",
-      "Remote Sensing": "Remote Sensing & Satellite Image Processing",
-      "Programming": "GIS Automation & Python Spatial Programming"
-    };
-    const trackTitleEn = trackEnglishTitles[track.id] || track.id;
 
     const certWindow = window.open("", "_blank", "width=1140,height=820");
     if (!certWindow) {
@@ -477,7 +511,7 @@
       border-bottom: 2px solid #b48327; display: inline-block; padding: 0 14mm 2mm; margin-bottom: 4.5mm; letter-spacing: 1px;
     }
     .cert-statement { font-size: 14.8px; color: #1e293b; line-height: 1.8; max-width: 230mm; margin: 0 auto; }
-    .course-name-highlight { font-weight: 800; color: #0f172a; font-size: 17px; }
+    .course-name-highlight { font-weight: 800; color: #0f172a; font-size: 18px; }
     .footer-row {
       display: flex; align-items: flex-end; justify-content: space-between;
       border-top: 1.5px solid #cbd5e1; padding-top: 4mm; z-index: 2;
@@ -502,6 +536,7 @@
     <button type="button" onclick="window.print()">حفظ النسختين كملف PDF / طباعة</button>
   </div>
 
+  <!-- النسخة الأولى: باللغة العربية -->
   <section class="cert-page" dir="rtl">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -527,7 +562,7 @@
       <div class="recipient-name-ar">${escapeHTML(cleanAr)}</div>
       <p class="cert-statement">
         قد أتمّ بنجاحٍ وتفوّق جميع المحاضرات والتطبيقات العملية المقررة في البرنامج التدريبي التطبيقي:<br>
-        <span class="course-name-highlight">«${escapeHTML(track.title)} — (${escapeHTML(track.id)})»</span><br>
+        <span class="course-name-highlight">«${escapeHTML(trackTitleAr)}»</span><br>
         بواقع (${totalCount}) محاضرة تدريبية، وقد مُنحت له هذه الشهادة تقديراً لالتزامه واجتيازه كافة متطلبات البرنامج بنجاح.
       </p>
     </main>
@@ -550,6 +585,7 @@
     </footer>
   </section>
 
+  <!-- النسخة الثانية: باللغة الإنجليزية -->
   <section class="cert-page" dir="ltr">
     <div class="outer-frame"></div>
     <div class="inner-frame"></div>
@@ -575,7 +611,7 @@
       <div class="recipient-name-en">${escapeHTML(cleanEn)}</div>
       <p class="cert-statement">
         has successfully completed with distinction all required lectures and practical engineering modules in:<br>
-        <span class="course-name-highlight">${escapeHTML(trackTitleEn)} (${escapeHTML(track.id)})</span><br>
+        <span class="course-name-highlight">${escapeHTML(trackTitleEn)}</span><br>
         comprising (${totalCount}) applied training sessions, and is hereby awarded this credential in recognition of his/her achievement.
       </p>
     </main>
@@ -601,7 +637,6 @@
 </html>`);
     certWindow.document.close();
   }
-
 
   function injectStyles() {
     if ($("academyStyles")) return;
@@ -726,6 +761,11 @@
         font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 8px;
         background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45);
         display: inline-flex; align-items: center; gap: 4px;
+      }
+      #s-academy .views-pill-badge {
+        font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 8px;
+        background: rgba(148, 163, 184, 0.14); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.32);
+        display: inline-flex; align-items: center; gap: 5px;
       }
 
       #s-academy .access-mode-toggle {
@@ -1443,9 +1483,8 @@
 
     const lecture = uploadedCourses.find(c => c.id === lectureId);
     if (lecture) {
-      const eligible = isTrackEligibleForCertificate(lecture.category);
-      if (eligible) {
-        notify(`مبارك! أتممت الكورس بنجاح. اضغط الآن على زر «الحصول على الشهادة» بالأسفل.`, "success");
+      if (lecture.isFinalLecture === true) {
+        notify(`مبارك! أتممت المحاضرة الأخيرة بنجاح. اضغط الآن على زر «الحصول على الشهادة» بالأسفل.`, "success");
       } else {
         const trackLectures = uploadedCourses.filter(c => c.category === lecture.category);
         const doneInTrack = trackLectures.filter(c => completedLectures.includes(c.id)).length;
@@ -1704,18 +1743,24 @@
     const hasAccess = canWatchLectureContent(item);
     const isFree = String(item.accessType || "code").toLowerCase() === "free";
     const isFinal = item.isFinalLecture === true;
-    const trackEligibleForCert = isTrackEligibleForCertificate(item.category);
+    const viewsCount = getLectureViewsCount(item);
 
     const likesArr = Array.isArray(item.likes) ? item.likes : [];
     const dislikesArr = Array.isArray(item.dislikes) ? item.dislikes : [];
     const userLiked = currentUser ? likesArr.includes(currentUser.uid) : false;
     const userDisliked = currentUser ? dislikesArr.includes(currentUser.uid) : false;
 
+    const sameTrackList = uploadedCourses.filter(c => c.category === item.category);
+    const currentIdx = sameTrackList.findIndex(c => c.id === item.id);
+    const nextLecture = currentIdx >= 0 && currentIdx < sameTrackList.length - 1 ? sameTrackList[currentIdx + 1] : null;
+    const showCertBtn = isCompleted && isFinal;
+
     return `
       <div class="academy-card course-detail-box" id="academyCourseDetailBox">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span class="hub-card-badge">${escapeHTML(item.category || "دورة تطبيقية")}</span>
+            <span class="views-pill-badge">${ico("eye", 13)} ${viewsCount} مشاهدة</span>
             ${isFree
               ? `<span class="access-pill-free">${ico("globe", 13)} مجانية للجميع</span>`
               : `<span class="access-pill-code">${ico("key-round", 13)} بالكود / PRO</span>`}
@@ -1747,17 +1792,25 @@
           <div style="margin:12px 0 10px;padding:13px;border-radius:12px;background:var(--bg,#101827);border:1.5px solid ${isCompleted ? "#22c55e" : "#e09f24"};">
             ${!isCompleted ? `
               <button type="button" class="academy-btn success" style="width:100%;font-size:14px;padding:12px;" data-complete-lecture="${escapeHTML(item.id)}">
-                ${ico("check-circle-2", 18)} ${isFinal ? "إكمال المحاضرة الأخيرة والحصول على الشهادة" : "إكمال المحاضرة وفتح المحاضرة التالية"}
+                ${ico("check-circle-2", 18)} ${isFinal ? "إكمال المحاضرة الأخيرة والحصول على الشهادة" : "إكمال المحاضرة"}
               </button>
             ` : `
-              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:${trackEligibleForCert ? "10px" : "0"};">
+              <div style="color:#4ade80;font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:${(showCertBtn || nextLecture) ? "10px" : "0"};">
                 ${ico("check-circle-2", 18)} تم إكمال هذه المحاضرة بنجاح
               </div>
-              ${trackEligibleForCert ? `
+              ${showCertBtn ? `
                 <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-generate-cert="${escapeHTML(item.category)}">
                   ${ico("award", 18)} الحصول على شهادة إتمام الكورس المعتمدة (عربي + إنجليزي)
                 </button>
-              ` : ""}
+              ` : nextLecture ? `
+                <button type="button" class="academy-btn gold" style="width:100%;font-size:14px;padding:12px;" data-open-uploaded-course="${escapeHTML(nextLecture.id)}">
+                  ${ico("arrow-left-circle", 18)} الانتقال للمحاضرة التالية: ${escapeHTML(nextLecture.title)}
+                </button>
+              ` : `
+                <div class="academy-muted" style="text-align:center;font-size:12.5px;">
+                  بانتظار رفع المحاضرة التالية في الكورس...
+                </div>
+              `}
             `}
           </div>
         ` : ""}
@@ -2016,7 +2069,7 @@
 
       <div class="academy-card">
         <h3>${ico("play-square", 19)} محاضرات ودروس المنصة (${filteredLectures.length})</h3>
-        <p class="academy-muted">أكمل كل محاضرة بالضغط على زر «إكمال المحاضرة» أسفل الفيديو للانتقال للمحاضرة التالية والحصول على الشهادة في النهاية.</p>
+        <p class="academy-muted">أكمل كل محاضرة بالضغط على زر «إكمال المحاضرة» أسفل الفيديو للانتقال للمحاضرة التالية والحصول على الشهادة بعد المحاضرة الختامية.</p>
 
         <div class="academy-grid">
           ${filteredLectures.length ? filteredLectures.map(item => {
@@ -2027,6 +2080,7 @@
             const trackList = uploadedCourses.filter(c => c.category === item.category);
             const lectureNum = trackList.findIndex(c => c.id === item.id) + 1;
             const likesCount = Array.isArray(item.likes) ? item.likes.length : 0;
+            const viewsCount = getLectureViewsCount(item);
 
             return `
               <div class="academy-card ${unlocked ? "" : "lecture-locked"}">
@@ -2049,7 +2103,11 @@
                 <h3>${escapeHTML(item.title)}</h3>
                 ${item.instructorName ? `<div class="lecturer-tag">${ico("user-check", 14)} ${escapeHTML(item.instructorName)}</div>` : ""}
                 <p>${escapeHTML(String(item.desc || "").slice(0, 110))}${String(item.desc || "").length > 110 ? "..." : ""}</p>
-                ${likesCount > 0 ? `<div class="academy-muted" style="margin-bottom:8px;display:inline-flex;align-items:center;gap:5px;">${ico("thumbs-up", 13)} ${likesCount} إعجاب</div>` : ""}
+
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;flex-wrap:wrap;">
+                  <span class="views-pill-badge">${ico("eye", 13)} ${viewsCount} مشاهدة</span>
+                  ${likesCount > 0 ? `<span class="academy-muted" style="display:inline-flex;align-items:center;gap:4px;">${ico("thumbs-up", 13)} ${likesCount} إعجاب</span>` : ""}
+                </div>
 
                 ${unlocked ? `
                   <button type="button" class="academy-btn ${isFree ? "success" : "gold"}" style="width:100%;" data-open-uploaded-course="${escapeHTML(item.id)}">
@@ -2243,7 +2301,7 @@
       const total = trackLectures.length;
       const done = trackLectures.filter(c => completedLectures.includes(c.id)).length;
       const canCertify = isTrackEligibleForCertificate(track.id);
-      const percent = canCertify && total > 0 ? 100 : total > 0 ? Math.round((done / total) * 100) : 0;
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
       return { ...track, total, done, percent, canCertify };
     });
 
@@ -2256,7 +2314,7 @@
 
       <div class="academy-card" style="margin-bottom:15px;border-color:#e09f24;">
         <h3>${ico("award", 21)} تقدمك التعليمي والشهادات المعتمدة (${overallPct}%)</h3>
-        <p>بمجرد إتمامك <b>100%</b> من محاضرات المسار أو إكمال المحاضرة الختامية، يظهر لك زر <b>الحصول على الشهادة المعتمدة (عربي + إنجليزي)</b>.</p>
+        <p>بمجرد إتمامك <b>المحاضرة الختامية</b> في أي كورس، يظهر لك زر <b>الحصول على الشهادة المعتمدة (عربي + إنجليزي)</b>.</p>
         <div class="academy-progress"><span style="width:${overallPct}%"></span></div>
         <div class="academy-muted">أتممت <b>${totalAllCompleted}</b> من أصل <b>${totalAllLectures}</b> محاضرة مرفوعة على المنصة.</div>
       </div>
@@ -2275,7 +2333,7 @@
                 ? "لم تُرفع محاضرات في هذا الكورس بعد."
                 : tr.canCertify
                 ? "مبارك! شهادتك المعتمدة جاهزة للاستخراج باللغتين العربية والإنجليزية."
-                : `متبقي لك ${tr.total - tr.done} محاضرة لإتمام الكورس والحصول على الشهادة.`}
+                : `أكمل محاضرات الكورس وصولاً للمحاضرة الختامية للحصول على الشهادة.`}
             </p>
 
             <div style="display:flex;flex-direction:column;gap:7px;">
@@ -2597,6 +2655,7 @@
           driveUrl: driveUrl || "",
           accessType,
           isFinalLecture,
+          viewsCount: BASE_VIEWS_START,
           likes: [],
           dislikes: [],
           authorEmail: currentUser.email || ADMIN_EMAIL,
@@ -2866,7 +2925,6 @@
     eventsBound = true;
 
     document.addEventListener("click", async event => {
-      // إصدار شهادة مخصصة من لوحة الأدمن
       if (event.target.closest("#adminIssueCustomCertBtn") && isAdminUser) {
         const nameAr = $("adminCertNameAr")?.value.trim();
         const nameEn = $("adminCertNameEn")?.value.trim();
@@ -2880,7 +2938,6 @@
         return;
       }
 
-      // إعادة طباعة شهادة من سجل الأدمن
       const reprintBtn = event.target.closest("[data-reprint-cert-track]");
       if (reprintBtn && isAdminUser) {
         await generateTrackCertificate(
@@ -2891,14 +2948,12 @@
         return;
       }
 
-      // زر الحصول على الشهادة للطلاب
       const certBtn = event.target.closest("[data-generate-cert]");
       if (certBtn) {
         await generateTrackCertificate(certBtn.dataset.generateCert);
         return;
       }
 
-      // أزرار اختيار نوع الفتح (مجانية / بالكود) في الرفع
       const upAccessBtn = event.target.closest("[data-set-upload-access]");
       if (upAccessBtn) {
         const mode = upAccessBtn.dataset.setUploadAccess === "free" ? "free" : "code";
@@ -2916,7 +2971,6 @@
         return;
       }
 
-      // أزرار اختيار هل هي آخر محاضرة في الرفع
       const upFinalBtn = event.target.closest("[data-set-upload-final]");
       if (upFinalBtn) {
         const val = upFinalBtn.dataset.setUploadFinal === "yes" ? "yes" : "no";
@@ -2934,7 +2988,6 @@
         return;
       }
 
-      // أزرار اختيار نوع الفتح في التعديل
       const edAccessBtn = event.target.closest("[data-set-edit-access]");
       if (edAccessBtn) {
         const mode = edAccessBtn.dataset.setEditAccess === "free" ? "free" : "code";
@@ -2952,7 +3005,6 @@
         return;
       }
 
-      // أزرار اختيار هل هي آخر محاضرة في التعديل
       const edFinalBtn = event.target.closest("[data-set-edit-final]");
       if (edFinalBtn) {
         const val = edFinalBtn.dataset.setEditFinal === "yes" ? "yes" : "no";
@@ -3018,6 +3070,7 @@
           if (isLectureUnlocked(targetLecture)) {
             await checkUserSubscriptionsStatus(currentUser);
             selectedCourseDetailId = targetLecture.id;
+            await incrementLectureViews(selectedCourseDetailId);
             await loadCommentsForCourse(selectedCourseDetailId);
           } else {
             notify("هذه المحاضرة مقفولة حالياً؛ أكمل المحاضرات السابقة في نفس التخصص لفتحها.", "warn");
@@ -3107,6 +3160,7 @@
         await checkUserSubscriptionsStatus(currentUser);
         selectedCourseDetailId = lectureId;
         isEditingCourseMode = false;
+        await incrementLectureViews(selectedCourseDetailId);
         await loadCommentsForCourse(selectedCourseDetailId);
         renderCourses();
         const detailBox = $("academyCourseDetailBox");
